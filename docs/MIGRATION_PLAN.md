@@ -59,12 +59,14 @@ Ohne Shell-Zugang (Shared Hosting) werden die Dateien unter `migrations/opspilot
 bisher in Versionsreihenfolge per phpMyAdmin eingespielt; sie sind so geschrieben, dass sie
 mehrfach ausgeführt werden können (`IF NOT EXISTS`, `INSERT IGNORE`).
 
-### Migrationen in Phase 2
+### OpsPilot-Migrationen
 
 | Datei | Inhalt | Art | Rückweg |
 |---|---|---|---|
 | `0001_runtime_ddl.sql` | `users.cal_token`, `editing_status.target_uid` (bisher zur Laufzeit angelegt), `changelog.entry_type` | additiv | nicht nötig |
 | `0002_plan_change_log.sql` | Tabelle `plan_change_log` (Änderungsprotokoll je Zelle) | additiv | `DROP TABLE plan_change_log` |
+| `0004_master_data.sql` | Tabellen `customers`, `locations`, `qualifications`, `user_qualifications`; Spalten `plan_areas.customer_id/location_id` | additiv | Tabellen/Spalten können bleiben |
+| `0005_api_push.sql` | `api_refresh_tokens`, `push_devices`, `push_queue` | additiv | Tabellen löschen |
 | `0003_clear_initial_passwords.sql` | leert `users.initial_password` (Klartext-Einmalpasswörter). Das Einmalpasswort bleibt über den Hash gültig; der Wechselzwang bleibt bestehen | Datenbereinigung | nicht umkehrbar – gewollt; Werte wurden nirgends angezeigt |
 
 ### Rechteneutralität von Phase 2
@@ -92,23 +94,31 @@ Ziel: Rollen und Rechte werden mandantenfähig, rollengebundene Prüfungen
    gewollten Fehlerbehebungen (`PERMISSIONS.md` Abschnitt 6, P-1 … P-7).
 4. Der Vergleich läuft zusätzlich als automatisierter Test gegen eine anonymisierte Kopie.
 
-## 5. Schritt 3 – Mandantenfähigkeit (Phase 3)
+## 5. Schritt 3 – Mandantenfähigkeit (umgesetzt)
 
-Reihenfolge (jeweils eigenes Release, expand → migrate → contract):
+Gewähltes Modell: **eine Datenbank je Mandant** (Begründung in `ARCHITECTURE.md` B.3).
+Dadurch ist **keine Datenmigration** nötig:
 
-1. **Expand:** Tabellen `tenants`, `tenant_domains`, `tenant_settings`; Mandant `1` aus
-   `app_settings.company_name` anlegen. Spalte `tenant_id INT NULL` in allen Fachtabellen.
-2. **Backfill:** `UPDATE … SET tenant_id = 1` tabellenweise in Blöcken (keine langen
-   Sperren), danach `NOT NULL DEFAULT 1` und Fremdschlüssel auf `tenants`.
-3. **Code:** Alle Abfragen über den tenant-gebundenen Zugriff; neue Unique-Keys
-   (`tenant_id, username` …) zusätzlich zu den alten anlegen.
-4. **Contract:** alte, mandantenlose Unique-Keys entfernen, sobald die Isolationstests
-   grün sind. `app_settings`-Werte in `tenant_settings` übernehmen (alte Zeilen bleiben
-   lesbar).
-5. Self-Hosting bleibt bei genau einem Mandanten; für Benutzer ändert sich nichts.
+- **Self-Hosting:** unverändert genau ein Mandant (`OPSPILOT_MODE=selfhosted`, Standard).
+  Die bestehende Datenbank bleibt, wie sie ist.
+- **Bestehende Installation in den SaaS-Betrieb übernehmen:**
+  1. Plattform-Datenbank anlegen und `php bin/migrate.php up --platform`.
+  2. Bestehende Datenbank als Mandant registrieren:
+     `php bin/tenant.php adopt <slug> "<Name>" <bestehende_datenbank> --domain=<host>`
+     (prüft, dass die Datenbank eine OpsPilot-Datenbank ist, und übernimmt sie unverändert).
+  3. `OPSPILOT_MODE=saas` setzen, `php bin/migrate.php up --all-tenants`.
+  Rückweg: `OPSPILOT_MODE=selfhosted` – die Mandanten-Datenbank ist eine normale
+  Einzel-Datenbank.
+- **Neue Mandanten:** `php bin/tenant.php create` oder `/platform/`.
 
-Rückweg bis einschließlich 3: Code-Rollback (Spalten stören den alten Code nicht).
-Nach 4: Restore aus dem Backup vor Schritt 4.
+### Rechte in Phase 3
+
+Rollen und Rechte liegen weiterhin in `role_permissions` je Mandanten-Datenbank – damit
+sind sie automatisch mandantenspezifisch, ohne Migration. Die fest an Rollen gebundenen
+Prüfungen (`canManageUsers`, `canManageConfig`, …) wurden **bewusst nicht** in Rechte
+umgewandelt, weil das bei Installationen mit angepassten Rechten unbeabsichtigte
+Änderungen hätte auslösen können. Neu ist nur das zusätzliche, standardmäßig nirgends
+vergebene Recht `view_absence_details_all` (Entscheidung E-2).
 
 ## 6. Schritt 4 – Umzug auf Docker/Linux (Phase 4, optional)
 

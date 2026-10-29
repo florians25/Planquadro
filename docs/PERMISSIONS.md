@@ -67,12 +67,21 @@ Hinweise:
 - `manage_users` wird gespeichert, aber **nicht ausgewertet** – die Benutzerverwaltung
   hängt fest an der Rolle (siehe 3.).
 
+### Ergänzungen seit Phase 2/3
+
+| Recht | Standard | Wirkung |
+|---|---|---|
+| `view_absence_details_all` | nur Admin (Rolle hat ohnehin Einsicht) | Art und Bemerkung von Krankheit/Urlaub bei **allen** Mitarbeitern sehen. Ohne dieses Recht sehen Manager/Teamleiter Gesundheitsdaten nur noch für tatsächlich unterstellte Mitarbeiter (direkt, transitiv, Vertretung) – die Planungsfreigabe `view_all_employees` öffnet sie nicht mehr (Entscheidung E-2). |
+
+Die API v1 (`docs/API.md`) nutzt exakt dieselben Funktionen (`hasPerm`, `canEditUser`,
+`visibleUserIds`, `canSeeAbsenceDetails`). Mitarbeiter sehen dort nur veröffentlichte Stände.
+
 ## 3. Fest an Rollen gebundene Prüfungen
 
 | Prüfung | Rollen | Wirkt auf |
 |---|---|---|
 | `canManageUsers()` | admin, manager, verwaltung | Seite und Aktionen „Team“ (`pages/mitarbeiter.php`) |
-| `canManageConfig()` | admin, manager, verwaltung | Bereiche/Einsatzcodes, Feiertage |
+| `canManageConfig()` | admin, manager, verwaltung | Bereiche/Einsatzcodes, Feiertage, Stammdaten (Kunden, Standorte, Qualifikationen) |
 | Wartungsmodus-Ausnahme | admin, manager | arbeiten während Wartung weiter |
 | `api/cleanup`, `api/maintenance` | admin, manager | Bereinigung, geplante Wartung |
 | Changelog löschen | admin, manager | `api/changelog` |
@@ -96,7 +105,8 @@ Hinweise:
 | vertretung | Rolle admin/manager/teamleiter |
 | mitarbeiter | Rolle admin/manager/verwaltung |
 | planbereiche, feiertage | Rolle admin/manager/verwaltung |
-| einstellungen | `manage_settings` |
+| einstellungen, organisation | `manage_settings` |
+| stammdaten | Rolle admin/manager/verwaltung + Modul `masterdata` |
 | rollen | `manage_roles` |
 
 ### 4.2 API-Endpunkte

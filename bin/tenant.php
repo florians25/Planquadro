@@ -4,6 +4,8 @@
  * --------------------------------------------------------------------------
  *   php bin/tenant.php list
  *   php bin/tenant.php create <slug> "<Name>" [--domain=acme.example.org] [--admin=admin]
+ *   php bin/tenant.php adopt <slug> "<Name>" <datenbank> [--domain=host]
+ *                                    bestehende Einzel-Installation als Mandant übernehmen
  *   php bin/tenant.php suspend <slug> | activate <slug>
  *   php bin/tenant.php domain-add <slug> <host> | domain-rm <host>
  *   php bin/tenant.php platform-admin <username>       legt Plattform-Admin an / setzt Passwort neu
@@ -57,6 +59,23 @@ case 'create':
     $tdb->prepare("INSERT INTO app_settings(setting_key,setting_value) VALUES('company_name',?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)")->execute([$name]);
     audit('tenant_create', "$slug ($name)");
     say("Administrator: $admin · Einmalpasswort: $pw  (Wechsel beim ersten Login erzwungen)");
+    exit(0);
+
+case 'adopt':
+    [$slug, $name, $dbName] = [$args[1] ?? '', $args[2] ?? '', $args[3] ?? ''];
+    if (!opsValidSlug($slug) || $name === '' || !preg_match('/^[A-Za-z0-9_]{1,64}$/', $dbName)) die2('Aufruf: adopt <slug> "<Name>" <datenbank> [--domain=host]');
+    $chk = $pdb->prepare("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=? AND table_name IN ('users','assignments','plan_areas','schema_migrations')");
+    $chk->execute([$dbName]);
+    $n = (int)$chk->fetchColumn();
+    if ($n < 3) die2("Datenbank $dbName sieht nicht wie eine OpsPilot-/Einsatzplanung-Datenbank aus.");
+    if ($n < 4) die2("Datenbank $dbName hat keine Versionstabelle. Zuerst im Self-Hosting-Modus: php bin/migrate.php baseline v6_9_0 && php bin/migrate.php up");
+    $s = $pdb->prepare('SELECT COUNT(*) FROM tenants WHERE slug=? OR db_name=?'); $s->execute([$slug, $dbName]);
+    if ((int)$s->fetchColumn() > 0) die2('Slug oder Datenbank ist bereits einem Mandanten zugeordnet.');
+    $pdb->prepare("INSERT INTO tenants(slug, name, db_name, status) VALUES(?,?,?,'active')")->execute([$slug, $name, $dbName]);
+    $id = (int)$pdb->lastInsertId();
+    if (is_string($opts['domain'] ?? null)) $pdb->prepare('INSERT INTO tenant_domains(host, tenant_id) VALUES(?,?)')->execute([strtolower($opts['domain']), $id]);
+    audit('tenant_adopt', "$slug ← $dbName");
+    say("Datenbank $dbName ist jetzt Mandant $slug. Daten und Benutzer bleiben unverändert.");
     exit(0);
 
 case 'suspend':

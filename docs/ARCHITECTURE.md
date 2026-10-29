@@ -173,52 +173,57 @@ Funktionen aus `app/` auf, statt SQL selbst zu formulieren. Phase 2 beginnt dami
 den Kernpfad *Zelle speichern / veröffentlichen* (`app/lib/PlanCells.php`,
 `app/lib/ChangeLog.php`).
 
-### B.3 Multi-Tenancy
+### B.3 Multi-Tenancy (umgesetzt)
 
-**Modell: gemeinsame Datenbank, gemeinsames Schema, Spalte `tenant_id`** in allen
-fachlichen Tabellen. Gründe: einfachster Betrieb für Self-Hosting (ein Mandant) und SaaS,
-mandantengenaue Exporte und Wiederherstellung sind über `tenant_id` filterbar, und eine
-spätere Auslagerung großer Mandanten in eigene Datenbanken bleibt möglich (der
-`TenantResolver` liefert dann auch die DSN).
+**Modell: eine Datenbank je Mandant** mit identischem Schema, dazu eine zentrale
+**Plattform-Datenbank** (`tenants`, `tenant_domains`, `platform_admins`, `platform_audit`,
+`backup_runs`). Umgesetzt in `app/lib/Tenancy.php`.
 
-- `tenants` (id, slug, name, status, plan, created_at) und `tenant_domains` (host → tenant).
-- Bestehende Installation = Mandant `1`. Alle bestehenden Zeilen erhalten `tenant_id = 1`.
-- Eindeutige Schlüssel werden mandantenbezogen: `users(tenant_id, username)`,
-  `holidays(tenant_id, holiday_date)`, `plan_areas(tenant_id, short_code)` usw.
-- **Durchsetzung in drei Ebenen:**
-  1. `TenantContext` wird pro Request genau einmal gesetzt (Host/Subdomain im SaaS-Modus,
-     fest `1` im Self-Hosting); Sessions und Tokens sind an den Mandanten gebunden.
-  2. Datenzugriff über ein Repository/Query-Helper, der `tenant_id` erzwingt; Rohes SQL in
-     Seiten wird schrittweise ersetzt. Ein statischer Check in der CI meldet Abfragen auf
-     Mandantentabellen ohne `tenant_id`.
-  3. Integrationstests „Mandant A darf B nicht sehen“ für jeden Endpunkt.
-- Globale Administration (SaaS): separater Bereich `/admin` mit eigener Rolle
-  `platform_admin`, nicht Teil der Mandanten-Rollen.
+> Entscheidung geändert gegenüber dem ersten Entwurf (gemeinsames Schema mit `tenant_id`):
+> Die bestehende Anwendung enthält mehrere hundert SQL-Abfragen in Seiten und APIs. Eine
+> `tenant_id`-Spalte hätte jede davon berühren müssen – mit hohem Regressionsrisiko und
+> der Gefahr, dass eine vergessene Bedingung Daten zwischen Mandanten öffnet. Mit einer
+> Datenbank je Mandant ist die Isolation **strukturell**: `getDB()` verbindet ausschließlich
+> mit der Datenbank des aufgelösten Mandanten; es gibt keinen Codepfad zu fremden Daten.
+> Zusätzlich werden Backup, Restore, Export und Löschung eines einzelnen Mandanten trivial.
+> Nachteil: Schema-Migrationen laufen je Mandant (`bin/migrate.php up --all-tenants`).
 
-### B.4 TenantConfig
+| | Self-Hosting (`OPSPILOT_MODE=selfhosted`, Standard) | SaaS (`OPSPILOT_MODE=saas`) |
+|---|---|---|
+| Mandanten | genau einer, Datenbank `OPSPILOT_DB_NAME` | beliebig viele, je eine Datenbank `opspilot_t_<slug>` |
+| Auflösung | fest | Host → `tenant_domains`; nur für `/api/v1` auf dem Plattform-Host zusätzlich Header `X-OpsPilot-Tenant` |
+| Plattform-DB | nicht nötig | `OPSPILOT_PLATFORM_DB_NAME` |
+| Verwaltung | – | `bin/tenant.php` (CLI) und `/platform/` (Web) |
 
-Eine zentrale, typisierte Konfiguration je Mandant, die `app_settings` ablöst
-(`app_settings` bleibt als Speicher für globale Werte und als Kompatibilitätsquelle).
+Durchsetzung:
+1. Mandant wird pro Request genau einmal bestimmt; unbekannt → 404, gesperrt → 503.
+2. Sessions: eigener Cookie-Name je Mandant **und** Bindung an den Mandanten (eine fremde
+   Session wird verworfen). API-Tokens enthalten den Mandanten und gelten nur dort.
+3. Plattform-Administration hat eigene Konten, eigene Session und sieht Fachdaten nur
+   als Zahlen.
+4. Integrationstests (`tests/Integration/TenancyTest.php`): getrennte Zugangsdaten, Daten,
+   Sessions, Tokens, gesperrte/unbekannte Mandanten, Header-Regel, Plattform-Zugang.
 
-```jsonc
-{
-  "branding":   { "name": "…", "logo": "storage://…", "colors": { "primary": "#…", "accent": "#…" } },
-  "modules":    { "assistant": true, "absences": true, "approvals": false, "wots": true, "ical": true, "mobile": true },
-  "navigation": ["dashboard","mein_plan","gesamtplan","monatsplanung", "…"],
-  "dashboard":  { "widgets": ["today_absent","kpis","announcements","upcoming_holidays"] },
-  "planning":   { "weekend_requires_flag": true, "lock_approved_vacation": true, "cross_team_planning": false,
-                  "absence_types": ["krank_halb", "…"], "rules": { "max_consecutive_days": null } },
-  "security":   { "password": { "min_length": 12 }, "session_timeout_minutes": 480, "sso": { "oidc": null } },
-  "locale":     { "timezone": "Europe/Berlin", "holiday_region": "NW" }
-}
-```
+### B.4 TenantConfig (umgesetzt)
 
-- Gespeichert in `tenant_settings (tenant_id, key, value JSON)`, gelesen über
-  `TenantConfig::get('planning.cross_team_planning')` mit dokumentierten Standardwerten.
-- Bestehende Schlüssel (`company_name`, `approval_system_enabled`, `epa_cross_team`, …) werden
-  1:1 abgebildet; `getSetting()` liest während der Übergangszeit zuerst die TenantConfig.
-- Einsatzcodes (`plan_areas`), Teams, Standorte, Kunden und Qualifikationen sind
-  Mandantendaten (eigene Tabellen mit `tenant_id`), keine Konfiguration.
+Zentrale Konfiguration je Mandant in `app/lib/TenantConfig.php`, gespeichert als JSON in
+`app_settings('tenant_config')` der Mandanten-Datenbank. Verwaltung über die Seite
+**Organisation** (Recht `manage_settings`).
+
+| Bereich | Inhalt |
+|---|---|
+| `branding` | Name, Markenfarbe, Akzentfarbe, Logo (PNG/JPEG/WebP) – als CSS-Variablen mit automatischer Kontrastprüfung |
+| `modules` | assistant, absences, approvals, vacation, deputation, annual, wots, ical, masterdata, mobile – deaktiviert = aus Navigation entfernt **und** per Direktaufruf/API gesperrt |
+| `navigation` | Reihenfolge und ausgeblendete Einträge |
+| `dashboard` | aktive Widgets |
+| `planning` | gleichzeitiges Bearbeiten, teamübergreifende Planung, Anzeige „heute abwesend“ |
+| `security.oidc` | SSO-Konfiguration (Issuer, Client, Claim, Passwort-Login erlaubt) |
+
+Bereits vorhandene Einstellungen (`company_name`, `approval_system_enabled`, `epa_cross_team`,
+`allow_concurrent_edit`, `dashboard_show_absent`) bleiben die **einzige** Quelle ihrer
+Werte; die TenantConfig liest und schreibt sie direkt. Mandantendaten wie Einsatzcodes,
+Kunden, Standorte und Qualifikationen sind keine Konfiguration, sondern Stammdaten
+(Seite **Stammdaten**, Migration `0004`).
 
 ### B.5 Berechtigungen (Ziel)
 
@@ -245,7 +250,7 @@ Eine zentrale, typisierte Konfiguration je Mandant, die `app_settings` ablöst
 | Konflikterkennung | `save_bulk` sperrt die betroffenen Zeilen (`SELECT … FOR UPDATE`) und vergleicht Revisionen. Abweichung → HTTP 409 mit Liste (Zelle, aktueller Stand, wer, wann); nichts wird geschrieben. Überschreiben nur nach ausdrücklicher Bestätigung, protokolliert. |
 | Transaktionen | Alle Mehrschritt-Schreibvorgänge in Transaktionen; Deadlocks werden einmal automatisch wiederholt. `publish` sperrt die Entwürfe, die es anwendet. |
 | Änderungsprotokoll | `plan_change_log`: Zelle, Aktion (`draft_set`, `draft_clear`, `publish`, `overwrite`, …), alter/neuer Stand, Benutzer, Zeitpunkt, Quelle. |
-| Live-Aktualisierung | Phase 2: bestehendes Polling + Revisionen. Ziel: **Server-Sent Events** (`/api/v1/events`) aus einer Ereignis-Tabelle (Outbox) – funktioniert hinter jedem Reverse Proxy, ohne zusätzlichen Dienst; mit Redis Pub/Sub für mehrere App-Instanzen im SaaS. WebSockets sind nicht nötig, weil Schreibzugriffe ohnehin per HTTP laufen. |
+| Live-Aktualisierung | Umgesetzt: bestehendes Polling + Revisionen; Apps über `GET sync` und Push. Ziel: **Server-Sent Events** (`/api/v1/events`) aus einer Ereignis-Tabelle (Outbox) – funktioniert hinter jedem Reverse Proxy, ohne zusätzlichen Dienst; mit Redis Pub/Sub für mehrere App-Instanzen im SaaS. WebSockets sind nicht nötig, weil Schreibzugriffe ohnehin per HTTP laufen. |
 | Sichtbarkeit | Eigene/fremde Entwürfe bleiben markiert; Veröffentlichungsvorschau zeigt, was wessen Änderung ist. |
 
 ### B.7 Betriebsmodelle
@@ -276,7 +281,7 @@ Geprüft wurden PWA, Capacitor und React Native/Expo gegen den vorhandenen Stack
 | Wartungsaufwand | niedrig | niedrig–mittel | hoch |
 
 **Entscheidung: Capacitor auf Basis einer Mobile-Web-App, die zugleich als PWA ausgeliefert
-wird.** Ein Codepfad (TypeScript, ohne schweres Framework) erzeugt die PWA für Browser und
+wird** (umgesetzt in `mobile/`, siehe `mobile/README.md`). Ein Codepfad (TypeScript, ohne schweres Framework) erzeugt die PWA für Browser und
 die iOS-/Android-Apps; native Plugins liefern Push, Biometrie und sicheren Tokenspeicher.
 React Native würde einen zweiten UI-Stack einführen, ohne dass die Anforderungen (Lesen,
 Abwesenheiten, Benachrichtigungen) das rechtfertigen. Die App spricht ausschließlich die

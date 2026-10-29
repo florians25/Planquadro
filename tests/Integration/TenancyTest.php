@@ -162,6 +162,18 @@ final class TenancyTest extends IntegrationTestCase
         $this->assertStringContainsString('name="password"', $tc->get('/platform/')->body);
     }
 
+    public function testAdoptExistingInstallation(): void
+    {
+        /* Die Selfhosted-Testdatenbank (mit Daten) als Mandant übernehmen */
+        [$rc, $out] = TestEnv::runCli(['bin/tenant.php', 'adopt', 'bestand', 'Bestand GmbH', TestEnv::$db['name'], '--domain=bestand.opspilot.test'], self::$saasEnv);
+        $this->assertSame(0, $rc, $out);
+        $this->assertTrue($this->loginOk($this->client('bestand.opspilot.test'), 'lager', TestEnv::PASSWORD), 'Bestandsbenutzer melden sich unverändert an');
+        [$rc, $out] = TestEnv::runCli(['bin/tenant.php', 'adopt', 'x2', 'X', TestEnv::$db['name']], self::$saasEnv);
+        $this->assertNotSame(0, $rc, 'Datenbank nicht doppelt zuordnen');
+        $pf = TestEnv::$db['name'] . '_platform';
+        TestEnv::rootPdo()->exec("DELETE FROM `$pf`.tenants WHERE slug='bestand'");
+    }
+
     public function testMigrateAllTenants(): void
     {
         [$rc, $out] = TestEnv::runCli(['bin/migrate.php', 'up', '--all-tenants'], self::$saasEnv);
