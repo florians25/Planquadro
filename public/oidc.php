@@ -53,7 +53,7 @@ try {
     $user = oidcFindUser($claims);
     if (!$user) {
         oidcAudit(null, 'oidc_unknown_user', 'Kein aktives Konto für ' . substr(hash('sha256', (string)($claims[oidcConfig()['claim']] ?? '')), 0, 12));
-        oidcFail('Für Ihr Firmenkonto gibt es keinen aktiven OpsPilot-Zugang. Bitte wenden Sie sich an die Administration.');
+        oidcFail('Für Ihr Firmenkonto gibt es keinen aktiven Vireo-Zugang. Bitte wenden Sie sich an die Administration.');
     }
     opsRegenerateSession();
     $_SESSION['user_id'] = $user['id'];

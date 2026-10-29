@@ -1,6 +1,6 @@
 <?php
 /**
- * OpsPilot – Stammdaten: Kunden, Standorte, Qualifikationen und die Zuordnung
+ * Vireo – Stammdaten: Kunden, Standorte, Qualifikationen und die Zuordnung
  * von Einsatzcodes zu Kunde/Standort. Zugriff wie "Bereiche"
  * (Manager, Verwaltung, Administrator).
  */

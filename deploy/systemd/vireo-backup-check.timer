@@ -1,5 +1,5 @@
 [Unit]
-Description=OpsPilot Backup-Statusprüfung stündlich
+Description=Vireo Backup-Statusprüfung stündlich
 
 [Timer]
 OnCalendar=hourly

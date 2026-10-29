@@ -4,7 +4,7 @@
  * /authorize akzeptiert login_hint=<benutzername> statt eines Login-Formulars;
  * tamper=1 erzeugt ein ID-Token mit ungültiger Signatur.
  */
-$dir = sys_get_temp_dir() . '/opspilot-fake-idp';
+$dir = sys_get_temp_dir() . '/vireo-fake-idp';
 if (!is_dir($dir)) mkdir($dir, 0700, true);
 $keyFile = $dir . '/key.pem';
 if (!is_file($keyFile)) { $k = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]); openssl_pkey_export($k, $pem); file_put_contents($keyFile, $pem); }

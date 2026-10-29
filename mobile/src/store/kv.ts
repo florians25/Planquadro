@@ -26,7 +26,7 @@ export class MemoryKv implements KvStore {
   }
 }
 
-const DB_NAME = 'opspilot';
+const DB_NAME = 'vireo';
 const DB_VERSION = 1;
 export const IDB_STORES = ['secure', 'keys', 'cache'] as const;
 export type IdbStoreName = (typeof IDB_STORES)[number];

@@ -1,14 +1,14 @@
-# OpsPilot – Beispiel-Override für den SaaS-Betrieb (viele Mandanten)
+# Vireo – Beispiel-Override für den SaaS-Betrieb (viele Mandanten)
 # ---------------------------------------------------------------------------
 #   docker compose -f docker-compose.yml -f docker-compose.saas.yml --profile proxy up -d
 #   docker compose exec app php bin/tenant.php create acme "Acme GmbH" --domain=acme.example.de
 #
-# - Plattform-Datenbank opspilot_platform (Mandanten, Domains, backup_runs)
-# - je Mandant eine Datenbank opspilot_t_<slug> (Rechte: docker/db-init/)
+# - Plattform-Datenbank vireo_platform (Mandanten, Domains, backup_runs)
+# - je Mandant eine Datenbank vireo_t_<slug> (Rechte: docker/db-init/)
 # - Mandant wird über den Hostnamen aufgelöst (tenant_domains); die API v1 ist
-#   zusätzlich über OPSPILOT_PLATFORM_HOST mit Header X-OpsPilot-Tenant erreichbar
+#   zusätzlich über VIREO_PLATFORM_HOST mit Header X-Vireo-Tenant erreichbar
 # - der Backup-Dienst sichert jeden Mandanten und die Plattform-DB einzeln
-# - Caddy: alle Mandanten-Hosts und den Plattform-Host in OPSPILOT_DOMAIN
+# - Caddy: alle Mandanten-Hosts und den Plattform-Host in VIREO_DOMAIN
 #   aufführen (kommagetrennt); für sehr viele Mandanten On-Demand-TLS oder ein
 #   Wildcard-Zertifikat per DNS-Challenge verwenden (docs/INSTALLATION.md)
 #
@@ -19,15 +19,15 @@
 services:
   app:
     environment: &saas-env
-      OPSPILOT_MODE: saas
-      OPSPILOT_PLATFORM_DB_NAME: ${OPSPILOT_PLATFORM_DB_NAME:-opspilot_platform}
-      OPSPILOT_PLATFORM_HOST: ${OPSPILOT_PLATFORM_HOST:-api.example.de}
-      OPSPILOT_TENANT_DB_PREFIX: ${OPSPILOT_TENANT_DB_PREFIX:-opspilot_t_}
-      OPSPILOT_DB_NAME: ${OPSPILOT_PLATFORM_DB_NAME:-opspilot_platform}
+      VIREO_MODE: saas
+      VIREO_PLATFORM_DB_NAME: ${VIREO_PLATFORM_DB_NAME:-vireo_platform}
+      VIREO_PLATFORM_HOST: ${VIREO_PLATFORM_HOST:-api.example.de}
+      VIREO_TENANT_DB_PREFIX: ${VIREO_TENANT_DB_PREFIX:-vireo_t_}
+      VIREO_DB_NAME: ${VIREO_PLATFORM_DB_NAME:-vireo_platform}
 
   backup:
     environment: *saas-env
 
   db:
     environment:
-      MARIADB_DATABASE: ${OPSPILOT_PLATFORM_DB_NAME:-opspilot_platform}
+      MARIADB_DATABASE: ${VIREO_PLATFORM_DB_NAME:-vireo_platform}

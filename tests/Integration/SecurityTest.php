@@ -1,12 +1,12 @@
 <?php
-namespace OpsPilot\Tests\Integration;
+namespace Vireo\Tests\Integration;
 
-use OpsPilot\Tests\Support\Client;
-use OpsPilot\Tests\Support\IntegrationTestCase;
-use OpsPilot\Tests\Support\TestEnv;
+use Vireo\Tests\Support\Client;
+use Vireo\Tests\Support\IntegrationTestCase;
+use Vireo\Tests\Support\TestEnv;
 
 /**
- * Regressionstests zu den Sicherheitsbefunden aus docs/OPSPILOT_ROADMAP.md.
+ * Regressionstests zu den Sicherheitsbefunden aus docs/VIREO_ROADMAP.md.
  * Die ID im Testnamen verweist auf den Befund.
  */
 final class SecurityTest extends IntegrationTestCase

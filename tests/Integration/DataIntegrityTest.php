@@ -1,7 +1,7 @@
 <?php
-namespace OpsPilot\Tests\Integration;
+namespace Vireo\Tests\Integration;
 
-use OpsPilot\Tests\Support\IntegrationTestCase;
+use Vireo\Tests\Support\IntegrationTestCase;
 
 /** Regressionstests: Datenintegrität und Rechteverwaltung (D-03, D-04, S-15, S-16, X-03). */
 final class DataIntegrityTest extends IntegrationTestCase

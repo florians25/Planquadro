@@ -1,5 +1,5 @@
 <?php
-namespace OpsPilot\Tests\Support;
+namespace Vireo\Tests\Support;
 
 /**
  * Minimaler HTTP-Client mit eigener Cookie-Session (ein Objekt = ein Browser).

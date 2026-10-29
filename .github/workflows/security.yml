@@ -37,15 +37,15 @@ jobs:
         image: mariadb:10.11
         env:
           MARIADB_ROOT_PASSWORD: root
-          MARIADB_DATABASE: opspilot_zap
+          MARIADB_DATABASE: vireo_zap
         ports: ["3306:3306"]
         options: >-
           --health-cmd="healthcheck.sh --connect" --health-interval=5s --health-timeout=5s --health-retries=20
     env:
-      OPSPILOT_DB_HOST: 127.0.0.1
-      OPSPILOT_DB_USER: root
-      OPSPILOT_DB_PASS: root
-      OPSPILOT_DB_NAME: opspilot_zap
+      VIREO_DB_HOST: 127.0.0.1
+      VIREO_DB_USER: root
+      VIREO_DB_PASS: root
+      VIREO_DB_NAME: vireo_zap
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2

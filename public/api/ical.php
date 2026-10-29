@@ -6,7 +6,7 @@
  */
 require_once __DIR__.'/../../app/config/database.php';
 
-/* Spalte cal_token wird per Migration angelegt (migrations/opspilot/0001) */
+/* Spalte cal_token wird per Migration angelegt (migrations/vireo/0001) */
 try { $db = getDB(); } catch (Exception $e) { http_response_code(500); exit('Server error'); }
 
 /* Modul Kalender-Abo deaktiviert → wie unbekannt behandeln */

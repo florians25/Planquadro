@@ -1,6 +1,6 @@
 <?php
 /**
- * OpsPilot – Mandantenverwaltung (SaaS, OPSPILOT_MODE=saas)
+ * Vireo – Mandantenverwaltung (SaaS, VIREO_MODE=saas)
  * --------------------------------------------------------------------------
  *   php bin/tenant.php list
  *   php bin/tenant.php create <slug> "<Name>" [--domain=acme.example.org] [--admin=admin]
@@ -34,7 +34,7 @@ function tenantBySlug(string $slug): array {
 }
 function randomPassword(): string { return rtrim(strtr(base64_encode(random_bytes(12)), '+/', '-_'), '='); }
 
-if (opsMode() !== 'saas') die2('Mandantenverwaltung nur im SaaS-Modus (OPSPILOT_MODE=saas).', 2);
+if (opsMode() !== 'saas') die2('Mandantenverwaltung nur im SaaS-Modus (VIREO_MODE=saas).', 2);
 $pdb = opsPlatformDB();
 
 switch ($cmd) {
@@ -67,7 +67,7 @@ case 'adopt':
     $chk = $pdb->prepare("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=? AND table_name IN ('users','assignments','plan_areas','schema_migrations')");
     $chk->execute([$dbName]);
     $n = (int)$chk->fetchColumn();
-    if ($n < 3) die2("Datenbank $dbName sieht nicht wie eine OpsPilot-/Einsatzplanung-Datenbank aus.");
+    if ($n < 3) die2("Datenbank $dbName sieht nicht wie eine Vireo-/Einsatzplanung-Datenbank aus.");
     if ($n < 4) die2("Datenbank $dbName hat keine Versionstabelle. Zuerst im Self-Hosting-Modus: php bin/migrate.php baseline v6_9_0 && php bin/migrate.php up");
     $s = $pdb->prepare('SELECT COUNT(*) FROM tenants WHERE slug=? OR db_name=?'); $s->execute([$slug, $dbName]);
     if ((int)$s->fetchColumn() > 0) die2('Slug oder Datenbank ist bereits einem Mandanten zugeordnet.');

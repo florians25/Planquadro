@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../app/config/database.php';
    kein CSRF (es gibt kein Cookie, das ein Angreifer ausnutzen könnte). Der
    Benutzer wird nach der Token-Prüfung in $_SESSION['user_id'] gesetzt,
    damit alle Rechte-/Scope-Funktionen unverändert funktionieren. */
-if (defined('OPSPILOT_STATELESS') && OPSPILOT_STATELESS) {
+if (defined('VIREO_STATELESS') && VIREO_STATELESS) {
     $_SESSION = [];
 } else {
     opsStartSession();

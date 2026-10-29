@@ -16,13 +16,13 @@ composer install
 Datenbank anlegen (Kollation wie in Produktion):
 
 ```sql
-CREATE DATABASE opspilot CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'opspilot'@'localhost' IDENTIFIED BY '…';
-GRANT ALL ON opspilot.* TO 'opspilot'@'localhost';
+CREATE DATABASE vireo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'vireo'@'localhost' IDENTIFIED BY '…';
+GRANT ALL ON vireo.* TO 'vireo'@'localhost';
 ```
 
 ```bash
-export OPSPILOT_DB_HOST=127.0.0.1 OPSPILOT_DB_NAME=opspilot OPSPILOT_DB_USER=opspilot OPSPILOT_DB_PASS=…
+export VIREO_DB_HOST=127.0.0.1 VIREO_DB_NAME=vireo VIREO_DB_USER=vireo VIREO_DB_PASS=…
 php bin/migrate.php up          # Basisschema + alle Migrationen
 php public/install.php          # ersten Administrator anlegen (Passwort wird angezeigt)
 php -S 127.0.0.1:8080 -t public tests/router.php
@@ -35,15 +35,15 @@ eingebaute PHP-Server dieselben URLs wie Apache bedient (`/dashboard`, `/api/sav
 
 | Variable | Zweck |
 |---|---|
-| `OPSPILOT_DB_HOST`, `_PORT`, `_NAME`, `_USER`, `_PASS` | Datenbank (Alternative: `app/config/secrets.php`) |
-| `OPSPILOT_APP_KEY` | Schlüssel für Zell-Revisionen (≥ 32 Zeichen). Ohne Angabe wird einmalig einer in `app_settings` erzeugt. |
-| `OPSPILOT_TRUSTED_PROXIES` | Reverse-Proxy-Adressen/CIDR, deren `X-Forwarded-For` ausgewertet wird |
-| `OPSPILOT_FORCE_SECURE_COOKIES` | `1` = Session-Cookie immer `Secure` (hinter TLS-terminierendem Proxy) |
-| `OPSPILOT_ALLOW_INSTALL` | `1` = `install.php` im Browser freigeben (nur Ersteinrichtung) |
+| `VIREO_DB_HOST`, `_PORT`, `_NAME`, `_USER`, `_PASS` | Datenbank (Alternative: `app/config/secrets.php`) |
+| `VIREO_APP_KEY` | Schlüssel für Zell-Revisionen (≥ 32 Zeichen). Ohne Angabe wird einmalig einer in `app_settings` erzeugt. |
+| `VIREO_TRUSTED_PROXIES` | Reverse-Proxy-Adressen/CIDR, deren `X-Forwarded-For` ausgewertet wird |
+| `VIREO_FORCE_SECURE_COOKIES` | `1` = Session-Cookie immer `Secure` (hinter TLS-terminierendem Proxy) |
+| `VIREO_ALLOW_INSTALL` | `1` = `install.php` im Browser freigeben (nur Ersteinrichtung) |
 
 Vollständige Liste (Mandanten, Backup, Alarme, Docker): [CONFIGURATION.md](CONFIGURATION.md).
 Lokal ohne Backup-Schlüssel zeigt das Dashboard Administratoren einen Backup-Hinweis;
-abschalten mit `OPSPILOT_BACKUP_BANNER=0`.
+abschalten mit `VIREO_BACKUP_BANNER=0`.
 
 ## Tests
 
@@ -51,8 +51,8 @@ abschalten mit `OPSPILOT_BACKUP_BANNER=0`.
 # Unit-Tests (ohne Datenbank)
 vendor/bin/phpunit --testsuite unit
 
-# Integrationstests: legen die Datenbank opspilot_test bei jedem Lauf NEU an
-OPSPILOT_TEST_DB_USER=root OPSPILOT_TEST_DB_PASS=… vendor/bin/phpunit
+# Integrationstests: legen die Datenbank vireo_test bei jedem Lauf NEU an
+VIREO_TEST_DB_USER=root VIREO_TEST_DB_PASS=… vendor/bin/phpunit
 
 # JS
 node --test tests/js/escape.test.mjs
@@ -74,13 +74,13 @@ Testdatenbank muss „test“ enthalten (Schutz vor versehentlichem Löschen).
 | `Unit/BackupCryptoTest`, `Unit/BackupFormatTest` | Verschlüsselung inkl. Manipulation/Abschneiden, GFS-Aufbewahrung, tar, Zeilenzähler, S3-Signatur |
 
 Teilen sich mehrere Checkouts eine Datenbankinstanz, je Checkout einen eigenen
-`OPSPILOT_TEST_DB_NAME` (z. B. `opspilot_test_feature`) verwenden.
+`VIREO_TEST_DB_NAME` (z. B. `vireo_test_feature`) verwenden.
 
 ### Deploymenttest (Docker)
 
 ```bash
-docker build -t opspilot/app:ci .
-cp .env.example .env    # OPSPILOT_IMAGE=opspilot/app:ci, OPSPILOT_FORCE_SECURE_COOKIES=0
+docker build -t vireo/app:ci .
+cp .env.example .env    # VIREO_IMAGE=vireo/app:ci, VIREO_FORCE_SECURE_COOKIES=0
 sh docker/init-secrets.sh
 sh tests/deploy/compose-smoke.sh     # baut den Stack am Ende wieder ab (KEEP=1 behält ihn)
 ```
@@ -89,7 +89,7 @@ Neue Fehlerbehebungen bekommen einen Test, der **vor** dem Fix fehlschlägt.
 
 ## Migrationen
 
-- Neue Schemaänderungen nur als Datei `migrations/opspilot/NNNN_beschreibung.sql`.
+- Neue Schemaänderungen nur als Datei `migrations/vireo/NNNN_beschreibung.sql`.
 - Additiv (expand → migrate → contract), mehrfach ausführbar, MySQL- **und**
   MariaDB-kompatibel (kein `ADD COLUMN IF NOT EXISTS`; stattdessen `information_schema`
   + `PREPARE`, siehe `0001_runtime_ddl.sql`).

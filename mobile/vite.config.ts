@@ -23,7 +23,7 @@ function listFiles(dir: string): string[] {
  */
 function serviceWorkerPlugin(): Plugin {
   return {
-    name: 'opspilot-service-worker',
+    name: 'vireo-service-worker',
     apply: 'build',
     generateBundle(_options, bundle) {
       const publicDir = new URL('./public', import.meta.url).pathname;

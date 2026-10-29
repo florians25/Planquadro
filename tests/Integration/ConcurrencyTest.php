@@ -1,9 +1,9 @@
 <?php
-namespace OpsPilot\Tests\Integration;
+namespace Vireo\Tests\Integration;
 
-use OpsPilot\Tests\Support\Client;
-use OpsPilot\Tests\Support\IntegrationTestCase;
-use OpsPilot\Tests\Support\TestEnv;
+use Vireo\Tests\Support\Client;
+use Vireo\Tests\Support\IntegrationTestCase;
+use Vireo\Tests\Support\TestEnv;
 
 /**
  * Mehrbenutzerbetrieb: Optimistic Concurrency, Konflikte, Sperren,

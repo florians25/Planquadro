@@ -1,11 +1,11 @@
 <?php
 /**
- * OpsPilot – OpenID Connect (Authorization Code + PKCE)
+ * Vireo – OpenID Connect (Authorization Code + PKCE)
  * --------------------------------------------------------------------------
  * Optionaler Login über einen Identity-Provider (Keycloak, Entra ID, Authentik,
  * Google Workspace …). Konfiguration in der TenantConfig (security.oidc), das
- * Client-Secret alternativ über OPSPILOT_OIDC_CLIENT_SECRET – im SaaS-Modus nur,
- * wenn OPSPILOT_OIDC_ISSUER denselben Issuer festlegt (sonst könnte ein Mandant
+ * Client-Secret alternativ über VIREO_OIDC_CLIENT_SECRET – im SaaS-Modus nur,
+ * wenn VIREO_OIDC_ISSUER denselben Issuer festlegt (sonst könnte ein Mandant
  * das plattformweite Secret an einen eigenen Server schicken lassen).
  *
  * Sicherheit:
@@ -13,7 +13,7 @@
  *  - ID-Token-Signatur gegen die JWKS des Providers (RS256/384/512, ES256)
  *  - Prüfung von iss, aud/azp, exp, iat, nonce
  *  - keine automatische Benutzeranlage: der Claim muss einem aktiven
- *    OpsPilot-Benutzer (users.username) entsprechen
+ *    Vireo-Benutzer (users.username) entsprechen
  */
 
 require_once __DIR__ . '/PlanCells.php';   /* opsAppKey() */
@@ -23,9 +23,9 @@ class OidcException extends RuntimeException {}
 function oidcConfig(): array
 {
     $c = (array)tcfg('security.oidc', []);
-    $env = opsEnv('OPSPILOT_OIDC_CLIENT_SECRET');
+    $env = opsEnv('VIREO_OIDC_CLIENT_SECRET');
     if ($env !== '') {
-        $pinned = rtrim(opsEnv('OPSPILOT_OIDC_ISSUER'), '/');
+        $pinned = rtrim(opsEnv('VIREO_OIDC_ISSUER'), '/');
         $issuer = rtrim((string)($c['issuer'] ?? ''), '/');
         if (opsMode() !== 'saas' ? ($pinned === '' || $pinned === $issuer) : ($pinned !== '' && $pinned === $issuer)) $c['client_secret'] = $env;
     }
@@ -45,9 +45,9 @@ function oidcPasswordLoginAllowed(): bool
 
 function oidcBaseUrl(): string
 {
-    $fixed = opsEnv('OPSPILOT_BASE_URL');
+    $fixed = opsEnv('VIREO_BASE_URL');
     if ($fixed !== '') return rtrim($fixed, '/');
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || getenv('OPSPILOT_FORCE_SECURE_COOKIES') === '1';
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || getenv('VIREO_FORCE_SECURE_COOKIES') === '1';
     return ($https ? 'https://' : 'http://') . ($_SERVER['HTTP_HOST'] ?? 'localhost');
 }
 
@@ -55,7 +55,7 @@ function oidcRedirectUri(): string { return oidcBaseUrl() . '/oidc'; }
 
 function oidcHttp(string $method, string $url, ?array $form = null, array $headers = []): array
 {
-    if (!preg_match('#^https://#', $url) && getenv('OPSPILOT_OIDC_ALLOW_HTTP') !== '1') throw new OidcException('Der Identity-Provider muss per HTTPS erreichbar sein.');
+    if (!preg_match('#^https://#', $url) && getenv('VIREO_OIDC_ALLOW_HTTP') !== '1') throw new OidcException('Der Identity-Provider muss per HTTPS erreichbar sein.');
     $ch = curl_init($url);
     curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10, CURLOPT_CONNECTTIMEOUT => 5,
         CURLOPT_FOLLOWLOCATION => false, CURLOPT_HTTPHEADER => array_merge(['Accept: application/json'], $headers),
@@ -83,7 +83,7 @@ function oidcHttp(string $method, string $url, ?array $form = null, array $heade
 
 function oidcBlockPrivate(): bool
 {
-    return opsMode() === 'saas' && getenv('OPSPILOT_OIDC_ALLOW_PRIVATE') !== '1';
+    return opsMode() === 'saas' && getenv('VIREO_OIDC_ALLOW_PRIVATE') !== '1';
 }
 
 /** Erste öffentliche Adresse des Hosts – null, wenn er (auch) intern auflöst */
@@ -224,7 +224,7 @@ function oidcEcRawToDer(string $raw): string
     return "\x30" . chr(strlen($seq)) . $seq;
 }
 
-/** Aktiven OpsPilot-Benutzer zum Claim finden (kein Auto-Provisioning) */
+/** Aktiven Vireo-Benutzer zum Claim finden (kein Auto-Provisioning) */
 function oidcFindUser(array $claims): ?array
 {
     $claim = oidcConfig()['claim'] ?? 'preferred_username';
@@ -246,14 +246,14 @@ function oidcFindUser(array $claims): ?array
    vom Browser nicht mitgeschickt. Inhalt ist per HMAC gegen Manipulation gesichert. */
 function oidcPendingCookieName(): string
 {
-    return 'OPSOIDC' . (opsMode() === 'saas' && function_exists('opsCurrentTenant') ? '_' . preg_replace('/[^a-z0-9]/', '', opsCurrentTenant()['slug']) : '');
+    return 'VIREOOIDC' . (opsMode() === 'saas' && function_exists('opsCurrentTenant') ? '_' . preg_replace('/[^a-z0-9]/', '', opsCurrentTenant()['slug']) : '');
 }
 
 function oidcPendingSet(array $p): void
 {
     $data = oidcB64u(json_encode($p));
     $val = $data . '.' . oidcB64u(hash_hmac('sha256', 'oidc-pending|' . $data, opsAppKey(getDB()), true));
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || getenv('OPSPILOT_FORCE_SECURE_COOKIES') === '1';
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || getenv('VIREO_FORCE_SECURE_COOKIES') === '1';
     setcookie(oidcPendingCookieName(), $val, ['expires' => time() + 600, 'path' => '/oidc', 'secure' => $https, 'httponly' => true, 'samesite' => 'Lax']);
 }
 

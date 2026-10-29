@@ -1,8 +1,8 @@
 <?php
 /**
- * OpsPilot – Plattform-Administration (nur SaaS)
+ * Vireo – Plattform-Administration (nur SaaS)
  * --------------------------------------------------------------------------
- * Erreichbar unter /platform/ auf dem Plattform-Host (OPSPILOT_PLATFORM_HOST).
+ * Erreichbar unter /platform/ auf dem Plattform-Host (VIREO_PLATFORM_HOST).
  * Eigene Anmeldung (platform_admins, anlegen per `php bin/tenant.php
  * platform-admin <name>`), eigene Session, keinerlei Zugriff auf
  * Mandanten-Sessions. Mandanten-Fachdaten werden nur gezählt, nie angezeigt.
@@ -12,12 +12,12 @@ require_once __DIR__ . '/../../app/lib/Security.php';
 
 $host = strtolower(preg_replace('/:\d+$/', '', (string)($_SERVER['HTTP_HOST'] ?? '')));
 /* Nur im SaaS-Modus und nur auf dem ausdrücklich konfigurierten Plattform-Host */
-if (opsMode() !== 'saas' || opsEnv('OPSPILOT_PLATFORM_HOST') === '' || $host !== strtolower(opsEnv('OPSPILOT_PLATFORM_HOST'))) {
+if (opsMode() !== 'saas' || opsEnv('VIREO_PLATFORM_HOST') === '' || $host !== strtolower(opsEnv('VIREO_PLATFORM_HOST'))) {
     http_response_code(404); exit('Not Found');
 }
 
-session_name('OPSPLATFORM');
-$https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || getenv('OPSPILOT_FORCE_SECURE_COOKIES') === '1';
+session_name('VIREOPLATFORM');
+$https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || getenv('VIREO_FORCE_SECURE_COOKIES') === '1';
 session_set_cookie_params(['lifetime' => 0, 'path' => '/platform/', 'secure' => $https, 'httponly' => true, 'samesite' => 'Strict']);
 ini_set('session.use_strict_mode', '1');
 session_start();
@@ -26,7 +26,7 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-in
 
 $pdb = opsPlatformDB();
 $ipHash = substr(hash('sha256', opsClientIp() . '|' . opsAppKeyPlatform()), 0, 16);
-function opsAppKeyPlatform(): string { return opsEnv('OPSPILOT_APP_KEY', 'opspilot-platform'); }
+function opsAppKeyPlatform(): string { return opsEnv('VIREO_APP_KEY', 'vireo-platform'); }
 function pfAudit(string $action, string $details = ''): void {
     global $pdb, $ipHash;
     $pdb->prepare('INSERT INTO platform_audit(admin, action, details, ip_hash) VALUES(?,?,?,?)')->execute([$_SESSION['pf_admin'] ?? null, $action, mb_substr($details, 0, 500), $ipHash]);
@@ -117,7 +117,7 @@ if ($admin) {
 $token = opsCsrfToken();
 ?><!DOCTYPE html>
 <html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>OpsPilot – Plattform</title>
+<title>Vireo – Plattform</title>
 <link rel="stylesheet" href="../assets/css/style.css">
 <style>
 body{background:var(--bg)}.pf{max-width:1200px;margin:0 auto;padding:1.25rem}
@@ -131,7 +131,7 @@ body{background:var(--bg)}.pf{max-width:1200px;margin:0 auto;padding:1.25rem}
 <main class="pf">
 <?php if (!$admin): ?>
   <div class="card pf-login"><div class="cb">
-    <h1 style="font-size:1.2rem;margin-bottom:1rem">OpsPilot Plattform</h1>
+    <h1 style="font-size:1.2rem;margin-bottom:1rem">Vireo Plattform</h1>
     <?php if ($err): ?><div class="alert alert-err" role="alert"><?php echo h($err); ?></div><?php endif; ?>
     <form method="post"><input type="hidden" name="_token" value="<?php echo h($token); ?>"><input type="hidden" name="action" value="login">
       <div class="fg"><label for="u">Benutzername</label><input id="u" name="username" autocomplete="username" required autofocus></div>
@@ -163,7 +163,7 @@ body{background:var(--bg)}.pf{max-width:1200px;margin:0 auto;padding:1.25rem}
       <form method="post"><input type="hidden" name="_token" value="<?php echo h($token); ?>"><input type="hidden" name="action" value="create">
         <div class="fg"><label for="ns">Kürzel (Slug)</label><input id="ns" name="slug" pattern="[a-z0-9][a-z0-9-]{0,38}[a-z0-9]" required placeholder="acme"></div>
         <div class="fg"><label for="nn">Name</label><input id="nn" name="name" required placeholder="Acme GmbH"></div>
-        <div class="fg"><label for="nd">Domain</label><input id="nd" name="domain" placeholder="acme.opspilot.example"></div>
+        <div class="fg"><label for="nd">Domain</label><input id="nd" name="domain" placeholder="acme.vireo.example"></div>
         <button class="btn btn-primary">Anlegen</button></form>
       <p class="muted" style="font-size:.75rem;margin-top:.5rem">Legt Datenbank und Schema an und erzeugt einen ersten Administrator mit Einmalpasswort.</p>
     </div></section>

@@ -3,7 +3,7 @@
  * Readiness: Datenbank erreichbar und keine offenen Migrationen.
  * GET /api/readyz → 200 {"status":"ready","checks":{…}} oder 503 {"status":"not_ready",…}
  *
- * Selfhosted: prüft OPSPILOT_DB_NAME.
+ * Selfhosted: prüft VIREO_DB_NAME.
  * SaaS:       prüft die Plattform-Datenbank; gehört der Host zu einem Mandanten
  *             (tenant_domains), zusätzlich dessen Datenbank. Unbekannte Hosts
  *             (z. B. interne Healthchecks des Load Balancers) prüfen nur die Plattform.
@@ -28,7 +28,7 @@ $checks = [];
 $ok = true;
 $check = function (string $name, callable $fn) use (&$checks, &$ok) {
     try { $r = $fn(); }
-    catch (Throwable $e) { error_log("OpsPilot readyz $name: " . $e->getMessage()); $r = 'error'; }
+    catch (Throwable $e) { error_log("Vireo readyz $name: " . $e->getMessage()); $r = 'error'; }
     $checks[$name] = $r;
     if ($r !== 'ok') $ok = false;
     return $r;
@@ -37,8 +37,8 @@ $check = function (string $name, callable $fn) use (&$checks, &$ok) {
 if (opsMode() === 'saas') {
     $pdb = null;
     $check('platform_database', function () use (&$pdb) {
-        $pdb = readyPdo(opsEnv('OPSPILOT_PLATFORM_DB_HOST', DB_HOST), opsEnv('OPSPILOT_PLATFORM_DB_PORT', DB_PORT), opsPlatformDbName(),
-            opsEnv('OPSPILOT_PLATFORM_DB_USER', DB_USER), opsEnv('OPSPILOT_PLATFORM_DB_PASS', DB_PASS));
+        $pdb = readyPdo(opsEnv('VIREO_PLATFORM_DB_HOST', DB_HOST), opsEnv('VIREO_PLATFORM_DB_PORT', DB_PORT), opsPlatformDbName(),
+            opsEnv('VIREO_PLATFORM_DB_USER', DB_USER), opsEnv('VIREO_PLATFORM_DB_PASS', DB_PASS));
         $pdb->query('SELECT 1');
         return 'ok';
     });

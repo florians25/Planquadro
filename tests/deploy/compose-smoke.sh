@@ -1,9 +1,9 @@
 #!/bin/sh
-# OpsPilot – Deploymenttest mit Docker Compose (CI und lokal)
+# Vireo – Deploymenttest mit Docker Compose (CI und lokal)
 # ---------------------------------------------------------------------------
-#   OPSPILOT_IMAGE=opspilot/app:ci sh tests/deploy/compose-smoke.sh
+#   VIREO_IMAGE=vireo/app:ci sh tests/deploy/compose-smoke.sh
 #
-# Erwartet: gebautes Image (OPSPILOT_IMAGE), .env und secrets/ (docker/init-secrets.sh),
+# Erwartet: gebautes Image (VIREO_IMAGE), .env und secrets/ (docker/init-secrets.sh),
 # inkl. secrets/backup_private.key für den Restore-Test.
 # Ablauf: compose up → /api/readyz → Installation → Erstlogin mit Passwortwechsel
 # (curl) → Backup über die Web-API → Backup + Restore-Test + Restore im Container
@@ -11,7 +11,7 @@
 set -eu
 
 cd "$(dirname "$0")/../.."
-PORT="${OPSPILOT_HTTP_PORT:-8080}"
+PORT="${VIREO_HTTP_PORT:-8080}"
 BASE="http://127.0.0.1:$PORT"
 DC="docker compose"
 WORK=$(mktemp -d)
@@ -56,7 +56,7 @@ loc=$(c -o /dev/null -w '%{redirect_url}' --data-urlencode "change_pw=1" --data-
       --data-urlencode "new_password2=$newpw" --data-urlencode "_token=$token" "$BASE/")
 case "$loc" in */dashboard) ;; *) fail "nach Passwortwechsel keine Weiterleitung zum Dashboard ($loc)";; esac
 [ "$(c -o "$WORK/dash.html" -w '%{http_code}' "$BASE/dashboard")" = "200" ] || fail "Dashboard nicht erreichbar"
-grep -q '<title>OpsPilot – Dashboard</title>' "$WORK/dash.html" || fail "Dashboard-Inhalt"
+grep -q '<title>Vireo – Dashboard</title>' "$WORK/dash.html" || fail "Dashboard-Inhalt"
 
 step "Backup über die Web-API (Einstellungen → Backup)"
 csrf=$(c "$BASE/einstellungen" | sed -n 's/.*name="csrf-token" content="\([^"]*\)".*/\1/p' | head -1)
@@ -71,9 +71,9 @@ $DC exec -T backup php bin/backup.php list
 $DC exec -T backup php bin/backup.php restore-test --key=- < secrets/backup_private.key
 latest=$($DC exec -T backup sh -c 'ls -1 /data/backups/default | grep -v prerestore | tail -1' | tr -d '\r')
 $DC exec -T backup php bin/backup.php verify "$latest" --key=- < secrets/backup_private.key
-$DC exec -T backup php bin/backup.php restore "$latest" --target-db=opspilot_ci_restore --files --key=- < secrets/backup_private.key > "$WORK/restore.json"
+$DC exec -T backup php bin/backup.php restore "$latest" --target-db=vireo_ci_restore --files --key=- < secrets/backup_private.key > "$WORK/restore.json"
 grep -q '"ok": true' "$WORK/restore.json" || fail "Restore: Zeilenzahlen"
-if $DC exec -T backup php bin/backup.php restore "$latest" --target-db="${OPSPILOT_DB_NAME:-opspilot}" --key=- < secrets/backup_private.key >/dev/null 2>&1; then
+if $DC exec -T backup php bin/backup.php restore "$latest" --target-db="${VIREO_DB_NAME:-vireo}" --key=- < secrets/backup_private.key >/dev/null 2>&1; then
     fail "Restore in nicht leere Produktiv-DB ohne --replace muss abgelehnt werden"
 fi
 $DC exec -T backup php bin/backup.php status --check > "$WORK/status.json" || fail "Backup-Status nicht gesund: $(cat "$WORK/status.json")"

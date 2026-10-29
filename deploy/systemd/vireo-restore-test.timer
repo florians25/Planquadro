@@ -1,5 +1,5 @@
 [Unit]
-Description=OpsPilot Restore-Test sonntags 04:30
+Description=Vireo Restore-Test sonntags 04:30
 
 [Timer]
 OnCalendar=Sun *-*-* 04:30:00

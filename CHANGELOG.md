@@ -1,15 +1,27 @@
-# OpsPilot Einsatzplanung – Changelog
+# Vireo Einsatzplanung – Changelog
 
 *Copyright © 2026 Florian-Fynn Scheibel. Alle Rechte vorbehalten.*
 
-## OpsPilot 7.0.0-dev – Phasen 3–7 „Plattform, Oberfläche, Apps, QS“ (unveröffentlicht)
+## Vireo 7.0.0-dev – neuer Produktname
+
+- Das Projekt heißt **Vireo** (Arbeitstitel war „OpsPilot“). Umgebungsvariablen heißen jetzt
+  `VIREO_*`; die bisherigen `OPSPILOT_*` werden weiter gelesen, wenn die neue Variable fehlt
+  (PHP und Docker-Entrypoint). Ebenso weiter gültig: Backup-Schlüssel mit
+  `opspilot-backup-…`-Präfix, Backup-Dateien `opspilot_…opbak` und der Header
+  `X-OpsPilot-Tenant`.
+- Unverändert (in bestehenden Datenbanken gespeichert): Migrations-IDs `op_*`/`pf_*`
+  und deren Art `opspilot` in `schema_migrations`, das Backup-Format (`.opbak`).
+- Neu: App-ID `de.vireo.app`, Rücksprung-Adresse `vireo://auth`, Cookie-Namen
+  `VIREOSID_*`/`VIREOOIDC`/`VIREOPLATFORM` (einmalige Neuanmeldung nach dem Update).
+
+## Vireo 7.0.0-dev – Phasen 3–7 „Plattform, Oberfläche, Apps, QS“ (unveröffentlicht)
 
 Alle bisherigen Funktionen, Daten, Rechte und Abläufe bleiben erhalten. Neue Funktionen
 sind optional oder standardmäßig so eingestellt, dass sich für bestehende Installationen
 nichts ändert.
 
 ### Plattform (Phase 3)
-- **Mandantenfähigkeit** (`OPSPILOT_MODE=saas`): eine Datenbank je Mandant, Auflösung per
+- **Mandantenfähigkeit** (`VIREO_MODE=saas`): eine Datenbank je Mandant, Auflösung per
   Domain, mandantengebundene Sitzungen. Self-Hosting (Standard) bleibt eine Einzel-Installation.
   `bin/tenant.php` legt Mandanten an oder übernimmt eine bestehende Installation
   unverändert (`adopt`). Plattform-Administration unter `/platform/`.
@@ -46,7 +58,7 @@ nichts ändert.
 - Doku: `INSTALLATION`, `CONFIGURATION`, `UPDATE`, `BACKUP`, `DISASTER_RECOVERY`.
 
 ### Oberfläche (Phase 5)
-- OpsPilot-Designsystem mit Dark Mode (folgt dem System, umschaltbar), besseren
+- Vireo-Designsystem mit Dark Mode (folgt dem System, umschaltbar), besseren
   Kontrasten, sichtbarem Fokus, Skip-Link und zugänglichen Dialogen.
 - Planungsmatrix per Tastatur bedienbar; Filter „Nur Änderungen“ für Entwürfe.
 - Große Pläne laden deutlich schneller (Monatsplan im Test: 856 → 68 Abfragen).
@@ -68,11 +80,11 @@ nichts ändert.
 `php bin/migrate.php up` spielt die Migrationen 0004 (Stammdaten) und 0005 (API/Push) ein.
 Neue Umgebungsvariablen sind optional (`docs/ARCHITECTURE.md`, `docs/API.md`).
 
-## OpsPilot 7.0.0-dev – Phase 2 „Stabilisierung“ (unveröffentlicht)
+## Vireo 7.0.0-dev – Phase 2 „Stabilisierung“ (unveröffentlicht)
 
 Basis ist Einsatzplanung v6.9.0. Alle Funktionen und Abläufe bleiben erhalten; die
 Änderungen beheben Fehler und sichern den Mehrbenutzerbetrieb ab. Details und Befund-IDs:
-`docs/OPSPILOT_ROADMAP.md`.
+`docs/VIREO_ROADMAP.md`.
 
 ### Gleichzeitiges Arbeiten
 - **Keine stillen Überschreibungen mehr.** Hat jemand anderes eine Zelle geändert, seit
@@ -91,7 +103,7 @@ Basis ist Einsatzplanung v6.9.0. Alle Funktionen und Abläufe bleiben erhalten; 
   von Administratoren geändert werden; die eigene Rolle ist nicht änderbar.
 - Die Teamseite enthält keine Passwort-Hashes, Einmalpasswörter oder Kalender-Tokens
   mehr; Einmalpasswörter werden nicht mehr im Klartext gespeichert.
-- `install.php` ist gesperrt (nur per CLI oder mit `OPSPILOT_ALLOW_INSTALL=1`) und
+- `install.php` ist gesperrt (nur per CLI oder mit `VIREO_ALLOW_INSTALL=1`) und
   erzeugt ein Zufallspasswort.
 - Schutz vor eingeschleustem Skript über Antragsbemerkungen, WOT-Links/-Farben und
   Bereichsfarben.

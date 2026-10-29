@@ -1,5 +1,5 @@
 <?php
-namespace OpsPilot\Tests\Support;
+namespace Vireo\Tests\Support;
 
 use PDO;
 
@@ -75,9 +75,9 @@ final class TestEnv
     {
         $c = self::$db;
         return [
-            'OPSPILOT_DB_HOST' => $c['host'], 'OPSPILOT_DB_PORT' => (string)$c['port'],
-            'OPSPILOT_DB_USER' => $c['user'], 'OPSPILOT_DB_PASS' => $c['pass'],
-            'OPSPILOT_DB_NAME' => $c['name'], 'OPSPILOT_APP_KEY' => str_repeat('k', 64),
+            'VIREO_DB_HOST' => $c['host'], 'VIREO_DB_PORT' => (string)$c['port'],
+            'VIREO_DB_USER' => $c['user'], 'VIREO_DB_PASS' => $c['pass'],
+            'VIREO_DB_NAME' => $c['name'], 'VIREO_APP_KEY' => str_repeat('k', 64),
             'PATH' => getenv('PATH') ?: '/usr/bin:/bin',
         ];
     }
@@ -128,7 +128,7 @@ final class TestEnv
         $sock = stream_socket_server('tcp://127.0.0.1:0');
         $port = (int)substr(strrchr(stream_socket_get_name($sock, false), ':'), 1);
         fclose($sock);
-        $log = sys_get_temp_dir() . '/opspilot-test-server-' . $port . '.log';
+        $log = sys_get_temp_dir() . '/vireo-test-server-' . $port . '.log';
         $cmd = [PHP_BINARY, '-d', 'display_errors=stderr', '-S', "127.0.0.1:$port", '-t', self::$root . '/public', $router ?? self::$root . '/tests/router.php'];
         $proc = proc_open($cmd, [0 => ['file', '/dev/null', 'r'], 1 => ['file', $log, 'a'], 2 => ['file', $log, 'a']], $pipes, self::$root, array_merge($env, $over));
         self::$extra[] = $proc;
@@ -161,7 +161,7 @@ final class TestEnv
         $sock = stream_socket_server('tcp://127.0.0.1:0');
         $port = (int)substr(strrchr(stream_socket_get_name($sock, false), ':'), 1);
         fclose($sock);
-        $log = sys_get_temp_dir() . '/opspilot-test-server.log';
+        $log = sys_get_temp_dir() . '/vireo-test-server.log';
         $cmd = [PHP_BINARY, '-d', 'display_errors=stderr', '-d', 'log_errors=1', '-S', "127.0.0.1:$port", '-t', self::$root . '/public', self::$root . '/tests/router.php'];
         $env = self::env() + ['PHP_CLI_SERVER_WORKERS' => '4'];
         self::$server = proc_open($cmd, [0 => ['file', '/dev/null', 'r'], 1 => ['file', $log, 'a'], 2 => ['file', $log, 'a']], $pipes, self::$root, $env);

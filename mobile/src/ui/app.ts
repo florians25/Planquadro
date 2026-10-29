@@ -167,7 +167,7 @@ export class App {
       <a class="skip-link" href="#main">Zum Inhalt springen</a>
       <header class="topbar">
         <a class="btn btn-icon topbar-back" href="#/plan" hidden aria-label="Zurück">${icon('back')}</a>
-        <h1 class="topbar-title" id="page-title" tabindex="-1">OpsPilot</h1>
+        <h1 class="topbar-title" id="page-title" tabindex="-1">Vireo</h1>
         ${this.session.isDemo ? html`<span class="chip chip-demo">Demo</span>` : ''}
       </header>
       <div class="banner-slot" id="banner" aria-live="polite"></div>
@@ -268,7 +268,7 @@ export class App {
       setTitle: (title, back) => {
         if (!this.shell || seq !== this.routeSeq) return;
         this.shell.title.textContent = title;
-        document.title = `${title} – OpsPilot`;
+        document.title = `${title} – Vireo`;
         this.shell.back.hidden = !back;
         if (back) this.shell.back.setAttribute('href', back);
       },

@@ -1,4 +1,4 @@
-# OpsPilot API v1
+# Vireo API v1
 
 Basis-URL: `https://<server>/api/v1/` · Format: JSON (UTF-8) · Zeitzone der Datumsangaben:
 die des Mandanten (`Y-m-d`, ohne Uhrzeit), Zeitstempel als ISO 8601 mit Offset.
@@ -10,8 +10,8 @@ Rechte-, Team-Scope- und Vertraulichkeitsregeln wie die Weboberfläche
 ## Mandant
 
 - **Self-Hosting:** genau ein Mandant, keine Angabe nötig.
-- **SaaS:** der Mandant ergibt sich aus dem Hostnamen (`acme.opspilot.example`). Läuft die
-  App gegen einen zentralen Host, wird der Mandant per Header `X-OpsPilot-Tenant: <slug>`
+- **SaaS:** der Mandant ergibt sich aus dem Hostnamen (`acme.vireo.example`). Läuft die
+  App gegen einen zentralen Host, wird der Mandant per Header `X-Vireo-Tenant: <slug>`
   gewählt. Tokens sind an den Mandanten gebunden; ein Token eines anderen Mandanten wird
   mit `401 invalid_token` abgewiesen.
 
@@ -49,7 +49,7 @@ Authorization: Bearer <access_token>
 ### `GET config`
 Branding für den Login-Bildschirm.
 ```json
-{ "api_version": 1, "tenant": { "name": "OpsPilot", "slug": "default",
+{ "api_version": 1, "tenant": { "name": "Vireo", "slug": "default",
   "branding": { "primary": "#e2001a", "accent": "#2563eb", "logo_url": "https://…/api/v1/branding/logo" } },
   "auth": { "password": true, "oidc": { "enabled": false, "label": "Mit Firmenkonto anmelden", "authorize_url": null } },
   "modules": { "absences": true, "approvals": false, "ical": true } }
@@ -83,7 +83,7 @@ durch Rotation). Fehler: `401 invalid_token`, `401 token_expired`,
 App-Sitzungen des Benutzers.
 
 ### `POST auth/oidc/token` (nur wenn OIDC aktiv)
-`{ "code": "…", "code_verifier": "…", "nonce": "…", "redirect_uri": "opspilot://auth" }` → wie Login.
+`{ "code": "…", "code_verifier": "…", "nonce": "…", "redirect_uri": "vireo://auth" }` → wie Login.
 `code_verifier` (PKCE, mind. 43 Zeichen) und `nonce` (aus der Autorisierungs-URL) sind Pflicht.
 Administratorkonten werden per SSO nur angemeldet, wenn die Organisation das ausdrücklich erlaubt.
 

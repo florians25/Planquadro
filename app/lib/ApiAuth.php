@@ -1,6 +1,6 @@
 <?php
 /**
- * OpsPilot – Token-Authentifizierung für die API v1
+ * Vireo – Token-Authentifizierung für die API v1
  * --------------------------------------------------------------------------
  * Access-Token: zustandslos, HMAC-SHA256 mit dem App-Schlüssel, 15 Minuten,
  *   Inhalt {sub, tid (Mandant), fam (Token-Familie), exp}. Bei jeder Anfrage

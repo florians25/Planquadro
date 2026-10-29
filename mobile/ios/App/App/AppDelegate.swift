@@ -43,7 +43,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
     }
 
-    // MARK: URL-Schema opspilot://auth (Fallback ohne Scenes)
+    // MARK: URL-Schema vireo://auth (Fallback ohne Scenes)
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         return ApplicationDelegateProxy.shared.application(app, open: url, options: options)

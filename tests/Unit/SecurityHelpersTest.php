@@ -1,5 +1,5 @@
 <?php
-namespace OpsPilot\Tests\Unit;
+namespace Vireo\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
@@ -9,7 +9,7 @@ final class SecurityHelpersTest extends TestCase
 {
     protected function tearDown(): void
     {
-        putenv('OPSPILOT_TRUSTED_PROXIES');
+        putenv('VIREO_TRUSTED_PROXIES');
         unset($_SERVER['HTTP_X_FORWARDED_FOR']);
     }
 
@@ -22,7 +22,7 @@ final class SecurityHelpersTest extends TestCase
 
     public function testForwardedForIsUsedBehindTrustedProxy(): void
     {
-        putenv('OPSPILOT_TRUSTED_PROXIES=10.0.0.0/8,172.16.0.1');
+        putenv('VIREO_TRUSTED_PROXIES=10.0.0.0/8,172.16.0.1');
         $_SERVER['REMOTE_ADDR'] = '10.1.2.3';
         $_SERVER['HTTP_X_FORWARDED_FOR'] = '6.6.6.6, 198.51.100.7, 172.16.0.1';
         $this->assertSame('198.51.100.7', opsClientIp(), 'rechteste nicht vertrauenswürdige Adresse');

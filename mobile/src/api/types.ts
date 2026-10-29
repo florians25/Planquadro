@@ -1,5 +1,5 @@
 /**
- * Typen der OpsPilot API v1 – 1:1 nach docs/API.md (verbindlicher Vertrag).
+ * Typen der Vireo API v1 – 1:1 nach docs/API.md (verbindlicher Vertrag).
  * Datumsangaben `Y-m-d` (ohne Uhrzeit, Zeitzone des Mandanten),
  * Zeitstempel ISO 8601 mit Offset.
  */

@@ -1,4 +1,4 @@
-package de.opspilot.app;
+package de.vireo.app;
 
 import com.getcapacitor.BridgeActivity;
 

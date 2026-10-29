@@ -1,13 +1,13 @@
-# OpsPilot-Designsystem
+# Vireo-Designsystem
 
 Ziel: das bewährte Erscheinungsbild der Einsatzplanung behutsam vereinheitlichen –
 **ohne** etablierte Abläufe zu ändern. Grundlage bleibt `public/assets/css/style.css`;
-`public/assets/css/opspilot-theme.css` ergänzt Tokens, Dark Mode und Barrierefreiheit.
+`public/assets/css/vireo-theme.css` ergänzt Tokens, Dark Mode und Barrierefreiheit.
 
 ## Schichten
 
 1. `style.css` – Komponenten (unverändert übernommen)
-2. `opspilot-theme.css` – Tokens, Dark Mode, Fokus, Bewegung, Touch
+2. `vireo-theme.css` – Tokens, Dark Mode, Fokus, Bewegung, Touch
 3. Inline-Variablen aus der TenantConfig (`opsBrandCss()`): Markenfarben des Mandanten
 
 ## Tokens
@@ -36,7 +36,7 @@ Modi gleich – sie sind fachliche Kennzeichen, die Planer wiedererkennen müsse
   Aufblitzen beim Laden).
 - Die dunklen Varianten der fest verdrahteten hellen Farben aus `style.css` werden mit
   `python3 tools/gen-dark-css.py` erzeugt (Bereich zwischen den Markern in
-  `opspilot-theme.css`). Nach Änderungen an `style.css` Generator erneut ausführen.
+  `vireo-theme.css`). Nach Änderungen an `style.css` Generator erneut ausführen.
 - Druck erfolgt immer hell.
 
 ## Barrierefreiheit (WCAG 2.2 AA)

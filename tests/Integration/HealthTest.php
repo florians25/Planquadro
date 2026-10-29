@@ -1,9 +1,9 @@
 <?php
-namespace OpsPilot\Tests\Integration;
+namespace Vireo\Tests\Integration;
 
-use OpsPilot\Tests\Support\Client;
-use OpsPilot\Tests\Support\IntegrationTestCase;
-use OpsPilot\Tests\Support\TestEnv;
+use Vireo\Tests\Support\Client;
+use Vireo\Tests\Support\IntegrationTestCase;
+use Vireo\Tests\Support\TestEnv;
 
 /** /api/healthz (Liveness) und /api/readyz (Datenbank + Migrationen, mandantenbezogen). */
 final class HealthTest extends IntegrationTestCase
@@ -23,7 +23,7 @@ final class HealthTest extends IntegrationTestCase
         $this->assertStringContainsString('no-store', (string)$r->header('Cache-Control'));
         $this->assertNull($r->header('Set-Cookie'), 'keine Session');
         /* auch ohne erreichbare Datenbank */
-        $url = TestEnv::startExtraServer(['OPSPILOT_DB_PORT' => '1', 'OPSPILOT_DB_HOST' => '127.0.0.1']);
+        $url = TestEnv::startExtraServer(['VIREO_DB_PORT' => '1', 'VIREO_DB_HOST' => '127.0.0.1']);
         $this->assertSame(200, $this->get($url, '/api/healthz')[0]);
     }
 
@@ -35,7 +35,7 @@ final class HealthTest extends IntegrationTestCase
         $this->assertNull($r->header('Set-Cookie'));
 
         /* Datenbank nicht erreichbar → 503 ohne Details */
-        $url = TestEnv::startExtraServer(['OPSPILOT_DB_PORT' => '1', 'OPSPILOT_DB_HOST' => '127.0.0.1']);
+        $url = TestEnv::startExtraServer(['VIREO_DB_PORT' => '1', 'VIREO_DB_HOST' => '127.0.0.1']);
         [$s, $j, $r] = $this->get($url, '/api/readyz');
         $this->assertSame(503, $s);
         $this->assertSame(['status' => 'not_ready', 'checks' => ['database' => 'error']], $j);
@@ -47,7 +47,7 @@ final class HealthTest extends IntegrationTestCase
         TestEnv::rootPdo()->exec("DROP DATABASE IF EXISTS `$empty`");
         TestEnv::rootPdo()->exec("CREATE DATABASE `$empty`");
         try {
-            $url = TestEnv::startExtraServer(['OPSPILOT_DB_NAME' => $empty]);
+            $url = TestEnv::startExtraServer(['VIREO_DB_NAME' => $empty]);
             [$s, $j] = $this->get($url, '/api/readyz');
             $this->assertSame(503, $s);
             $this->assertSame(['database' => 'ok', 'migrations' => 'pending'], $j['checks']);
@@ -63,17 +63,17 @@ final class HealthTest extends IntegrationTestCase
         $root->exec("DROP DATABASE IF EXISTS `$pf`");
         $root->exec("CREATE DATABASE `$pf`");
         try {
-            $saas = ['OPSPILOT_MODE' => 'saas', 'OPSPILOT_PLATFORM_DB_NAME' => $pf];
+            $saas = ['VIREO_MODE' => 'saas', 'VIREO_PLATFORM_DB_NAME' => $pf];
             [$rc, $out] = TestEnv::runCli(['bin/migrate.php', 'up', '--platform'], $saas);
             $this->assertSame(0, $rc, $out);
             /* Mandant zeigt auf die (vollständig migrierte) Haupt-Testdatenbank */
             $root->prepare("INSERT INTO `$pf`.tenants(slug, name, db_name, status) VALUES('hz','HZ',?,'active'), ('hzoff','Gesperrt',?,'suspended')")
                  ->execute([TestEnv::$db['name'], TestEnv::$db['name'] . '_hz_off']);
-            $root->exec("INSERT INTO `$pf`.tenant_domains(host, tenant_id) SELECT 'hz.opspilot.test', id FROM `$pf`.tenants WHERE slug='hz'");
-            $root->exec("INSERT INTO `$pf`.tenant_domains(host, tenant_id) SELECT 'hzoff.opspilot.test', id FROM `$pf`.tenants WHERE slug='hzoff'");
+            $root->exec("INSERT INTO `$pf`.tenant_domains(host, tenant_id) SELECT 'hz.vireo.test', id FROM `$pf`.tenants WHERE slug='hz'");
+            $root->exec("INSERT INTO `$pf`.tenant_domains(host, tenant_id) SELECT 'hzoff.vireo.test', id FROM `$pf`.tenants WHERE slug='hzoff'");
             $url = TestEnv::startExtraServer($saas);
 
-            [$s, $j] = $this->get($url, '/api/readyz', 'hz.opspilot.test');
+            [$s, $j] = $this->get($url, '/api/readyz', 'hz.vireo.test');
             $this->assertSame(200, $s);
             $this->assertSame(['platform_database' => 'ok', 'platform_migrations' => 'ok', 'database' => 'ok', 'migrations' => 'ok'], $j['checks']);
 
@@ -82,7 +82,7 @@ final class HealthTest extends IntegrationTestCase
             $this->assertSame(200, $s);
             $this->assertSame(['platform_database' => 'ok', 'platform_migrations' => 'ok'], $j['checks']);
 
-            [$s, $j] = $this->get($url, '/api/readyz', 'hzoff.opspilot.test');
+            [$s, $j] = $this->get($url, '/api/readyz', 'hzoff.vireo.test');
             $this->assertSame(503, $s);
             $this->assertSame('unavailable', $j['checks']['database']);
 

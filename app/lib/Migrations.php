@@ -1,6 +1,6 @@
 <?php
 /**
- * OpsPilot – Migrationsstand (nur lesend)
+ * Vireo – Migrationsstand (nur lesend)
  * --------------------------------------------------------------------------
  * Liefert die Versionen, die bin/migrate.php kennt, und vergleicht sie mit der
  * Tabelle schema_migrations einer Datenbank. Verwendet von /api/readyz und
@@ -21,7 +21,7 @@ function opsExpectedMigrations(bool $platform = false): array
     $legacy = glob($root . '/migrations/migrate_v*.sql') ?: [];
     usort($legacy, fn($a, $b) => strnatcmp(basename($a), basename($b)));
     foreach ($legacy as $f) $list[] = basename($f, '.sql');
-    $new = glob($root . '/migrations/opspilot/*.sql') ?: [];
+    $new = glob($root . '/migrations/vireo/*.sql') ?: [];
     sort($new, SORT_STRING);
     foreach ($new as $f) $list[] = 'op_' . basename($f, '.sql');
     return $list;

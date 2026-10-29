@@ -1,0 +1,12 @@
+# Vireo – Zeitsteuerung per cron (Alternative zu systemd-Timern / Docker-Scheduler)
+# Installation: sudo cp deploy/cron/vireo /etc/cron.d/vireo  (Pfade anpassen)
+# Die Umgebungsvariablen stehen in /etc/vireo/vireo.env (KEY=VALUE, ohne "export").
+SHELL=/bin/sh
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# täglich 02:30 Backup
+30 2 * * * www-data cd /var/www/vireo && set -a && . /etc/vireo/vireo.env && set +a && php bin/backup.php run >> /var/log/vireo-backup.log 2>&1
+# stündlich: Alarm, wenn das letzte erfolgreiche Backup zu alt ist
+5 * * * *  www-data cd /var/www/vireo && set -a && . /etc/vireo/vireo.env && set +a && php bin/backup.php status --alert > /dev/null 2>&1
+# optional, besser auf einem separaten Prüfsystem: Restore-Test sonntags 04:30
+#30 4 * * 0 www-data cd /var/www/vireo && set -a && . /etc/vireo/vireo.env && set +a && VIREO_BACKUP_PRIVATE_KEY_FILE=/etc/vireo/backup_private.key php bin/backup.php restore-test >> /var/log/vireo-backup.log 2>&1

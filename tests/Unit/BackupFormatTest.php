@@ -1,5 +1,5 @@
 <?php
-namespace OpsPilot\Tests\Unit;
+namespace Vireo\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
@@ -50,10 +50,11 @@ final class BackupFormatTest extends TestCase
     {
         $t = self::at('2026-10-29 02:30:05');
         $n = \Backup::archiveName('acme-gmbh', 'scheduled', $t);
-        $this->assertSame('opspilot_acme-gmbh_20261029-023005Z_scheduled.opbak', $n);
+        $this->assertSame('vireo_acme-gmbh_20261029-023005Z_scheduled.opbak', $n);
         $this->assertSame(['scope' => 'acme-gmbh', 'time' => $t, 'kind' => 'scheduled'], \Backup::parseName($n));
         $this->assertSame('_platform', \Backup::parseName(\Backup::archiveName('_platform', 'manual', $t))['scope']);
-        foreach (['backup_auto_2025.epbak', 'opspilot_x_20261029-023005Z_manual.opbak.part', '../opspilot_a_b.opbak', 'opspilot_Acme_20261029-023005Z_manual.opbak'] as $bad) {
+        $this->assertSame('acme-gmbh', \Backup::parseName('opspilot_acme-gmbh_20261029-023005Z_scheduled.opbak')['scope'], 'Name aus der Entwicklungsphase');
+        foreach (['backup_auto_2025.epbak', 'vireo_x_20261029-023005Z_manual.opbak.part', '../vireo_a_b.opbak', 'vireo_Acme_20261029-023005Z_manual.opbak'] as $bad) {
             $this->assertNull(\Backup::parseName($bad), $bad);
         }
     }
@@ -121,6 +122,7 @@ final class BackupFormatTest extends TestCase
     /**
      * AWS Signature V4: Referenzwerte mit botocore 1.x (S3SigV4Auth) für dieselben
      * Eingaben erzeugt – Pfad mit Sonderzeichen, Port, Query-Parameter.
+     * Die Eingaben (Präfix "opspilot") gehören zum festen Referenzvektor und bleiben unverändert.
      */
     public function testS3SignatureMatchesReferenceImplementation(): void
     {

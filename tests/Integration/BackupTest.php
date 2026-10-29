@@ -1,9 +1,9 @@
 <?php
-namespace OpsPilot\Tests\Integration;
+namespace Vireo\Tests\Integration;
 
-use OpsPilot\Tests\Support\Client;
-use OpsPilot\Tests\Support\IntegrationTestCase;
-use OpsPilot\Tests\Support\TestEnv;
+use Vireo\Tests\Support\Client;
+use Vireo\Tests\Support\IntegrationTestCase;
+use Vireo\Tests\Support\TestEnv;
 
 require_once __DIR__ . '/../../app/lib/Backup.php';
 
@@ -22,15 +22,15 @@ final class BackupTest extends IntegrationTestCase
     {
         parent::setUp();
         if (self::$env) return;
-        self::$dir = sys_get_temp_dir() . '/opspilot-backup-test-' . bin2hex(random_bytes(4));
+        self::$dir = sys_get_temp_dir() . '/vireo-backup-test-' . bin2hex(random_bytes(4));
         mkdir(self::$dir . '/storage/default/branding', 0700, true);
         file_put_contents(self::$dir . '/storage/default/branding/logo.png', random_bytes(2048));
         file_put_contents(self::$dir . '/storage/default/notiz.txt', "Mandantendatei\n");
         $k = \BackupCrypto::keygen();
         self::$env = [
-            'OPSPILOT_STORAGE_DIR' => self::$dir . '/storage', 'OPSPILOT_BACKUP_DIR' => self::$dir . '/backups',
-            'OPSPILOT_BACKUP_PUBLIC_KEY' => $k['public'], 'OPSPILOT_BACKUP_PRIVATE_KEY' => $k['secret'],
-            'OPSPILOT_BACKUP_TEMP_DB_PREFIX' => TestEnv::$db['name'] . '_rt_', 'OPSPILOT_BACKUP_TMP_DIR' => self::$dir . '/tmp',
+            'VIREO_STORAGE_DIR' => self::$dir . '/storage', 'VIREO_BACKUP_DIR' => self::$dir . '/backups',
+            'VIREO_BACKUP_PUBLIC_KEY' => $k['public'], 'VIREO_BACKUP_PRIVATE_KEY' => $k['secret'],
+            'VIREO_BACKUP_TEMP_DB_PREFIX' => TestEnv::$db['name'] . '_rt_', 'VIREO_BACKUP_TMP_DIR' => self::$dir . '/tmp',
         ];
         register_shutdown_function(function () {
             try { $r = TestEnv::rootPdo(); foreach (self::$dropDbs as $d) $r->exec("DROP DATABASE IF EXISTS `$d`"); } catch (\Throwable $e) {}
@@ -80,7 +80,7 @@ final class BackupTest extends IntegrationTestCase
         /* Daten mit Sonderzeichen, Binär- und NULL-Werten */
         $this->db()->prepare("INSERT INTO app_settings(setting_key, setting_value) VALUES('backup_test_$dumper', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)")
              ->execute(["Zeile1\nZeile2 'quote' \\backslash; (),( ümlaut 🚀 \0 null"]);
-        $env = ['OPSPILOT_BACKUP_DUMPER' => $dumper];
+        $env = ['VIREO_BACKUP_DUMPER' => $dumper];
         [$rc, $out] = $this->cli(['run', '--kind=manual'], $env);
         $this->assertSame(0, $rc, $out);
         $this->assertStringContainsString('3-2-1', $out, 'Warnung ohne externes Ziel');
@@ -89,9 +89,9 @@ final class BackupTest extends IntegrationTestCase
 
         /* Manifest */
         $tmp = self::$dir . '/m-' . bin2hex(random_bytes(3));
-        $m = (new \Backup())->decryptTo($archive, \BackupCrypto::parseSecret(self::$env['OPSPILOT_BACKUP_PRIVATE_KEY']), $tmp);
+        $m = (new \Backup())->decryptTo($archive, \BackupCrypto::parseSecret(self::$env['VIREO_BACKUP_PRIVATE_KEY']), $tmp);
         \Backup::rmTree($tmp);
-        $this->assertSame('opspilot-backup', $m['format']);
+        $this->assertSame('vireo-backup', $m['format']);
         $this->assertSame(1, $m['version']);
         $this->assertSame('default', $m['scope']);
         $this->assertSame(TestEnv::$db['name'], $m['database']['name']);
@@ -137,7 +137,7 @@ final class BackupTest extends IntegrationTestCase
         $this->assertStringContainsString('--yes', $out);
         $this->assertSame($before, $this->counts(TestEnv::$db['name']));
         /* ohne privaten Schlüssel kein Restore */
-        [$rc, $out] = $this->cli(['restore', $archive, '--target-db=x'], ['OPSPILOT_BACKUP_PRIVATE_KEY' => '']);
+        [$rc, $out] = $this->cli(['restore', $archive, '--target-db=x'], ['VIREO_BACKUP_PRIVATE_KEY' => '']);
         $this->assertSame(1, $rc);
         $this->assertStringContainsString('Privater Schlüssel fehlt', $out);
         /* manipuliertes Archiv: Abbruch vor jeder Änderung */
@@ -200,10 +200,10 @@ final class BackupTest extends IntegrationTestCase
         $this->assertFileExists(self::$dir . '/storage/_backup/status.json');
 
         /* ohne Schlüssel: kein unverschlüsseltes Backup, Lauf als Fehler protokolliert */
-        [$rc, $out] = $this->cli(['run'], ['OPSPILOT_BACKUP_PUBLIC_KEY' => '']);
+        [$rc, $out] = $this->cli(['run'], ['VIREO_BACKUP_PUBLIC_KEY' => '']);
         $this->assertSame(1, $rc);
         $this->assertStringContainsString('Unverschlüsselte Backups werden nicht erstellt', $out);
-        [$rc, $out] = $this->cli(['status', '--check'], ['OPSPILOT_BACKUP_PUBLIC_KEY' => '']);
+        [$rc, $out] = $this->cli(['status', '--check'], ['VIREO_BACKUP_PUBLIC_KEY' => '']);
         $this->assertSame(3, $rc);
         $st = json_decode($out, true);
         $this->assertSame('failed', $st['scopes']['default']['last_run']['status']);
@@ -221,7 +221,7 @@ final class BackupTest extends IntegrationTestCase
         $p = proc_open([PHP_BINARY, '-S', "127.0.0.1:$port", '-t', $hookDir], [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes);
         for ($i = 0; $i < 50 && !@fsockopen('127.0.0.1', $port); $i++) usleep(50000);
         try {
-            $env = ['OPSPILOT_ALERT_WEBHOOK' => "http://127.0.0.1:$port/", 'OPSPILOT_DB_NAME' => TestEnv::$db['name'] . '_gibt_es_nicht', 'no_proxy' => '*'];
+            $env = ['VIREO_ALERT_WEBHOOK' => "http://127.0.0.1:$port/", 'VIREO_DB_NAME' => TestEnv::$db['name'] . '_gibt_es_nicht', 'no_proxy' => '*'];
             [$rc] = $this->cli(['run'], $env);
             $this->assertSame(1, $rc);
             [$rc] = $this->cli(['run'], $env);   /* zweiter Fehler: kein zweiter Alarm innerhalb der Wiederholsperre */
@@ -238,7 +238,7 @@ final class BackupTest extends IntegrationTestCase
 
     public function testWebApiAndDashboardBanner(): void
     {
-        $url = TestEnv::startExtraServer(array_merge(self::$env, ['OPSPILOT_BACKUP_DUMPER' => 'php']));
+        $url = TestEnv::startExtraServer(array_merge(self::$env, ['VIREO_BACKUP_DUMPER' => 'php']));
         $admin = new Client(); $admin->base = $url;
         $admin->login('admin', TestEnv::PASSWORD);
         $dash = $admin->get('/dashboard');
@@ -258,12 +258,12 @@ final class BackupTest extends IntegrationTestCase
         $this->assertNotEmpty($d['backups']);
         $name = $d['backups'][0]['name'];
         $this->assertStringNotContainsString('PRIVATE', $r->body);
-        $this->assertStringNotContainsString('opspilot-backup-sk', $r->body);
+        $this->assertStringNotContainsString('vireo-backup-sk', $r->body);
 
         $r = $admin->get('/api/backup?action=download&name=' . rawurlencode($name));
         $this->assertSame(200, $r->status);
         $this->assertStringStartsWith(\BackupCrypto::MAGIC, $r->body);
-        $this->assertSame(404, $admin->get('/api/backup?action=download&name=opspilot_default_20000101-000000Z_manual.opbak')->status);
+        $this->assertSame(404, $admin->get('/api/backup?action=download&name=vireo_default_20000101-000000Z_manual.opbak')->status);
         $this->assertSame(400, $admin->get('/api/backup?action=download&name=..%2F..%2Fapp%2Fconfig%2Fsecrets.php')->status);
 
         /* Entfernte, unsichere Funktionen */
@@ -286,7 +286,7 @@ final class BackupTest extends IntegrationTestCase
         $this->assertStringNotContainsString('id="backupBanner"', $ma->get('/dashboard')->body);
 
         /* Hinweis, wenn das letzte Backup zu alt ist */
-        $old = TestEnv::startExtraServer(array_merge(self::$env, ['OPSPILOT_BACKUP_MAX_AGE_HOURS' => '1', 'OPSPILOT_STORAGE_DIR' => self::$dir . '/storage-old']));
+        $old = TestEnv::startExtraServer(array_merge(self::$env, ['VIREO_BACKUP_MAX_AGE_HOURS' => '1', 'VIREO_STORAGE_DIR' => self::$dir . '/storage-old']));
         @mkdir(self::$dir . '/storage-old/_backup', 0700, true);
         file_put_contents(self::$dir . '/storage-old/_backup/status.json', json_encode(['runs' => [[
             'id' => 'x', 'scope' => 'default', 'kind' => 'scheduled', 'status' => 'ok', 'started_at' => gmdate('c', time() - 30 * 3600),
@@ -304,16 +304,16 @@ final class BackupTest extends IntegrationTestCase
         $prefix = TestEnv::$db['name'] . '_bkt_';
         foreach ([$pf, $prefix . 'one'] as $d) { $root->exec("DROP DATABASE IF EXISTS `$d`"); self::$dropDbs[] = $d; }
         $root->exec("CREATE DATABASE `$pf`");
-        $saas = ['OPSPILOT_MODE' => 'saas', 'OPSPILOT_PLATFORM_DB_NAME' => $pf, 'OPSPILOT_TENANT_DB_PREFIX' => $prefix];
+        $saas = ['VIREO_MODE' => 'saas', 'VIREO_PLATFORM_DB_NAME' => $pf, 'VIREO_TENANT_DB_PREFIX' => $prefix];
         [$rc, $out] = TestEnv::runCli(['bin/migrate.php', 'up', '--platform'], $saas);
         $this->assertSame(0, $rc, $out);
         [$rc, $out] = TestEnv::runCli(['bin/tenant.php', 'create', 'one', 'Eins GmbH'], $saas);
         $this->assertSame(0, $rc, $out);
-        $env = $saas + ['OPSPILOT_BACKUP_DUMPER' => 'php', 'OPSPILOT_BACKUP_DIR' => self::$dir . '/saas-backups'];
+        $env = $saas + ['VIREO_BACKUP_DUMPER' => 'php', 'VIREO_BACKUP_DIR' => self::$dir . '/saas-backups'];
         [$rc, $out] = $this->cli(['run'], $env);
         $this->assertSame(0, $rc, $out);
-        $this->assertMatchesRegularExpression('/^one\s+WARNING\s+one\/opspilot_one_/m', $out);
-        $this->assertMatchesRegularExpression('/^_platform\s+WARNING\s+_platform\/opspilot__platform_/m', $out);
+        $this->assertMatchesRegularExpression('/^one\s+WARNING\s+one\/vireo_one_/m', $out);
+        $this->assertMatchesRegularExpression('/^_platform\s+WARNING\s+_platform\/vireo__platform_/m', $out);
         $runs = $root->query("SELECT scope, kind, status, archive, sha256 FROM `$pf`.backup_runs ORDER BY id")->fetchAll();
         $this->assertSame(['one', '_platform'], array_column($runs, 'scope'));
         $this->assertSame(['warning', 'warning'], array_column($runs, 'status'));

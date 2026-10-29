@@ -1,7 +1,7 @@
 {
   "api_version": 1,
   "tenant": {
-    "name": "OpsPilot Demo GmbH",
+    "name": "Vireo Demo GmbH",
     "slug": "demo",
     "branding": { "primary": "#e2001a", "accent": "#2563eb", "logo_url": null }
   },

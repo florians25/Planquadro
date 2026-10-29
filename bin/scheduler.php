@@ -1,20 +1,20 @@
 <?php
 /**
- * OpsPilot – Backup-Scheduler (Dauerprozess, z. B. Compose-Dienst "backup")
+ * Vireo – Backup-Scheduler (Dauerprozess, z. B. Compose-Dienst "backup")
  * --------------------------------------------------------------------------
  *   php bin/scheduler.php            Endlosschleife
  *   php bin/scheduler.php once       fällige Aufgaben einmal prüfen/ausführen
  *   php bin/scheduler.php health     Exit 0, wenn der Scheduler lebt (Docker-Healthcheck)
  *
- * Aufgaben (Zeiten in der Zeitzone von PHP, im Image OPSPILOT_TIMEZONE):
- *   - tägliches Backup aller Bereiche um OPSPILOT_BACKUP_TIME (Standard 02:30)
- *   - wöchentlicher Restore-Test am OPSPILOT_RESTORE_TEST_DAY (1 = Mo … 7 = So,
- *     Standard 7) um OPSPILOT_RESTORE_TEST_TIME (Standard 04:30) – nur, wenn ein
+ * Aufgaben (Zeiten in der Zeitzone von PHP, im Image VIREO_TIMEZONE):
+ *   - tägliches Backup aller Bereiche um VIREO_BACKUP_TIME (Standard 02:30)
+ *   - wöchentlicher Restore-Test am VIREO_RESTORE_TEST_DAY (1 = Mo … 7 = So,
+ *     Standard 7) um VIREO_RESTORE_TEST_TIME (Standard 04:30) – nur, wenn ein
  *     privater Schlüssel konfiguriert ist (siehe docs/BACKUP.md, „Restore-Test“)
- *   - stündliche Prüfung auf veraltete Backups (> OPSPILOT_BACKUP_MAX_AGE_HOURS)
+ *   - stündliche Prüfung auf veraltete Backups (> VIREO_BACKUP_MAX_AGE_HOURS)
  *     mit Alarm per Webhook/Mail
- * Prüfintervall: OPSPILOT_SCHEDULER_INTERVAL Sekunden (Standard 60).
- * OPSPILOT_BACKUP_ENABLED=0 schaltet die Backups ab (z. B. auf Testsystemen).
+ * Prüfintervall: VIREO_SCHEDULER_INTERVAL Sekunden (Standard 60).
+ * VIREO_BACKUP_ENABLED=0 schaltet die Backups ab (z. B. auf Testsystemen).
  *
  * Ohne Docker: stattdessen cron oder systemd-Timer (deploy/systemd/, docs/BACKUP.md).
  */
@@ -24,7 +24,7 @@ require_once __DIR__ . '/../app/lib/Backup.php';
 set_time_limit(0);
 
 $cmd = $argv[1] ?? 'loop';
-$interval = max(10, (int)opsEnv('OPSPILOT_SCHEDULER_INTERVAL', '60'));
+$interval = max(10, (int)opsEnv('VIREO_SCHEDULER_INTERVAL', '60'));
 $stateFile = Backup::stateDir() . '/scheduler.json';
 $beat = Backup::stateDir() . '/scheduler.heartbeat';
 
@@ -56,8 +56,8 @@ function tick(string $stateFile): void
     $b = new Backup();
     $b->log = fn($s) => logLine($s);
 
-    if (opsEnv('OPSPILOT_BACKUP_ENABLED', '1') !== '0') {
-        [$h, $m] = hm(opsEnv('OPSPILOT_BACKUP_TIME', '02:30'), '02:30');
+    if (opsEnv('VIREO_BACKUP_ENABLED', '1') !== '0') {
+        [$h, $m] = hm(opsEnv('VIREO_BACKUP_TIME', '02:30'), '02:30');
         $due = mktime($h, $m, 0, (int)date('n', $now), (int)date('j', $now), (int)date('Y', $now));
         if ($now >= $due && ($state['last_backup_day'] ?? '') !== $today) {
             logLine('Tägliches Backup startet');
@@ -68,13 +68,13 @@ function tick(string $stateFile): void
             } catch (Throwable $e) { logLine('Backup FEHLER: ' . $e->getMessage()); }
         }
 
-        $day = max(1, min(7, (int)opsEnv('OPSPILOT_RESTORE_TEST_DAY', '7')));
-        [$h, $m] = hm(opsEnv('OPSPILOT_RESTORE_TEST_TIME', '04:30'), '04:30');
+        $day = max(1, min(7, (int)opsEnv('VIREO_RESTORE_TEST_DAY', '7')));
+        [$h, $m] = hm(opsEnv('VIREO_RESTORE_TEST_TIME', '04:30'), '04:30');
         $due = mktime($h, $m, 0, (int)date('n', $now), (int)date('j', $now), (int)date('Y', $now));
         if ((int)date('N', $now) === $day && $now >= $due && ($state['last_restore_test_day'] ?? '') !== $today) {
             $state['last_restore_test_day'] = $today;
             file_put_contents($stateFile, json_encode($state));
-            if (opsEnv('OPSPILOT_BACKUP_PRIVATE_KEY') === '') {
+            if (opsEnv('VIREO_BACKUP_PRIVATE_KEY') === '') {
                 logLine('Restore-Test übersprungen: kein privater Schlüssel auf diesem System (empfohlen: Restore-Test auf separatem System, docs/BACKUP.md).');
             } else {
                 try {
@@ -98,7 +98,7 @@ if ($cmd === 'once') { touch($beat); tick($stateFile); exit(0); }
 if ($cmd !== 'loop') { fwrite(STDERR, "Aufruf: php bin/scheduler.php [loop|once|health]\n"); exit(2); }
 
 logLine(sprintf('Scheduler gestartet (Backup %s, Restore-Test Tag %s %s, Intervall %ds, Zeitzone %s)',
-    opsEnv('OPSPILOT_BACKUP_TIME', '02:30'), opsEnv('OPSPILOT_RESTORE_TEST_DAY', '7'), opsEnv('OPSPILOT_RESTORE_TEST_TIME', '04:30'),
+    opsEnv('VIREO_BACKUP_TIME', '02:30'), opsEnv('VIREO_RESTORE_TEST_DAY', '7'), opsEnv('VIREO_RESTORE_TEST_TIME', '04:30'),
     $interval, date_default_timezone_get()));
 while (!$stop) {
     touch($beat);

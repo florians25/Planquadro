@@ -3,6 +3,7 @@
  * Zentrale Sicherheitsfunktionen (CSRF, Client-IP, Eingabeprüfung).
  * Wird von public/includes/auth.php und public/index.php geladen.
  */
+require_once __DIR__ . '/Env.php';   /* OPSPILOT_* → VIREO_* */
 
 /**
  * Startet die Session mit sicheren Cookie-Parametern. Muss überall statt
@@ -15,9 +16,9 @@ function opsStartSession(): void
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
     $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-          || (getenv('OPSPILOT_FORCE_SECURE_COOKIES') === '1');
+          || (getenv('VIREO_FORCE_SECURE_COOKIES') === '1');
     /* Je Mandant eigener Cookie-Name – zusätzlich zur Bindung in opsBindSessionToTenant() */
-    if (function_exists('opsCurrentTenant') && opsMode() === 'saas') session_name('OPSID_' . preg_replace('/[^a-z0-9]/', '', opsCurrentTenant()['slug']));
+    if (function_exists('opsCurrentTenant') && opsMode() === 'saas') session_name('VIREOSID_' . preg_replace('/[^a-z0-9]/', '', opsCurrentTenant()['slug']));
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
@@ -90,13 +91,13 @@ function opsCsrfFromRequest(): string
 /**
  * Bricht zustandsändernde Requests (alles außer GET/HEAD/OPTIONS) ohne
  * gültiges Token mit HTTP 403 ab. Ausnahme nur über die Konstante
- * OPSPILOT_CSRF_EXEMPT (Cron-Aufruf mit eigenem Schlüssel).
+ * VIREO_CSRF_EXEMPT (Cron-Aufruf mit eigenem Schlüssel).
  */
 function opsEnforceCsrf(): void
 {
     $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
     if (in_array($method, ['GET', 'HEAD', 'OPTIONS'], true)) return;
-    if (defined('OPSPILOT_CSRF_EXEMPT') && OPSPILOT_CSRF_EXEMPT) return;
+    if (defined('VIREO_CSRF_EXEMPT') && VIREO_CSRF_EXEMPT) return;
     $sent = opsCsrfFromRequest();
     if ($sent !== '' && !empty($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $sent)) return;
     http_response_code(403);
@@ -118,12 +119,12 @@ function opsRegenerateSession(): void
 /**
  * IP-Adresse des Clients. X-Forwarded-For wird nur ausgewertet, wenn die
  * direkte Gegenstelle ein vertrauenswürdiger Proxy ist
- * (OPSPILOT_TRUSTED_PROXIES, kommagetrennt, IPs oder CIDR-Bereiche).
+ * (VIREO_TRUSTED_PROXIES, kommagetrennt, IPs oder CIDR-Bereiche).
  */
 function opsClientIp(): string
 {
     $remote = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-    $trusted = array_filter(array_map('trim', explode(',', (string)getenv('OPSPILOT_TRUSTED_PROXIES'))));
+    $trusted = array_filter(array_map('trim', explode(',', (string)getenv('VIREO_TRUSTED_PROXIES'))));
     if (!$trusted || empty($_SERVER['HTTP_X_FORWARDED_FOR'])) return $remote;
     $isTrusted = false;
     foreach ($trusted as $t) if (opsIpInRange($remote, $t)) { $isTrusted = true; break; }

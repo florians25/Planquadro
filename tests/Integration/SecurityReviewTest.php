@@ -1,13 +1,13 @@
 <?php
-namespace OpsPilot\Tests\Integration;
+namespace Vireo\Tests\Integration;
 
-use OpsPilot\Tests\Support\Client;
-use OpsPilot\Tests\Support\IntegrationTestCase;
-use OpsPilot\Tests\Support\Response;
-use OpsPilot\Tests\Support\TestEnv;
+use Vireo\Tests\Support\Client;
+use Vireo\Tests\Support\IntegrationTestCase;
+use Vireo\Tests\Support\Response;
+use Vireo\Tests\Support\TestEnv;
 
 /**
- * Regressionstests zu den Befunden des Sicherheitsreviews (OpsPilot 7.0.0-dev):
+ * Regressionstests zu den Befunden des Sicherheitsreviews (Vireo 7.0.0-dev):
  * SSO-Konfiguration nur für Admins, keine Abwesenheitsarten in der Konfliktvorschau,
  * Client-Secret nur an den festgelegten Issuer, App-Sitzungen nach Passwortwechsel,
  * PKCE-Pflicht, Plattform-Host.
@@ -39,7 +39,7 @@ final class SecurityReviewTest extends IntegrationTestCase
 
     private function oidcConfig(string $issuer, array $extra = []): void
     {
-        $cfg = ['security' => ['oidc' => $extra + ['enabled' => true, 'issuer' => $issuer, 'client_id' => 'opspilot-test',
+        $cfg = ['security' => ['oidc' => $extra + ['enabled' => true, 'issuer' => $issuer, 'client_id' => 'vireo-test',
             'claim' => 'preferred_username', 'allow_password_login' => true, 'scopes' => 'openid']]];
         $this->db()->prepare("INSERT INTO app_settings(setting_key,setting_value) VALUES('tenant_config',?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)")
             ->execute([json_encode($cfg)]);
@@ -47,7 +47,7 @@ final class SecurityReviewTest extends IntegrationTestCase
 
     private function idp(): string
     {
-        return self::$idp ??= TestEnv::startExtraServer(['FAKE_IDP_LOG' => sys_get_temp_dir() . '/opspilot-idp-token.log'], TestEnv::$root . '/tests/fixtures/fake_idp.php');
+        return self::$idp ??= TestEnv::startExtraServer(['FAKE_IDP_LOG' => sys_get_temp_dir() . '/vireo-idp-token.log'], TestEnv::$root . '/tests/fixtures/fake_idp.php');
     }
 
     /** Kompletter Browser-Login über den Test-IdP; liefert die Callback-Antwort */
@@ -79,7 +79,7 @@ final class SecurityReviewTest extends IntegrationTestCase
 
     public function testOidcNeverLogsInAdministratorsByDefault(): void
     {
-        $app = TestEnv::startExtraServer(['OPSPILOT_OIDC_ALLOW_HTTP' => '1']);
+        $app = TestEnv::startExtraServer(['VIREO_OIDC_ALLOW_HTTP' => '1']);
         $this->oidcConfig($this->idp());
         $r = $this->oidcLogin($app, 'admin');
         $this->assertStringContainsString('url=./', (string)$r->header('Refresh'));
@@ -89,40 +89,40 @@ final class SecurityReviewTest extends IntegrationTestCase
 
     public function testOidcStateLivesInLaxCookieSoStrictSessionIsNotNeeded(): void
     {
-        $app = TestEnv::startExtraServer(['OPSPILOT_OIDC_ALLOW_HTTP' => '1']);
+        $app = TestEnv::startExtraServer(['VIREO_OIDC_ALLOW_HTTP' => '1']);
         $this->oidcConfig($this->idp());
         $c = new Client(); $c->base = $app;
         $r = $c->get('/oidc?start=1');
-        $this->assertMatchesRegularExpression('/^Set-Cookie: OPSOIDC=[^;]+;.*path=\/oidc;.*HttpOnly; SameSite=Lax/mi', $r->headers);
+        $this->assertMatchesRegularExpression('/^Set-Cookie: VIREOOIDC=[^;]+;.*path=\/oidc;.*HttpOnly; SameSite=Lax/mi', $r->headers);
         /* Callback ohne Sitzungs-Cookie (wie bei SameSite=Strict nach Rückkehr vom IdP) */
-        preg_match('/^Set-Cookie: OPSOIDC=([^;]+)/mi', $r->headers, $m);
+        preg_match('/^Set-Cookie: VIREOOIDC=([^;]+)/mi', $r->headers, $m);
         $auth = $r->header('Location');
         $ic = new Client(); $ic->base = $this->idp();
         $cb = $ic->get(substr($auth, strlen($this->idp())) . '&login_hint=ma1')->header('Location');
         $fresh = new Client(); $fresh->base = $app;
-        $done = $fresh->request('GET', substr($cb, strlen($app)), null, ['Cookie: OPSOIDC=' . $m[1]]);
+        $done = $fresh->request('GET', substr($cb, strlen($app)), null, ['Cookie: VIREOOIDC=' . $m[1]]);
         $this->assertSame(200, $done->status);
         $this->assertStringContainsString('url=dashboard', (string)$done->header('Refresh'));
         $this->assertStringContainsString('Ma1 Test', $fresh->get('/dashboard')->body);
         /* manipuliertes Zwischenstands-Cookie wird abgelehnt */
         $bad = new Client(); $bad->base = $app;
-        $r = $bad->request('GET', '/oidc?code=x&state=y', null, ['Cookie: OPSOIDC=' . base64_encode('{"state":"y"}') . '.AAAA']);
+        $r = $bad->request('GET', '/oidc?code=x&state=y', null, ['Cookie: VIREOOIDC=' . base64_encode('{"state":"y"}') . '.AAAA']);
         $this->assertStringContainsString('url=./', (string)$r->header('Refresh'));
     }
 
     public function testEnvClientSecretIsOnlySentToPinnedIssuer(): void
     {
-        $log = sys_get_temp_dir() . '/opspilot-idp-token.log';
+        $log = sys_get_temp_dir() . '/vireo-idp-token.log';
         $idp = $this->idp();
         $this->oidcConfig($idp);
         /* festgelegter Issuer passt nicht → Secret wird nicht verwendet */
         @unlink($log);
-        $app = TestEnv::startExtraServer(['OPSPILOT_OIDC_ALLOW_HTTP' => '1', 'OPSPILOT_OIDC_CLIENT_SECRET' => 'GLOBAL-SECRET', 'OPSPILOT_OIDC_ISSUER' => 'https://login.example.org']);
+        $app = TestEnv::startExtraServer(['VIREO_OIDC_ALLOW_HTTP' => '1', 'VIREO_OIDC_CLIENT_SECRET' => 'GLOBAL-SECRET', 'VIREO_OIDC_ISSUER' => 'https://login.example.org']);
         $this->oidcLogin($app, 'ma1');
         $this->assertStringContainsString('token auth=-', (string)@file_get_contents($log));
         /* passender Issuer (bzw. Self-Hosting ohne Festlegung) → Secret wird gesendet */
         @unlink($log);
-        $app = TestEnv::startExtraServer(['OPSPILOT_OIDC_ALLOW_HTTP' => '1', 'OPSPILOT_OIDC_CLIENT_SECRET' => 'GLOBAL-SECRET', 'OPSPILOT_OIDC_ISSUER' => $idp]);
+        $app = TestEnv::startExtraServer(['VIREO_OIDC_ALLOW_HTTP' => '1', 'VIREO_OIDC_CLIENT_SECRET' => 'GLOBAL-SECRET', 'VIREO_OIDC_ISSUER' => $idp]);
         $this->oidcLogin($app, 'ma1');
         $this->assertStringContainsString('token auth=Basic ', (string)@file_get_contents($log));
     }
@@ -130,7 +130,7 @@ final class SecurityReviewTest extends IntegrationTestCase
     public function testApiOidcTokenRequiresPkceAndNonce(): void
     {
         $this->oidcConfig('https://idp.invalid');
-        $r = $this->api('POST', 'auth/oidc/token', ['code' => 'abc', 'redirect_uri' => 'opspilot://auth']);
+        $r = $this->api('POST', 'auth/oidc/token', ['code' => 'abc', 'redirect_uri' => 'vireo://auth']);
         $this->assertSame(401, $r->status);
         $this->assertStringContainsString('PKCE', $r->body);
     }

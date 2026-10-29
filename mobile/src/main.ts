@@ -40,7 +40,7 @@ async function boot(): Promise<void> {
 
 boot().catch((e) => {
   const root = document.getElementById('app');
-  if (root) root.textContent = 'OpsPilot konnte nicht gestartet werden.';
+  if (root) root.textContent = 'Vireo konnte nicht gestartet werden.';
   toast(messageOf(e), 'error');
   console.error(e);
 });

@@ -16,11 +16,11 @@ export const isNative = Capacitor.isNativePlatform();
 export const platform = Capacitor.getPlatform() as DevicePlatform;
 
 export function deviceName(): string {
-  if (platform === 'ios') return 'OpsPilot iOS-App';
-  if (platform === 'android') return 'OpsPilot Android-App';
+  if (platform === 'ios') return 'Vireo iOS-App';
+  if (platform === 'android') return 'Vireo Android-App';
   const ua = navigator.userAgent;
   const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
-  return `OpsPilot Web (${browser})`;
+  return `Vireo Web (${browser})`;
 }
 
 // ------------------------------------------------------------------ Netzwerk
@@ -73,7 +73,7 @@ export async function authenticateBiometric(reason: string): Promise<boolean> {
       cancelTitle: 'Abbrechen',
       iosFallbackTitle: 'Code eingeben',
       allowDeviceCredential: true,
-      androidTitle: 'OpsPilot entsperren',
+      androidTitle: 'Vireo entsperren',
       androidSubtitle: reason,
     });
     return true;

@@ -11,7 +11,7 @@ requireLogin();
 if (isMaintenanceMode() && !hasRole('admin', 'manager')) {
     $_mUser = currentUser();
     $_mMsg  = getSetting('maintenance_message', 'Das System wird gewartet. Bitte versuchen Sie es später erneut.');
-    $_mCo   = getSetting('company_name', 'OpsPilot');
+    $_mCo   = getSetting('company_name', 'Vireo');
 
     /* Geplantes Ende anzeigen, falls eine Wartung hinterlegt ist. */
     $_mEnd = null;
@@ -81,9 +81,9 @@ $_bp = bp();
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>/* Farbschema vor dem ersten Rendern setzen (kein Aufblitzen) */(function(){try{var t=localStorage.getItem('op-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');document.documentElement.setAttribute('data-theme-pref',t);}catch(e){}})();</script>
-<title><?php echo e(tcfg('branding.name','OpsPilot')); ?><?php echo isset($pageTitle) ? ' – '.e($pageTitle) : ''; ?></title>
+<title><?php echo e(tcfg('branding.name','Vireo')); ?><?php echo isset($pageTitle) ? ' – '.e($pageTitle) : ''; ?></title>
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/style.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/style.css'); ?>">
-<link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/opspilot-theme.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/opspilot-theme.css'); ?>">
+<link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/vireo-theme.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/vireo-theme.css'); ?>">
 <meta name="color-scheme" content="light dark">
 <meta name="csrf-token" content="<?php echo csrfToken(); ?>">
 <style><?php echo opsBrandCss(); ?></style>
@@ -118,10 +118,10 @@ $_bp = bp();
 </head>
 <body data-uid="<?php echo $_cu['id']??0; ?>" data-csrf="<?php echo csrfToken(); ?>">
 <a class="skip-link" href="#main">Zum Inhalt springen</a>
-<div id="appLoader"><div class="loader-dots"><span></span><span></span><span></span></div><div class="loader-text"><?php echo e(tcfg('branding.name','OpsPilot')); ?></div></div>
+<div id="appLoader"><div class="loader-dots"><span></span><span></span><span></span></div><div class="loader-text"><?php echo e(tcfg('branding.name','Vireo')); ?></div></div>
 <div id="toasts" class="toast-wrap"></div>
 <nav class="nav">
-  <a href="<?php echo $_bp; ?>dashboard" class="nav-brand" aria-label="<?php echo e(tcfg('branding.name','OpsPilot')); ?> – Dashboard"><?php if (tcfg('branding.logo')): ?><img src="<?php echo $_bp; ?>api/branding?logo=1" alt="" class="nav-brand-logo"><?php else: ?><span class="nav-brand-icon"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect x="3" y="6" width="26" height="23" rx="3" stroke="#fff" stroke-width="2.5"/><path d="M3 12h26" stroke="#fff" stroke-width="2.5"/><path d="M9 3v5M23 3v5" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><rect x="7" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="14" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="21" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="7" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="14" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="21" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".3"/></svg></span><?php endif; ?></a>
+  <a href="<?php echo $_bp; ?>dashboard" class="nav-brand" aria-label="<?php echo e(tcfg('branding.name','Vireo')); ?> – Dashboard"><?php if (tcfg('branding.logo')): ?><img src="<?php echo $_bp; ?>api/branding?logo=1" alt="" class="nav-brand-logo"><?php else: ?><span class="nav-brand-icon"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect x="3" y="6" width="26" height="23" rx="3" stroke="#fff" stroke-width="2.5"/><path d="M3 12h26" stroke="#fff" stroke-width="2.5"/><path d="M9 3v5M23 3v5" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><rect x="7" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="14" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="21" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="7" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="14" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="21" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".3"/></svg></span><?php endif; ?></a>
   <div class="nav-links" id="navLinks">
     <?php if (opsNavVisible('dashboard')): ?><a style="order:<?php echo opsNavOrder('dashboard'); ?>" href="<?php echo $_bp; ?>dashboard" class="nav-link mob-ok<?php echo $_pg==='dashboard'?' active':''; ?>"<?php if($_pg==='dashboard') echo ' aria-current="page"'; ?> title="Dashboard" aria-label="Dashboard">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>

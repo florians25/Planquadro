@@ -1,6 +1,6 @@
 <?php
 /**
- * OpsPilot Einsatzplanung – Abwesenheiten   v6.9.0
+ * Vireo Einsatzplanung – Abwesenheiten   v6.9.0
  *
  * Copyright (c) 2026 Florian-Fynn Scheibel. Alle Rechte vorbehalten.
  *

@@ -1,4 +1,4 @@
-/* === OpsPilot Einsatzplanung v6.1.8 – app.js === */
+/* === Vireo Einsatzplanung v6.1.8 – app.js === */
 
 /* ============================================================
    CORE: Date helper – FIXES timezone/UTC bug

@@ -1,6 +1,6 @@
 {
-    "name": "florians25/opspilot",
-    "description": "OpsPilot – Field & Onsite Service Management (Einsatzplanung)",
+    "name": "florians25/vireo",
+    "description": "Vireo – Field & Onsite Service Management (Einsatzplanung)",
     "type": "project",
     "license": "proprietary",
     "require": {
@@ -15,7 +15,7 @@
         "phpunit/phpunit": "^10.5"
     },
     "autoload-dev": {
-        "psr-4": { "OpsPilot\\Tests\\": "tests/" }
+        "psr-4": { "Vireo\\Tests\\": "tests/" }
     },
     "scripts": {
         "test": "phpunit",

@@ -1,0 +1,17 @@
+# Vireo – stündliche Prüfung: Alarm (Webhook/Mail), wenn das letzte
+# erfolgreiche Backup älter als VIREO_BACKUP_MAX_AGE_HOURS (26 h) ist.
+[Unit]
+Description=Vireo Backup-Statusprüfung
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+EnvironmentFile=/etc/vireo/vireo.env
+WorkingDirectory=/var/www/vireo
+ExecStart=/usr/bin/php bin/backup.php status --alert
+StandardOutput=null
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=yes

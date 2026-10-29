@@ -1,8 +1,8 @@
-# OpsPilot – Roadmap
+# Vireo – Roadmap
 
 Stand: 29.10.2026 · Ausgangsbasis: Einsatzplanung v6.9.0
 
-OpsPilot entwickelt die bestehende Einsatzplanung zu einer mandantenfähigen Field- &
+Vireo entwickelt die bestehende Einsatzplanung zu einer mandantenfähigen Field- &
 Onsite-Service-Plattform weiter. **Grundsatz: Keine Neuentwicklung.** Jede Phase liefert
 lauffähige, getestete Zwischenstände; bestehende Daten, Rechte und Abläufe bleiben
 erhalten.
@@ -113,11 +113,11 @@ behoben und mit Regressionstests abgesichert (`tests/Integration/SecurityReviewT
 |---|---|---|---|
 | R-01 | H | Recht „Einstellungen verwalten“ konnte SSO auf einen eigenen IdP umstellen und sich so als Administrator anmelden | ✅ SSO nur durch Admins; Admin-Konten standardmäßig nicht per SSO |
 | R-02 | H | Konfliktvorschau (`save_bulk check_conflicts`) zeigte Urlaubs-/Krankheitsart ohne Detailrecht | ✅ nur „Abwesend“ |
-| R-03 | H | SaaS: plattformweites `OPSPILOT_OIDC_CLIENT_SECRET` ging an den vom Mandanten gewählten Token-Endpunkt | ✅ nur für festgelegten `OPSPILOT_OIDC_ISSUER` |
+| R-03 | H | SaaS: plattformweites `VIREO_OIDC_CLIENT_SECRET` ging an den vom Mandanten gewählten Token-Endpunkt | ✅ nur für festgelegten `VIREO_OIDC_ISSUER` |
 | R-04 | M | SSRF über Issuer/Discovery-URL | ✅ SaaS: keine internen Ziele, IP-Pinning |
 | R-05 | M | App-Sitzungen überlebten Passwortwechsel; Rotation verlängerte die Laufzeit | ✅ Widerruf, absolute Laufzeit, Prüfungen beim Refresh |
 | R-06 | M | Mandanten-Header auch für Nicht-API-Pfade (`?x=/api/v1/`) | ✅ nur Pfad `/api/v1/…` |
-| R-07 | N | Plattform-Admin ohne gesetzten `OPSPILOT_PLATFORM_HOST` auf jedem Host | ✅ verweigert |
+| R-07 | N | Plattform-Admin ohne gesetzten `VIREO_PLATFORM_HOST` auf jedem Host | ✅ verweigert |
 | R-08 | N | Passwort-Orakel bei „nur SSO“; Laufzeitunterschied bei unbekannten Benutzern | ✅ einheitliche Antwort, Dummy-Hash |
 | R-09 | M | SSO-Rücksprung in echten Browsern durch `SameSite=Strict` gebrochen | ✅ Zwischenstand in eigenem Lax-Cookie |
 | R-10 | M | API-SSO ohne Pflicht für PKCE-Verifier/nonce | ✅ Pflicht, App sendet nonce |
@@ -206,7 +206,7 @@ Offen: Inline-Handler entfernen / CSP ohne `unsafe-inline` (S-21, S-22), virtuel
 Drag-and-Drop.
 
 
-- OpsPilot-Designsystem (Design Tokens als CSS-Variablen, Light/Dark, Mandantenfarben).
+- Vireo-Designsystem (Design Tokens als CSS-Variablen, Light/Dark, Mandantenfarben).
 - Bessere Kontraste (WCAG 2.2 AA), Fokus-Stile, Tastaturbedienung der Planungsmatrix,
   ARIA für Dialoge.
 - Performance großer Pläne: serverseitige Vorberechnung, weniger DOM, virtuelles Scrollen

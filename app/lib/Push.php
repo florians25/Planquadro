@@ -1,6 +1,6 @@
 <?php
 /**
- * OpsPilot – Benachrichtigungen bei Planänderungen und Push-Versand
+ * Vireo – Benachrichtigungen bei Planänderungen und Push-Versand
  * --------------------------------------------------------------------------
  * planNotifyChanges() wird nach einer Veröffentlichung aufgerufen: Jeder
  * betroffene Mitarbeiter erhält eine In-App-Benachrichtigung (Glocke im Web,
@@ -78,11 +78,11 @@ function pushDerToRaw(string $der): string
     return $out;
 }
 
-/** FCM HTTP v1 (Service-Account-JSON in OPSPILOT_FCM_SERVICE_ACCOUNT_FILE) */
+/** FCM HTTP v1 (Service-Account-JSON in VIREO_FCM_SERVICE_ACCOUNT_FILE) */
 function pushSendFcm(string $token, string $title, string $body, array $data): PushResult
 {
     static $access = null; static $exp = 0; static $project = null;
-    $file = opsEnv('OPSPILOT_FCM_SERVICE_ACCOUNT_FILE');
+    $file = opsEnv('VIREO_FCM_SERVICE_ACCOUNT_FILE');
     if ($file === '' || !is_readable($file)) return new PushResult(false, false, 'FCM nicht konfiguriert');
     if (!$access || $exp < time() + 60) {
         $sa = json_decode((string)file_get_contents($file), true);
@@ -107,9 +107,9 @@ function pushSendFcm(string $token, string $title, string $body, array $data): P
 /** APNs mit Token-Authentifizierung (.p8-Schlüssel) */
 function pushSendApns(string $token, string $title, string $body, array $data): PushResult
 {
-    $keyFile = opsEnv('OPSPILOT_APNS_KEY_FILE');
-    $keyId = opsEnv('OPSPILOT_APNS_KEY_ID'); $team = opsEnv('OPSPILOT_APNS_TEAM_ID');
-    $topic = opsEnv('OPSPILOT_APNS_BUNDLE_ID', 'de.opspilot.app');
+    $keyFile = opsEnv('VIREO_APNS_KEY_FILE');
+    $keyId = opsEnv('VIREO_APNS_KEY_ID'); $team = opsEnv('VIREO_APNS_TEAM_ID');
+    $topic = opsEnv('VIREO_APNS_BUNDLE_ID', 'de.vireo.app');
     if ($keyFile === '' || !is_readable($keyFile) || $keyId === '' || $team === '') return new PushResult(false, false, 'APNs nicht konfiguriert');
     if (!preg_match('/^[0-9a-fA-F]{32,200}$/', $token)) return new PushResult(false, true, 'ungültiges Geräte-Token');
     static $jwt = null; static $at = 0;
@@ -117,7 +117,7 @@ function pushSendApns(string $token, string $title, string $body, array $data): 
         $jwt = pushJwt(['alg' => 'ES256', 'kid' => $keyId], ['iss' => $team, 'iat' => time()], file_get_contents($keyFile), 'ES256');
         $at = time();
     }
-    $host = opsEnv('OPSPILOT_APNS_SANDBOX') === '1' ? 'api.sandbox.push.apple.com' : 'api.push.apple.com';
+    $host = opsEnv('VIREO_APNS_SANDBOX') === '1' ? 'api.sandbox.push.apple.com' : 'api.push.apple.com';
     $payload = ['aps' => ['alert' => ['title' => $title, 'body' => $body], 'sound' => 'default']] + $data;
     [$code, $resp] = pushHttp("https://$host/3/device/$token", json_encode($payload),
         ['authorization: bearer ' . $jwt, 'apns-topic: ' . $topic, 'apns-push-type: alert', 'content-type: application/json'], true);
@@ -128,11 +128,11 @@ function pushSendApns(string $token, string $title, string $body, array $data): 
 /** ntfy (selbst gehostet, ohne Cloud): Token = Topic-Name */
 function pushSendNtfy(string $topic, string $title, string $body, array $data): PushResult
 {
-    $base = rtrim(opsEnv('OPSPILOT_NTFY_URL'), '/');
+    $base = rtrim(opsEnv('VIREO_NTFY_URL'), '/');
     if ($base === '') return new PushResult(false, false, 'ntfy nicht konfiguriert');
     if (!preg_match('/^[A-Za-z0-9_-]{8,64}$/', $topic)) return new PushResult(false, true, 'ungültiges Topic');
     $headers = ['Title: ' . str_replace(["\r", "\n"], '', $title), 'Tags: calendar'];
-    if (($t = opsEnv('OPSPILOT_NTFY_TOKEN')) !== '') $headers[] = 'Authorization: Bearer ' . $t;
+    if (($t = opsEnv('VIREO_NTFY_TOKEN')) !== '') $headers[] = 'Authorization: Bearer ' . $t;
     [$code] = pushHttp("$base/$topic", $body, $headers);
     return $code >= 200 && $code < 300 ? new PushResult(true) : new PushResult(false, false, 'ntfy ' . $code);
 }

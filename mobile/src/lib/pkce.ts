@@ -48,7 +48,7 @@ export async function buildAuthorizeUrl(authorizeUrl: string, redirectUri: strin
   return { url: url.toString(), session: { state, nonce, verifier, redirectUri, createdAt: Date.now() } };
 }
 
-/** Liest `code`/`state`/`error` aus einer Redirect-URL (opspilot://auth?… oder https://…?…). */
+/** Liest `code`/`state`/`error` aus einer Redirect-URL (vireo://auth?… oder https://…?…). */
 export function parseAuthRedirect(redirect: string): { code: string | null; state: string | null; error: string | null } {
   let params: URLSearchParams;
   try {

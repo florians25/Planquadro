@@ -168,7 +168,7 @@ $dbVer=$db->query('SELECT VERSION() as v')->fetch()['v']; $phpVer=phpversion();
 <div class="st-sec active" id="sP0">
 <div class="st-h">Allgemein</div><div class="st-sub">Grundlegende Systemkonfiguration</div>
 <div class="st-card">
-<div class="st-row"><div class="st-row-l"><div class="st-row-t">Firmenname</div><div class="st-row-d">Wird in Kopfzeile und Druck angezeigt</div></div><div class="st-row-r"><input type="text" id="sCompany" value="<?php echo e(getSetting('company_name','OpsPilot'));?>" class="st-inp" style="width:180px"></div></div>
+<div class="st-row"><div class="st-row-l"><div class="st-row-t">Firmenname</div><div class="st-row-d">Wird in Kopfzeile und Druck angezeigt</div></div><div class="st-row-r"><input type="text" id="sCompany" value="<?php echo e(getSetting('company_name','Vireo'));?>" class="st-inp" style="width:180px"></div></div>
 <div class="st-row"><div class="st-row-l"><div class="st-row-t">App-Version</div></div><div class="st-row-r"><span class="st-badge st-b-info">v6.7.0</span></div></div>
 <div class="st-row"><div class="st-row-l"><div class="st-row-t">Heute Abwesend anzeigen</div><div class="st-row-d">Abwesenheits-Liste auf dem Dashboard anzeigen</div></div><div class="st-row-r"><label class="st-tog"><input type="checkbox" id="sShowAbsent" <?php echo getSetting('dashboard_show_absent','1')!=='0'?'checked':'';?>><span class="sl"></span></label></div></div>
 </div>

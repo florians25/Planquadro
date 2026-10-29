@@ -1,4 +1,4 @@
-title = "OpsPilot gitleaks config"
+title = "Vireo gitleaks config"
 
 [extend]
 useDefault = true

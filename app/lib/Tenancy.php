@@ -1,35 +1,36 @@
 <?php
 /**
- * OpsPilot – Mandantenauflösung
+ * Vireo – Mandantenauflösung
  * --------------------------------------------------------------------------
  * Modell: eine Datenbank je Mandant (gleiches Schema), dazu eine zentrale
  * Plattform-Datenbank (Mandanten, Domains, Plattform-Admins, Backup-Status).
  *
- *   OPSPILOT_MODE=selfhosted (Standard)  genau ein Mandant, Datenbank =
- *                                         OPSPILOT_DB_NAME, keine Plattform-DB nötig
- *   OPSPILOT_MODE=saas                    Mandant aus dem Hostnamen
+ *   VIREO_MODE=selfhosted (Standard)  genau ein Mandant, Datenbank =
+ *                                         VIREO_DB_NAME, keine Plattform-DB nötig
+ *   VIREO_MODE=saas                    Mandant aus dem Hostnamen
  *                                         (tenant_domains) oder – nur für die API
  *                                         auf dem Plattform-Host – aus dem Header
- *                                         X-OpsPilot-Tenant
+ *                                         X-Vireo-Tenant
  *
  * Isolation: Jede Abfrage der Anwendung läuft über getDB(), und getDB()
  * verbindet ausschließlich mit der Datenbank des aufgelösten Mandanten. Es
  * gibt keinen Codepfad, der Daten eines anderen Mandanten lesen könnte.
  * Sessions werden an den Mandanten gebunden (opsBindSessionToTenant()).
  *
- * CLI: Mandant per Umgebungsvariable OPSPILOT_TENANT=<slug> wählen.
+ * CLI: Mandant per Umgebungsvariable VIREO_TENANT=<slug> wählen.
  */
+require_once __DIR__ . '/Env.php';   /* OPSPILOT_* → VIREO_* */
 
 function opsMode(): string
 {
-    return getenv('OPSPILOT_MODE') === 'saas' ? 'saas' : 'selfhosted';
+    return getenv('VIREO_MODE') === 'saas' ? 'saas' : 'selfhosted';
 }
 
 function opsEnv(string $name, string $default = ''): string
 {
     $v = getenv($name);
     if ($v !== false && $v !== '') return $v;
-    /* Docker-Secrets: OPSPILOT_DB_PASS_FILE=/run/secrets/db_pass */
+    /* Docker-Secrets: VIREO_DB_PASS_FILE=/run/secrets/db_pass */
     $f = getenv($name . '_FILE');
     if ($f !== false && $f !== '' && is_readable($f)) return trim((string)file_get_contents($f));
     return $default;
@@ -40,11 +41,11 @@ function opsPlatformDB(): PDO
 {
     static $pdo = null;
     if ($pdo) return $pdo;
-    $host = opsEnv('OPSPILOT_PLATFORM_DB_HOST', DB_HOST);
-    $port = opsEnv('OPSPILOT_PLATFORM_DB_PORT', DB_PORT);
-    $name = opsEnv('OPSPILOT_PLATFORM_DB_NAME', 'opspilot_platform');
-    $user = opsEnv('OPSPILOT_PLATFORM_DB_USER', DB_USER);
-    $pass = opsEnv('OPSPILOT_PLATFORM_DB_PASS', DB_PASS);
+    $host = opsEnv('VIREO_PLATFORM_DB_HOST', DB_HOST);
+    $port = opsEnv('VIREO_PLATFORM_DB_PORT', DB_PORT);
+    $name = opsEnv('VIREO_PLATFORM_DB_NAME', 'vireo_platform');
+    $user = opsEnv('VIREO_PLATFORM_DB_USER', DB_USER);
+    $pass = opsEnv('VIREO_PLATFORM_DB_PASS', DB_PASS);
     $pdo = new PDO(sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $host, (int)$port, $name), $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -53,7 +54,7 @@ function opsPlatformDB(): PDO
     return $pdo;
 }
 
-function opsPlatformDbName(): string { return opsEnv('OPSPILOT_PLATFORM_DB_NAME', 'opspilot_platform'); }
+function opsPlatformDbName(): string { return opsEnv('VIREO_PLATFORM_DB_NAME', 'vireo_platform'); }
 
 /** Gültiger Mandanten-Slug: a-z, 0-9, Bindestrich, 2–40 Zeichen */
 function opsValidSlug(string $s): bool { return (bool)preg_match('/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/', $s) && strlen($s) >= 2; }
@@ -61,12 +62,12 @@ function opsValidSlug(string $s): bool { return (bool)preg_match('/^[a-z0-9](?:[
 /** Datenbankname eines Mandanten (Konvention, kann in tenants.db_name abweichen) */
 function opsTenantDbNameFor(string $slug): string
 {
-    return opsEnv('OPSPILOT_TENANT_DB_PREFIX', 'opspilot_t_') . str_replace('-', '_', $slug);
+    return opsEnv('VIREO_TENANT_DB_PREFIX', 'vireo_t_') . str_replace('-', '_', $slug);
 }
 
 /**
  * Aktueller Mandant als Array: id, slug, name, db_name, status.
- * Selfhosted: fester Mandant "default" auf OPSPILOT_DB_NAME.
+ * Selfhosted: fester Mandant "default" auf VIREO_DB_NAME.
  * Wirft keine Ausnahme; nicht auflösbare Anfragen werden mit 404 beendet.
  */
 function opsCurrentTenant(): array
@@ -78,8 +79,8 @@ function opsCurrentTenant(): array
     }
     $slug = null;
     if (PHP_SAPI === 'cli') {
-        $slug = getenv('OPSPILOT_TENANT') ?: null;
-        if (!$slug) { fwrite(STDERR, "OPSPILOT_TENANT=<slug> fehlt (SaaS-Modus)\n"); exit(2); }
+        $slug = getenv('VIREO_TENANT') ?: null;
+        if (!$slug) { fwrite(STDERR, "VIREO_TENANT=<slug> fehlt (SaaS-Modus)\n"); exit(2); }
     }
     try {
         $db = opsPlatformDB();
@@ -89,10 +90,10 @@ function opsCurrentTenant(): array
             $s->execute([$host]);
             $row = $s->fetch();
             /* Zentraler API-Host: Mandant per Header (nur /api/v1, nie für Cookie-Sessions) */
-            $platHost = strtolower(opsEnv('OPSPILOT_PLATFORM_HOST'));
+            $platHost = strtolower(opsEnv('VIREO_PLATFORM_HOST'));
             $reqPath = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
             if (!$row && $platHost !== '' && $host === $platHost && strncmp($reqPath, '/api/v1/', 8) === 0) {
-                $slug = strtolower(trim((string)($_SERVER['HTTP_X_OPSPILOT_TENANT'] ?? '')));
+                $slug = strtolower(trim((string)($_SERVER['HTTP_X_VIREO_TENANT'] ?? $_SERVER['HTTP_X_OPSPILOT_TENANT'] ?? '')));
             }
         }
         if ($slug !== null) {
@@ -101,7 +102,7 @@ function opsCurrentTenant(): array
             $row = $s->fetch();
         }
     } catch (PDOException $e) {
-        error_log('OpsPilot platform DB: ' . $e->getMessage());
+        error_log('Vireo platform DB: ' . $e->getMessage());
         opsTenantAbort(503, 'Dienst vorübergehend nicht verfügbar.');
     }
     if (empty($row) || $row['status'] === 'deleted') opsTenantAbort(404, 'Unbekannter Mandant.');
@@ -119,7 +120,7 @@ function opsTenantAbort(int $code, string $msg): void
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['error' => ['code' => $code === 404 ? 'unknown_tenant' : 'tenant_unavailable', 'message' => $msg]]);
     } else {
-        echo '<!DOCTYPE html><html lang="de"><meta charset="utf-8"><title>OpsPilot</title><body style="font-family:sans-serif;padding:3rem;text-align:center"><h2>'
+        echo '<!DOCTYPE html><html lang="de"><meta charset="utf-8"><title>Vireo</title><body style="font-family:sans-serif;padding:3rem;text-align:center"><h2>'
            . htmlspecialchars($msg) . '</h2></body></html>';
     }
     exit;

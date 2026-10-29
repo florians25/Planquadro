@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'de.opspilot.app',
-  appName: 'OpsPilot',
+  appId: 'de.vireo.app',
+  appName: 'Vireo',
   webDir: 'dist',
   // Die Oberfläche wird ausschließlich aus dem App-Bundle geladen (kein server.url).
   // Die Server-Adresse des Mandanten gibt der Nutzer zur Laufzeit ein.

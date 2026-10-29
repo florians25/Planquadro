@@ -1,9 +1,9 @@
-# OpsPilot – Migrationsplan
+# Vireo – Migrationsplan
 
 Stand: 29.10.2026
 
 Wie eine bestehende Einsatzplanung-Installation (v6.x, Apache/Shared Hosting, MySQL) auf
-OpsPilot gebracht wird – **ohne Datenverlust und ohne ungewollte Rechteänderung**. Jeder
+Vireo gebracht wird – **ohne Datenverlust und ohne ungewollte Rechteänderung**. Jeder
 Schritt ist einzeln umkehrbar.
 
 ## 1. Grundsätze
@@ -20,14 +20,14 @@ Schritt ist einzeln umkehrbar.
 - **Rechte werden verglichen, nicht vermutet:** Effektive Rechtematrix vor und nach jeder
   Migration exportieren und diffen (Abschnitt 4).
 
-## 2. Schritt 0 – Vorbereitung (einmalig, vor dem ersten OpsPilot-Deployment)
+## 2. Schritt 0 – Vorbereitung (einmalig, vor dem ersten Vireo-Deployment)
 
 1. **DB-Passwort rotieren.** Das bisherige Passwort stand im Quellcode und im
    weitergegebenen Archiv. Neues Passwort im Hosting-Panel setzen.
 2. **Zugangsdaten auslagern.** `app/config/database.php` enthält keine Fallback-Werte
    mehr. Vor dem Hochladen eine der beiden Varianten einrichten:
-   - Umgebungsvariablen `OPSPILOT_DB_HOST`, `OPSPILOT_DB_NAME`, `OPSPILOT_DB_USER`,
-     `OPSPILOT_DB_PASS` (z. B. `SetEnv` in einer nicht ausgelieferten Konfiguration), **oder**
+   - Umgebungsvariablen `VIREO_DB_HOST`, `VIREO_DB_NAME`, `VIREO_DB_USER`,
+     `VIREO_DB_PASS` (z. B. `SetEnv` in einer nicht ausgelieferten Konfiguration), **oder**
    - `app/config/secrets.php` nach Vorlage `secrets.sample.php`.
    Die bisherigen Variablen `CCKOE_DB_*` werden weiterhin gelesen.
 3. **Bestehende Backups sichern.** `app/backups/*.epbak` und `.backup_key` vom Server
@@ -36,9 +36,9 @@ Schritt ist einzeln umkehrbar.
    alte Cron-URL `api/backup?action=cron_backup` entfällt – den Cronjob löschen und die
    neue Zeitsteuerung einrichten ([BACKUP.md](BACKUP.md)). Im Docker-Betrieb startet der
    Container eine übernommene Datenbank ohne Versionstabelle erst mit
-   `OPSPILOT_AUTO_BASELINE=v6_9_0` ([INSTALLATION.md](INSTALLATION.md#bestehende-einsatzplanung-übernehmen)).
-4. **`install.php` prüfen.** Ab OpsPilot ist es ohne gesetzte Umgebungsvariable
-   `OPSPILOT_ALLOW_INSTALL=1` gesperrt. Auf dem bisherigen Server die Datei sofort löschen.
+   `VIREO_AUTO_BASELINE=v6_9_0` ([INSTALLATION.md](INSTALLATION.md#bestehende-einsatzplanung-übernehmen)).
+4. **`install.php` prüfen.** Ab Vireo ist es ohne gesetzte Umgebungsvariable
+   `VIREO_ALLOW_INSTALL=1` gesperrt. Auf dem bisherigen Server die Datei sofort löschen.
 
 ## 3. Schritt 1 – Versionsführung der Datenbank (Phase 2)
 
@@ -50,7 +50,7 @@ Alt-Skripte dürfen **nicht** erneut laufen: `migrate_v6_3_1` und `migrate_v6_9_
 # Backup!
 php bin/migrate.php status                 # erkennt "bestehende Installation ohne Versionstabelle"
 php bin/migrate.php baseline v6_9_0        # letzte tatsächlich eingespielte Alt-Migration
-php bin/migrate.php up                     # spielt nur neue OpsPilot-Migrationen ein
+php bin/migrate.php up                     # spielt nur neue Vireo-Migrationen ein
 ```
 
 `baseline` schreibt ausschließlich in die neue Tabelle `schema_migrations`; Fachdaten
@@ -59,11 +59,11 @@ bleiben unberührt. Rückweg: `DROP TABLE schema_migrations`.
 Der Runner erkennt MySQL und übersetzt die MariaDB-Syntax der Alt-Migrationen
 (`ADD COLUMN IF NOT EXISTS`); getestet in der CI mit MariaDB 10.11 und MySQL 8.0.
 
-Ohne Shell-Zugang (Shared Hosting) werden die Dateien unter `migrations/opspilot/` wie
+Ohne Shell-Zugang (Shared Hosting) werden die Dateien unter `migrations/vireo/` wie
 bisher in Versionsreihenfolge per phpMyAdmin eingespielt; sie sind so geschrieben, dass sie
 mehrfach ausgeführt werden können (`IF NOT EXISTS`, `INSERT IGNORE`).
 
-### OpsPilot-Migrationen
+### Vireo-Migrationen
 
 | Datei | Inhalt | Art | Rückweg |
 |---|---|---|---|
@@ -103,15 +103,15 @@ Ziel: Rollen und Rechte werden mandantenfähig, rollengebundene Prüfungen
 Gewähltes Modell: **eine Datenbank je Mandant** (Begründung in `ARCHITECTURE.md` B.3).
 Dadurch ist **keine Datenmigration** nötig:
 
-- **Self-Hosting:** unverändert genau ein Mandant (`OPSPILOT_MODE=selfhosted`, Standard).
+- **Self-Hosting:** unverändert genau ein Mandant (`VIREO_MODE=selfhosted`, Standard).
   Die bestehende Datenbank bleibt, wie sie ist.
 - **Bestehende Installation in den SaaS-Betrieb übernehmen:**
   1. Plattform-Datenbank anlegen und `php bin/migrate.php up --platform`.
   2. Bestehende Datenbank als Mandant registrieren:
      `php bin/tenant.php adopt <slug> "<Name>" <bestehende_datenbank> --domain=<host>`
-     (prüft, dass die Datenbank eine OpsPilot-Datenbank ist, und übernimmt sie unverändert).
-  3. `OPSPILOT_MODE=saas` setzen, `php bin/migrate.php up --all-tenants`.
-  Rückweg: `OPSPILOT_MODE=selfhosted` – die Mandanten-Datenbank ist eine normale
+     (prüft, dass die Datenbank eine Vireo-Datenbank ist, und übernimmt sie unverändert).
+  3. `VIREO_MODE=saas` setzen, `php bin/migrate.php up --all-tenants`.
+  Rückweg: `VIREO_MODE=selfhosted` – die Mandanten-Datenbank ist eine normale
   Einzel-Datenbank.
 - **Neue Mandanten:** `php bin/tenant.php create` oder `/platform/`.
 

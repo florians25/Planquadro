@@ -1,5 +1,5 @@
 <?php
-namespace OpsPilot\Tests\Support;
+namespace Vireo\Tests\Support;
 
 use PHPUnit\Framework\TestCase;
 

@@ -1,8 +1,8 @@
 {
-  "name": "opspilot-mobile",
+  "name": "vireo-mobile",
   "private": true,
   "version": "1.0.0",
-  "description": "OpsPilot App für iOS, Android und als PWA (Capacitor + Vite + TypeScript)",
+  "description": "Vireo App für iOS, Android und als PWA (Capacitor + Vite + TypeScript)",
   "type": "module",
   "license": "UNLICENSED",
   "scripts": {

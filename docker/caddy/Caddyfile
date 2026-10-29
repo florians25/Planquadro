@@ -1,14 +1,14 @@
-# OpsPilot – Caddy als Reverse Proxy mit automatischem HTTPS (Let's Encrypt/ZeroSSL)
-# OPSPILOT_DOMAIN: ein oder mehrere Hostnamen, kommagetrennt
+# Vireo – Caddy als Reverse Proxy mit automatischem HTTPS (Let's Encrypt/ZeroSSL)
+# VIREO_DOMAIN: ein oder mehrere Hostnamen, kommagetrennt
 #   (z. B. "plan.example.de" oder im SaaS-Betrieb "acme.example.de, beta.example.de").
 # Voraussetzung: DNS zeigt auf diesen Server, Ports 80 und 443 sind erreichbar.
 # Für "localhost" erzeugt Caddy ein lokales Zertifikat (Test).
 #
 # Caddy setzt X-Forwarded-For, X-Forwarded-Proto und X-Forwarded-Host selbst und
 # ignoriert entsprechende Header von Clients. Die App vertraut nur der festen
-# Adresse dieses Containers (OPSPILOT_TRUSTED_PROXIES / OPSPILOT_PROXY_IP).
+# Adresse dieses Containers (VIREO_TRUSTED_PROXIES / VIREO_PROXY_IP).
 
-{$OPSPILOT_DOMAIN} {
+{$VIREO_DOMAIN} {
 	encode zstd gzip
 
 	request_body {

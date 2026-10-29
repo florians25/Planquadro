@@ -1,7 +1,7 @@
 <?php
 $pageTitle = 'Datenschutz';
 require_once __DIR__ . '/../includes/header.php';
-$company   = getSetting('company_name', 'OpsPilot');
+$company   = getSetting('company_name', 'Vireo');
 $controller= getSetting('dp_controller', '');          // Verantwortliche Stelle (Anschrift)
 $dpo       = getSetting('dp_officer', '');             // Datenschutzbeauftragte/r
 $agreement = getSetting('dp_works_agreement', '');     // Betriebsvereinbarung (Bezeichnung/Datum)

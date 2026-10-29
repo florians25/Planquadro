@@ -1,6 +1,6 @@
 <?php
 /**
- * OpsPilot – Organisation (TenantConfig)
+ * Vireo – Organisation (TenantConfig)
  * Branding, Module, Navigation, Dashboard-Widgets, Planungsregeln, Anmeldung (SSO).
  * Zugriff: Recht "Einstellungen verwalten".
  */
@@ -225,7 +225,7 @@ $redirectUri = oidcRedirectUri();
       <div class="fg"><label for="oIss">Issuer-URL</label><input id="oIss" name="issuer" placeholder="https://login.example.com/realms/firma" value="<?php echo e($oidc['issuer']); ?>"></div>
       <div class="org-row">
         <div class="fg"><label for="oCid">Client-ID</label><input id="oCid" name="client_id" value="<?php echo e($oidc['client_id']); ?>"></div>
-        <div class="fg"><label for="oSec">Client-Secret</label><input id="oSec" name="client_secret" type="password" placeholder="<?php echo ($oidc['client_secret'] || getenv('OPSPILOT_OIDC_CLIENT_SECRET')) ? '•••••••• (unverändert)' : 'leer = öffentlicher Client'; ?>"></div>
+        <div class="fg"><label for="oSec">Client-Secret</label><input id="oSec" name="client_secret" type="password" placeholder="<?php echo ($oidc['client_secret'] || getenv('VIREO_OIDC_CLIENT_SECRET')) ? '•••••••• (unverändert)' : 'leer = öffentlicher Client'; ?>"></div>
       </div>
       <div class="org-row">
         <div class="fg"><label for="oClaim">Zuordnung über</label><select id="oClaim" name="claim">
@@ -236,7 +236,7 @@ $redirectUri = oidcRedirectUri();
       </div>
       <label class="org-check"><input type="checkbox" name="allow_password_login" value="1" <?php if ($oidc['allow_password_login']) echo 'checked'; ?>> Anmeldung mit Passwort weiterhin erlauben</label>
       <label class="org-check"><input type="checkbox" name="allow_admin" value="1" <?php if (!empty($oidc['allow_admin'])) echo 'checked'; ?>> Administratoren dürfen sich ebenfalls per SSO anmelden (Standard: nur Passwort als Notfallzugang)</label>
-      <p class="muted" style="font-size:.78rem">Redirect-URI beim Identity-Provider eintragen: <code><?php echo e($redirectUri); ?></code> (Apps: <code>opspilot://auth</code>). Benutzer werden nicht automatisch angelegt – das Konto muss in OpsPilot existieren und aktiv sein.</p>
+      <p class="muted" style="font-size:.78rem">Redirect-URI beim Identity-Provider eintragen: <code><?php echo e($redirectUri); ?></code> (Apps: <code>vireo://auth</code>). Benutzer werden nicht automatisch angelegt – das Konto muss in Vireo existieren und aktiv sein.</p>
       <button class="btn btn-primary" type="submit">Anmeldung speichern</button>
       <button class="btn btn-outline" type="button" id="btnOidcTest">Verbindung testen</button>
     </form>

@@ -68,7 +68,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            OPSPILOT_VERSION=${{ github.ref_name }}
+            VIREO_VERSION=${{ github.ref_name }}
           sbom: true
           provenance: mode=max
           cache-from: type=gha

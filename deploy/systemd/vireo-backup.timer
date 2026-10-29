@@ -1,5 +1,5 @@
 [Unit]
-Description=OpsPilot Backup täglich um 02:30
+Description=Vireo Backup täglich um 02:30
 
 [Timer]
 OnCalendar=*-*-* 02:30:00

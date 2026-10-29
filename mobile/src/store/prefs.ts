@@ -30,7 +30,7 @@ export const DEFAULT_PREFS: AppPrefs = {
   branding: null,
 };
 
-const KEY = 'opspilot.prefs.v1';
+const KEY = 'vireo.prefs.v1';
 
 export async function loadPrefs(): Promise<AppPrefs> {
   try {

@@ -1,4 +1,4 @@
--- OpsPilot (Einsatzplanung) – Basisschema v3.1; danach migrations/ in Versionsreihenfolge einspielen
+-- Vireo (Einsatzplanung) – Basisschema v3.1; danach migrations/ in Versionsreihenfolge einspielen
 CREATE DATABASE IF NOT EXISTS `einsatzplanung` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `einsatzplanung`;
 
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS `app_settings` (
 INSERT INTO `app_settings` (`setting_key`,`setting_value`) VALUES
 ('maintenance_mode','0'),
 ('maintenance_message','Das System wird gewartet. Bitte versuchen Sie es später erneut.'),
-('company_name','OpsPilot'),
+('company_name','Vireo'),
 ('app_version','4.3'),
 ('approval_system_enabled','0');
 

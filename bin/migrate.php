@@ -1,6 +1,6 @@
 <?php
 /**
- * OpsPilot – Datenbank-Migrationen
+ * Vireo – Datenbank-Migrationen
  * --------------------------------------------------------------------------
  * Aufruf (CLI):
  *   php bin/migrate.php status                 zeigt angewendete/offene Migrationen
@@ -9,7 +9,7 @@
  *                                              bis einschließlich dieser Altversion als
  *                                              migriert, ohne SQL auszuführen
  *
- * Optionen (SaaS, OPSPILOT_MODE=saas):
+ * Optionen (SaaS, VIREO_MODE=saas):
  *   --tenant=<slug>     Datenbank dieses Mandanten
  *   --all-tenants       nacheinander alle aktiven Mandanten (bricht beim ersten Fehler ab)
  *   --platform          Plattform-Datenbank (migrations/platform/*.sql)
@@ -19,7 +19,7 @@
  *   2. migrations/migrate_v*.sql       Alt-Migrationen (Einsatzplanung bis v6.9.0),
  *                                      tolerant: "Spalte/Index existiert schon" wird
  *                                      übersprungen, wie bisher mit "mysql --force"
- *   3. migrations/opspilot/*.sql       neue Migrationen, strikt (Fehler = Abbruch)
+ *   3. migrations/vireo/*.sql       neue Migrationen, strikt (Fehler = Abbruch)
  *
  * Warum "baseline": Die Alt-Migrationen sind NICHT gefahrlos wiederholbar
  * (z. B. setzen migrate_v6_3_1/v6_9_0 Rollenrechte zurück, v5_2_7 verschiebt
@@ -35,7 +35,7 @@ $opts = []; $args = [];
 foreach (array_slice($argv, 1) as $a) {
     if (preg_match('/^--([a-z-]+)(?:=(.*))?$/', $a, $m)) $opts[$m[1]] = $m[2] ?? true; else $args[] = $a;
 }
-if (!empty($opts['tenant'])) putenv('OPSPILOT_TENANT=' . $opts['tenant']);
+if (!empty($opts['tenant'])) putenv('VIREO_TENANT=' . $opts['tenant']);
 
 require_once __DIR__ . '/../app/config/database.php';
 require_once __DIR__ . '/../app/lib/SqlSplitter.php';
@@ -84,7 +84,7 @@ function tableExists(PDO $db, string $t): bool {
 function ensureVersionTable(PDO $db): void {
     $db->exec("CREATE TABLE IF NOT EXISTS `schema_migrations` (
         `version`    VARCHAR(190) NOT NULL PRIMARY KEY,
-        `kind`       ENUM('base','legacy','opspilot') NOT NULL,
+        `kind`       ENUM('base','legacy','opspilot') NOT NULL,   /* 'opspilot' = Migrationen aus migrations/vireo (Wert bleibt aus Kompatibilität) */
         `checksum`   CHAR(64) NOT NULL,
         `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `executed`   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '0 = per baseline markiert'
@@ -104,7 +104,7 @@ function allMigrations(string $root, bool $platform = false): array {
     $legacy = glob($root . '/migrations/migrate_v*.sql') ?: [];
     usort($legacy, function ($a, $b) { return strnatcmp(basename($a), basename($b)); });
     foreach ($legacy as $f) $list[basename($f, '.sql')] = ['legacy', $f];
-    $new = glob($root . '/migrations/opspilot/*.sql') ?: [];
+    $new = glob($root . '/migrations/vireo/*.sql') ?: [];
     sort($new, SORT_STRING);
     foreach ($new as $f) $list['op_' . basename($f, '.sql')] = ['opspilot', $f];
     return $list;
@@ -224,11 +224,11 @@ case 'up':
     $pending = array_diff_key($all, $applied);
     if (!$fresh) unset($pending['0000_base']);
     if (!$pending) { out('Datenbank ist aktuell.'); exit(0); }
-    $lock = $db->query("SELECT GET_LOCK('opspilot_migrate', 30)")->fetchColumn();
+    $lock = $db->query("SELECT GET_LOCK('vireo_migrate', 30)")->fetchColumn();
     if ((int)$lock !== 1) fail('Eine andere Migration läuft bereits.');
     out(count($pending) . ' offene Migration(en):');
     foreach ($pending as $v => [$kind, $path]) runFile($db, $v, $kind, $path);
-    $db->query("SELECT RELEASE_LOCK('opspilot_migrate')");
+    $db->query("SELECT RELEASE_LOCK('vireo_migrate')");
     out('Fertig.');
     exit(0);
 

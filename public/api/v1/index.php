@@ -1,9 +1,9 @@
 <?php
 /**
- * OpsPilot API v1 – Front-Controller (Vertrag: docs/API.md)
+ * Vireo API v1 – Front-Controller (Vertrag: docs/API.md)
  * Alle Anfragen unter /api/v1/* landen hier (.htaccess / tests/router.php).
  */
-define('OPSPILOT_STATELESS', true);
+define('VIREO_STATELESS', true);
 require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../../app/lib/PlanCells.php';
 require_once __DIR__ . '/../../../app/lib/ApiAuth.php';
@@ -13,12 +13,12 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 header('X-Content-Type-Options: nosniff');
 /* Mobile Apps (Capacitor) und PWA senden kein Cookie; CORS nur für konfigurierte Ursprünge */
-$allowedOrigins = array_filter(array_map('trim', explode(',', opsEnv('OPSPILOT_API_CORS_ORIGINS', 'capacitor://localhost,http://localhost,https://localhost'))));
+$allowedOrigins = array_filter(array_map('trim', explode(',', opsEnv('VIREO_API_CORS_ORIGINS', 'capacitor://localhost,http://localhost,https://localhost'))));
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if ($origin !== '' && in_array($origin, $allowedOrigins, true)) {
     header('Access-Control-Allow-Origin: ' . $origin);
     header('Vary: Origin');
-    header('Access-Control-Allow-Headers: Authorization, Content-Type, X-OpsPilot-Tenant');
+    header('Access-Control-Allow-Headers: Authorization, Content-Type, X-Vireo-Tenant');
     header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
     header('Access-Control-Max-Age: 600');
 }
@@ -46,7 +46,7 @@ function apiLogo(): ?string { return tcfg('branding.logo') ? oidcBaseUrl() . '/a
 function apiTenantInfo(): array
 {
     $t = opsCurrentTenant();
-    return ['name' => (string)tcfg('branding.name', 'OpsPilot'), 'slug' => $t['slug'],
+    return ['name' => (string)tcfg('branding.name', 'Vireo'), 'slug' => $t['slug'],
         'branding' => ['primary' => tcfg('branding.primary'), 'accent' => tcfg('branding.accent'), 'logo_url' => apiLogo()]];
 }
 function apiModules(): array
@@ -190,7 +190,7 @@ if ($path === 'auth/oidc/token' && $method === 'POST') {
     if (!oidcEnabled()) apiError(404, 'not_found', 'SSO ist nicht aktiviert.');
     $b = apiBody();
     $redirect = (string)($b['redirect_uri'] ?? '');
-    if (!in_array($redirect, ['opspilot://auth', oidcRedirectUri()], true)) apiError(400, 'invalid_request', 'Unzulässige redirect_uri.');
+    if (!in_array($redirect, ['vireo://auth', oidcRedirectUri()], true)) apiError(400, 'invalid_request', 'Unzulässige redirect_uri.');
     try {
         $claims = oidcExchange((string)($b['code'] ?? ''), $redirect, (string)($b['code_verifier'] ?? ''), isset($b['nonce']) ? (string)$b['nonce'] : null);
     } catch (OidcException $e) { apiError(401, 'invalid_credentials', $e->getMessage()); }

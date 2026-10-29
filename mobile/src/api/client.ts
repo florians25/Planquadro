@@ -31,7 +31,7 @@ export interface RefreshTokenStore {
 export interface ApiClientOptions {
   /** API-Basis inkl. `/api/v1/` */
   baseUrl: string;
-  /** Mandanten-Slug für SaaS → Header `X-OpsPilot-Tenant` */
+  /** Mandanten-Slug für SaaS → Header `X-Vireo-Tenant` */
   tenant?: string | null;
   fetch?: FetchLike;
   refreshTokenStore: RefreshTokenStore;
@@ -158,7 +158,7 @@ export class ApiClient {
   /** Einzelner HTTP-Aufruf ohne Refresh-Logik. */
   private async send<T>(method: string, path: string, opts: RequestOptions & { token?: string } = {}): Promise<T> {
     const headers: Record<string, string> = { Accept: 'application/json' };
-    if (this.tenant) headers['X-OpsPilot-Tenant'] = this.tenant;
+    if (this.tenant) headers['X-Vireo-Tenant'] = this.tenant;
     if (opts.token) headers['Authorization'] = `Bearer ${opts.token}`;
     let body: string | undefined;
     if (opts.body !== undefined) {

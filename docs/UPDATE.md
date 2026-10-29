@@ -8,7 +8,7 @@ unmittelbar vor dem Update.
 ## Docker Compose
 
 ```bash
-cd /opt/opspilot
+cd /opt/vireo
 
 # 0. Release-Hinweise lesen (CHANGELOG.md), aktuelle Version notieren
 docker compose images app
@@ -20,7 +20,7 @@ docker compose exec -T backup php bin/backup.php status | grep -m1 '"healthy"'
 docker compose exec -T backup php bin/backup.php verify <archiv> --key=- < backup_private.key
 
 # 2. Neues Image holen (Release) – oder Code aktualisieren und bauen
-sed -i 's/^OPSPILOT_IMAGE=.*/OPSPILOT_IMAGE=ghcr.io\/<owner>\/opspilot:1.1.0/' .env
+sed -i 's/^VIREO_IMAGE=.*/VIREO_IMAGE=ghcr.io\/<owner>\/vireo:1.1.0/' .env
 docker compose pull app backup
 #    lokal gebaut:  git pull && docker compose build app
 
@@ -36,7 +36,7 @@ docker compose ps                              # app und backup "healthy"
 
 Schlägt eine Migration fehl, startet Apache **nicht** (Container wird neu gestartet und
 schlägt erneut fehl); die Fehlermeldung steht in `docker compose logs app`. Jede neue
-Migration ist eine Datei in `migrations/opspilot/`; bereits angewendete werden nie erneut
+Migration ist eine Datei in `migrations/vireo/`; bereits angewendete werden nie erneut
 ausgeführt (`schema_migrations`).
 
 ## Rollback
@@ -46,7 +46,7 @@ vorheriges Image wieder eintragen und starten. Da Migrationen additiv sind, läu
 ältere Version mit dem neueren Schema.
 
 ```bash
-sed -i 's/^OPSPILOT_IMAGE=.*/OPSPILOT_IMAGE=ghcr.io\/<owner>\/opspilot:1.0.0/' .env
+sed -i 's/^VIREO_IMAGE=.*/VIREO_IMAGE=ghcr.io\/<owner>\/vireo:1.0.0/' .env
 docker compose up -d
 ```
 
@@ -57,19 +57,19 @@ Backup von Schritt 1 wiederherstellen, altes Image starten.
 docker compose stop app backup
 docker compose run --rm -T --no-deps backup php bin/backup.php restore <archiv-aus-schritt-1> \
     --replace --yes --key=- < backup_private.key
-sed -i 's/^OPSPILOT_IMAGE=.*/OPSPILOT_IMAGE=ghcr.io\/<owner>\/opspilot:1.0.0/' .env
+sed -i 's/^VIREO_IMAGE=.*/VIREO_IMAGE=ghcr.io\/<owner>\/vireo:1.0.0/' .env
 docker compose up -d
 curl -fsS http://127.0.0.1:8080/api/readyz
 ```
 
 `--replace` legt vorher ein Sicherheits-Backup des (defekten) Stands an und behält die
-ersetzten Tabellen in `opspilot_rt_old_…`, bis Sie sie löschen.
+ersetzten Tabellen in `vireo_rt_old_…`, bis Sie sie löschen.
 
 ## Ohne Docker
 
 ```bash
-cd /var/www/opspilot
-set -a; . /etc/opspilot/opspilot.env; set +a
+cd /var/www/vireo
+set -a; . /etc/vireo/vireo.env; set +a
 sudo -E -u www-data php bin/backup.php run --kind=manual            # 1. Backup
 git fetch --tags && git checkout v1.1.0                              # 2. Code
 sudo -E -u www-data php bin/migrate.php status                       #    offene Migrationen ansehen
@@ -91,5 +91,5 @@ beides beim Start ebenfalls, mit serverweiter Sperre.
 ## Erstmaliger Umstieg von Einsatzplanung ≤ v6.9
 
 Siehe [MIGRATION_PLAN.md](MIGRATION_PLAN.md) und [INSTALLATION.md](INSTALLATION.md#bestehende-einsatzplanung-übernehmen)
-(`OPSPILOT_AUTO_BASELINE`). Alte Cronjobs auf `api/backup?action=cron_backup` entfernen –
+(`VIREO_AUTO_BASELINE`). Alte Cronjobs auf `api/backup?action=cron_backup` entfernen –
 Backups übernimmt jetzt der Dienst `backup` bzw. der systemd-Timer.
