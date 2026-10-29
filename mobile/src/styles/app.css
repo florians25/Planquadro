@@ -28,7 +28,7 @@
     --ok: #4ade80; --okbg: #052e16; --wn: #fbbf24; --wnbg: #3a2a05;
     --err: #f87171; --errbg: #3b0d0d; --inf: #38bdf8; --ibg: #082f49;
     --nv: #070d18; --nvh: #111a2b;
-    --grid: #253147; --grid-strong: #33425c; --we: #0e1726; --hol: #2a1a0a; --today: #3a1018;
+    --grid: #253147; --grid-strong: #33425c; --we: #0e1726; --hol: #2a1a0a; --today: #16264d;
     --focus: #60a5fa;
     --sh: 0 1px 3px rgba(0,0,0,.5);
   }
@@ -40,7 +40,7 @@
   --ok: #4ade80; --okbg: #052e16; --wn: #fbbf24; --wnbg: #3a2a05;
   --err: #f87171; --errbg: #3b0d0d; --inf: #38bdf8; --ibg: #082f49;
   --nv: #070d18; --nvh: #111a2b;
-  --grid: #253147; --grid-strong: #33425c; --we: #0e1726; --hol: #2a1a0a; --today: #3a1018;
+  --grid: #253147; --grid-strong: #33425c; --we: #0e1726; --hol: #2a1a0a; --today: #16264d;
   --focus: #60a5fa;
   --sh: 0 1px 3px rgba(0,0,0,.5);
 }

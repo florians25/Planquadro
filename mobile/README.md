@@ -51,7 +51,7 @@ mobile/
 ├── capacitor.config.ts        App-ID de.planquadro.app, Name „Planquadro“
 ├── vite.config.ts             Build, Vitest-Konfiguration, Service-Worker-Generator
 ├── public/                    manifest.webmanifest, Icons
-├── scripts/gen-icons.mjs      Platzhalter-Icons ohne Abhängigkeiten
+│                           (Icons/Splash: `npm run icons` → tools/brand/render_png.js)
 ├── src/
 │   ├── main.ts                Start: Session laden, OIDC-Rücksprung (Web), App starten, SW registrieren
 │   ├── api/
@@ -210,7 +210,7 @@ APNs-Geräte-Token (`provider: "apns"`).
 
 - [ ] Version in `package.json`, Android `versionCode`/`versionName`
       (`android/app/build.gradle`) und iOS `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` erhöhen
-- [ ] Finale App-Icons und Splash-Screens (z. B. `npx @capacitor/assets generate`) statt Platzhalter
+- [x] App-Icons und Splash-Screens im Planquadro-Design (`npm run icons`, siehe docs/BRAND.md)
 - [ ] `npm run test` und `npm run build` grün; `npx cap sync`
 - [ ] Push mit Produktions-FCM/APNs getestet (`aps-environment` = production beim Archivieren)
 - [ ] OIDC-Rücksprung `planquadro://auth` beim Identity Provider registriert
