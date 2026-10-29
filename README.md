@@ -21,6 +21,9 @@ Rechte zu verändern.
 - **Apps:** iOS/Android/PWA (`mobile/`) über die API v1 – persönlicher Plan, Team,
   Abwesenheiten und Anträge, Einsatzdetails mit Kundeninfos, Push, Offline-Lesemodus,
   Biometrie, Dark Mode, Mandanten-Branding
+- **Betrieb:** Docker-Image und Compose-Stack (Self-Hosting und SaaS), Healthchecks,
+  verschlüsselte Backups mit externen Zielen, Aufbewahrung, automatischem Restore-Test
+  und Notfallhandbuch
 - **Oberfläche:** OpsPilot-Designsystem, Dark Mode, Tastaturbedienung der Planungsmatrix,
   Barrierefreiheit (WCAG 2.2 AA), deutlich schnellere große Pläne
 
@@ -36,6 +39,11 @@ Rechte zu verändern.
 | [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Designsystem, Dark Mode, Barrierefreiheit |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Entwicklung, Tests, CI, Branches |
 | [mobile/README.md](mobile/README.md) | Mobile-Apps bauen und veröffentlichen |
+| [docs/INSTALLATION.md](docs/INSTALLATION.md) | Installation: Docker Compose, Reverse Proxy/HTTPS, Apache/PHP, Shared Hosting |
+| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | alle Umgebungsvariablen |
+| [docs/UPDATE.md](docs/UPDATE.md) | sicheres Update und Rollback |
+| [docs/BACKUP.md](docs/BACKUP.md) | Backup, Verschlüsselung, Ziele, Aufbewahrung, Restore |
+| [docs/DISASTER_RECOVERY.md](docs/DISASTER_RECOVERY.md) | Notfallhandbuch mit RPO/RTO |
 | [CHANGELOG.md](CHANGELOG.md) | Änderungen je Version |
 
 ## Schnellstart (Entwicklung)

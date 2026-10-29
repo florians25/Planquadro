@@ -371,41 +371,29 @@ Ferien: <code>{"name":"Osterferien","date":"2026-03-30","type":"ferien"}</code>
 
 <!-- 10: Backup & Restore -->
 <div class="st-sec" id="sP10">
-<div class="st-h">Backup & Restore</div><div class="st-sub">AES-256 verschlüsselte Backups. Maximal 10 Backups – älteste werden automatisch überschrieben.</div>
+<div class="st-h">Backup &amp; Restore</div><div class="st-sub">Konsistente, mit einem öffentlichen Schlüssel verschlüsselte Backups (libsodium). Der private Schlüssel zum Wiederherstellen liegt nicht auf dem Server.</div>
+
+<div id="backupState" style="margin-bottom:.75rem"><p class="muted" style="padding:.5rem">Laden...</p></div>
 
 <div style="display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap">
-<button class="btn btn-primary" onclick="createBackup()">
+<button class="btn btn-primary" id="backupCreateBtn" onclick="createBackup()">
 <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;margin-right:.3rem;vertical-align:middle"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/></svg>
 Backup jetzt erstellen</button>
 <button class="btn btn-outline" onclick="loadBackups()">Aktualisieren</button>
-<button class="btn btn-outline" onclick="setupCron()">Cron einrichten</button>
-<button class="btn btn-outline" onclick="showBackupKey()" style="border-color:var(--wn);color:var(--wn)">
-<svg viewBox="0 0 20 20" fill="currentColor" style="width:12px;height:12px;margin-right:.2rem;vertical-align:middle"><path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd"/></svg>
-Schlüssel anzeigen</button>
-</div>
-
-<div id="backupKeyInfo" style="display:none;margin-bottom:.75rem;padding:.65rem;background:#fef3c7;border:1px solid #fde68a;border-radius:var(--r);font-size:.78rem">
-<b style="color:#92400e">Verschlüsselungsschlüssel (AES-256):</b>
-<div style="margin-top:.3rem;display:flex;gap:.3rem">
-<input type="text" class="inp-sm" id="backupKeyVal" readonly style="flex:1;font-family:monospace;font-size:.7rem;background:#fff" onclick="this.select()">
-<button class="btn btn-xs btn-outline" onclick="navigator.clipboard.writeText(document.getElementById('backupKeyVal').value);toast('Kopiert','success')">Kopieren</button>
-</div>
-<p style="font-size:.65rem;color:#92400e;margin-top:.3rem;font-weight:600">Diesen Schlüssel sicher aufbewahren! Ohne ihn können Backups NICHT wiederhergestellt werden.</p>
-</div>
-
-<div id="cronInfo" style="display:none;margin-bottom:.75rem;padding:.65rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r);font-size:.78rem">
-<b style="color:var(--ok)">Cron-URL für tägliches Backup:</b>
-<div style="margin-top:.3rem;display:flex;gap:.3rem">
-<input type="text" class="inp-sm" id="cronUrl" readonly style="flex:1;font-family:monospace;font-size:.7rem;background:#fff" onclick="this.select()">
-<button class="btn btn-xs btn-outline" onclick="navigator.clipboard.writeText(document.getElementById('cronUrl').value);toast('Kopiert','success')">Kopieren</button>
-</div>
-<p class="muted" style="font-size:.65rem;margin-top:.3rem">Cronjob: <code>0 2 * * * curl -s "URL" > /dev/null</code> (täglich um 02:00)</p>
 </div>
 
 <div class="st-card">
 <div class="st-card-h">Backups <span class="muted" style="font-weight:400;font-size:.72rem" id="backupCounter"></span></div>
 <div id="backupList"><p class="muted" style="padding:.5rem">Laden...</p></div>
 </div>
+
+<div class="st-card" id="legacyBackupCard" style="display:none">
+<div class="st-card-h">Alt-Backups (Version 6.x, .epbak)</div>
+<p class="muted" style="font-size:.72rem;padding:0 .5rem .4rem">Nur noch per Kommandozeile wiederherstellbar: <code>php bin/backup.php legacy-decrypt &lt;datei&gt; app/backups/.backup_key</code> (siehe docs/BACKUP.md). Schlüsseldatei anschließend offline sichern und vom Server entfernen.</p>
+<div id="legacyBackupList"></div>
+</div>
+
+<p class="muted" style="font-size:.7rem">Wiederherstellen: <code>php bin/backup.php restore &lt;archiv&gt; --target-db=&lt;neue_db&gt;</code> mit dem offline verwahrten privaten Schlüssel – Anleitung in docs/BACKUP.md und docs/DISASTER_RECOVERY.md.</p>
 </div>
 
 </div><!-- /st-main -->
@@ -626,82 +614,56 @@ document.addEventListener('DOMContentLoaded',loadMaintList);
 
 /* === Backup & Restore === */
 function createBackup(){
-    toast('Backup wird erstellt und verschl\u00fcsselt...','info');
+    var btn=document.getElementById('backupCreateBtn');if(btn)btn.disabled=true;
+    toast('Backup wird erstellt und verschlüsselt...','info');
     fetch(getApiBase()+'api/backup',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'create'})})
     .then(function(r){return r.json();}).then(function(d){
-        if(d.success){toast(d.msg+' ('+d.size+', verschl\u00fcsselt)','success');loadBackups();}
-        else toast(d.error||'Fehler','error');
-    }).catch(function(e){toast(e.message,'error');});
+        if(btn)btn.disabled=false;
+        if(d.success){toast(d.msg+' ('+d.size+')'+(d.warnings&&d.warnings.length?' – mit Warnungen':''),d.status==='ok'?'success':'info');loadBackups();}
+        else{toast(d.error||'Fehler','error');loadBackups();}
+    }).catch(function(e){if(btn)btn.disabled=false;toast(e.message,'error');});
+}
+function backupBadge(st){
+    if(st==='ok')return '<span class="badge" style="background:#dcfce7;color:#16a34a;font-size:.6rem">OK</span>';
+    if(st==='warning')return '<span class="badge" style="background:#fef3c7;color:#92400e;font-size:.6rem">Warnung</span>';
+    return '<span class="badge" style="background:#fee2e2;color:#b91c1c;font-size:.6rem">Fehler</span>';
 }
 function loadBackups(){
-    var el=document.getElementById('backupList');
-    var cnt=document.getElementById('backupCounter');
+    var el=document.getElementById('backupList'),stEl=document.getElementById('backupState'),cnt=document.getElementById('backupCounter');
     if(!el)return;
     el.innerHTML='<p class="muted" style="padding:.5rem">Laden...</p>';
-    fetch(getApiBase()+'api/backup',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'list'})})
+    fetch(getApiBase()+'api/backup',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'status'})})
     .then(function(r){return r.json();}).then(function(d){
-        if(cnt) cnt.textContent='('+d.count+'/'+d.max+')';
-        if(!d.success||!d.backups||d.backups.length===0){el.innerHTML='<p class="muted" style="padding:.75rem;text-align:center">Keine Backups vorhanden</p>';return;}
-        var h='<table style="width:100%;font-size:.78rem"><thead><tr style="border-bottom:2px solid var(--bd)"><th style="text-align:left;padding:.3rem .5rem">Datei</th><th>Typ</th><th>Gr\u00f6\u00dfe</th><th>Datum</th><th style="text-align:right;padding-right:.5rem">Aktionen</th></tr></thead><tbody>';
-        d.backups.forEach(function(b){
-            var typeBadge=b.type==='auto'?'<span class="badge" style="background:#e0f2fe;color:#0369a1;font-size:.6rem">Auto</span>':(b.type==='safety'?'<span class="badge" style="background:#fef3c7;color:#92400e;font-size:.6rem">Sicherung</span>':'<span class="badge" style="background:#dcfce7;color:#16a34a;font-size:.6rem">Manuell</span>');
-            var lockIcon=b.encrypted?'<svg viewBox="0 0 20 20" fill="currentColor" style="width:10px;height:10px;color:var(--ok);vertical-align:middle;margin-left:3px"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>':'';
-            h+='<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:.4rem .5rem;font-family:monospace;font-size:.65rem">'+esc(b.name)+lockIcon+'</td><td style="text-align:center">'+typeBadge+'</td><td style="text-align:center">'+esc(b.size_fmt)+'</td><td style="text-align:center;font-size:.72rem">'+esc(b.date)+'</td>';
-            h+='<td style="text-align:right;padding-right:.5rem;white-space:nowrap"><button class="btn btn-xs btn-outline" onclick="downloadBackup(\''+esc(b.name)+'\')">Download</button> ';
-            h+='<button class="btn btn-xs btn-outline" style="color:var(--wn);border-color:var(--wn)" onclick="restoreBackup(\''+esc(b.name)+'\')">Restore</button> ';
-            h+='<button class="btn btn-xs btn-outline btn-danger-text" onclick="deleteBackup(\''+esc(b.name)+'\')">L\u00f6schen</button></td></tr>';
-        });
-        h+='</tbody></table>';el.innerHTML=h;
+        if(!d.success){el.innerHTML='<p class="muted txt-d">'+esc(d.error||'Fehler')+'</p>';return;}
+        var warn=d.warnings&&d.warnings.length;
+        var box=!d.healthy?'#fecaca;background:#fef2f2':(warn?'#fde68a;background:#fffbeb':'#bbf7d0;background:#f0fdf4');
+        var h='<div style="padding:.65rem;border-radius:var(--r);font-size:.78rem;border:1px solid '+box+'">';
+        h+='<b>'+(!d.healthy?'Backups prüfen':(warn?'Backups aktuell – mit Hinweisen':'Backups aktuell'))+'</b><br>';
+        h+='Letztes erfolgreiches Backup: '+(d.last_success?esc(d.last_success.date)+' ('+esc(String(d.age_hours))+' h alt, '+esc(d.last_success.size_fmt||'')+')':'<b>keines</b>')+'<br>';
+        if(d.last_run)h+='Letzter Lauf: '+esc(d.last_run.date)+' '+backupBadge(d.last_run.status)+'<br>';
+        h+='Ziele: '+esc(d.targets.join(', '))+(d.external_target?'':' <b style="color:var(--err)">(kein externes Ziel)</b>')+'<br>';
+        h+='Aufbewahrung: '+d.retention.daily+' täglich, '+d.retention.weekly+' wöchentlich, '+d.retention.monthly+' monatlich<br>';
+        h+='Letzter Restore-Test: '+(d.last_restore_test?esc(d.last_restore_test.date)+' '+backupBadge(d.last_restore_test.status):'noch keiner');
+        if(warn){h+='<ul style="margin:.4rem 0 0 1rem;color:'+(d.healthy?'#92400e':'var(--err)')+'">';d.warnings.forEach(function(w){h+='<li>'+esc(w)+'</li>';});h+='</ul>';}
+        h+='</div>';stEl.innerHTML=h;
+        if(cnt)cnt.textContent='('+d.backups.length+')';
+        if(!d.backups.length){el.innerHTML='<p class="muted" style="padding:.75rem;text-align:center">Keine Backups vorhanden</p>';}
+        else{
+            var t='<table style="width:100%;font-size:.78rem"><thead><tr style="border-bottom:2px solid var(--bd)"><th style="text-align:left;padding:.3rem .5rem">Datei</th><th>Typ</th><th>Größe</th><th>Datum</th><th style="text-align:right;padding-right:.5rem">Aktion</th></tr></thead><tbody>';
+            d.backups.forEach(function(b){
+                var typ=b.kind==='scheduled'?'Auto':(b.kind==='prerestore'?'Sicherung':'Manuell');
+                t+='<tr style="border-bottom:1px solid #f3f4f6"><td style="padding:.4rem .5rem;font-family:monospace;font-size:.65rem">'+esc(b.name)+'</td><td style="text-align:center">'+esc(typ)+'</td><td style="text-align:center">'+esc(b.size_fmt)+'</td><td style="text-align:center;font-size:.72rem">'+esc(b.date)+'</td>';
+                t+='<td style="text-align:right;padding-right:.5rem"><a class="btn btn-xs btn-outline" href="'+getApiBase()+'api/backup?action=download&amp;name='+encodeURIComponent(b.name)+'">Download</a></td></tr>';
+            });
+            el.innerHTML=t+'</tbody></table>';
+        }
+        var lc=document.getElementById('legacyBackupCard'),ll=document.getElementById('legacyBackupList');
+        if(lc&&d.legacy&&d.legacy.length){
+            lc.style.display='';var l='<table style="width:100%;font-size:.75rem"><tbody>';
+            d.legacy.forEach(function(b){l+='<tr><td style="padding:.3rem .5rem;font-family:monospace;font-size:.65rem">'+esc(b.name)+'</td><td>'+esc(b.size_fmt)+'</td><td>'+esc(b.date)+'</td><td style="text-align:right;padding-right:.5rem"><a class="btn btn-xs btn-outline" href="'+getApiBase()+'api/backup?action=download&amp;name='+encodeURIComponent(b.name)+'">Download</a></td></tr>';});
+            ll.innerHTML=l+'</tbody></table>';
+        }
     }).catch(function(){el.innerHTML='<p class="muted txt-d">Fehler</p>';});
-}
-function downloadBackup(name){
-    toast('Download wird vorbereitet...','info');
-    fetch(getApiBase()+'api/backup',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'download',name:name})})
-    .then(function(r){return r.json();}).then(function(d){
-        if(d.success&&d.data){
-            var blob=new Blob([Uint8Array.from(atob(d.data),function(c){return c.charCodeAt(0);})],{type:'application/octet-stream'});
-            var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=d.name;a.click();URL.revokeObjectURL(url);
-            toast('Download gestartet','success');
-        } else toast(d.error||'Fehler','error');
-    }).catch(function(e){toast(e.message,'error');});
-}
-function restoreBackup(name){
-    epConfirm('ACHTUNG: Datenbank aus "'+name+'" wiederherstellen?\n\nEin Sicherheits-Backup wird vorher automatisch erstellt.\nDie Datei wird mit dem gespeicherten Schl\u00fcssel entschl\u00fcsselt.',function(){
-        toast('Restore l\u00e4uft...','info');
-        fetch(getApiBase()+'api/backup',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'restore',name:name})})
-        .then(function(r){return r.json();}).then(function(d){
-            if(d.success){toast(d.msg,'success');loadBackups();}
-            else toast(d.error||'Fehler','error');
-        }).catch(function(e){toast(e.message,'error');});
-    });
-}
-function deleteBackup(name){
-    epConfirm('Backup "'+name+'" endg\u00fcltig l\u00f6schen?',function(){
-        fetch(getApiBase()+'api/backup',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'delete',name:name})})
-        .then(function(r){return r.json();}).then(function(d){
-            if(d.success){toast(d.msg,'success');loadBackups();}
-            else toast(d.error||'Fehler','error');
-        }).catch(function(e){toast(e.message,'error');});
-    });
-}
-function setupCron(){
-    fetch(getApiBase()+'api/backup',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'setup_cron'})})
-    .then(function(r){return r.json();}).then(function(d){
-        if(d.success){
-            document.getElementById('cronUrl').value=d.url;
-            document.getElementById('cronInfo').style.display='';
-            toast(d.msg,'success');
-        } else toast(d.error||'Fehler','error');
-    }).catch(function(e){toast(e.message,'error');});
-}
-function showBackupKey(){
-    fetch(getApiBase()+'api/backup',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'get_key'})})
-    .then(function(r){return r.json();}).then(function(d){
-        if(d.success){
-            document.getElementById('backupKeyVal').value=d.key;
-            document.getElementById('backupKeyInfo').style.display='';
-        } else toast(d.error||'Fehler','error');
-    }).catch(function(e){toast(e.message,'error');});
 }
 
 /* === Announcements / Meldungen === */

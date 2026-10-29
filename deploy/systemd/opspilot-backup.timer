@@ -1,0 +1,11 @@
+[Unit]
+Description=OpsPilot Backup täglich um 02:30
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+# verpasste Läufe (Server war aus) nachholen
+Persistent=true
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target

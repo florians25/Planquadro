@@ -29,6 +29,22 @@ nichts ändert.
 - Push bei veröffentlichten Planänderungen (FCM, APNs, ntfy für Self-Hosting) über eine
   Warteschlange und `bin/push-worker.php`.
 
+### Betrieb, Backup, Recovery (Phase 4)
+- **Docker:** Image (Apache, läuft als www-data), `docker-compose.yml` für Self-Hosting,
+  `docker-compose.saas.yml`, optional Caddy für HTTPS; Healthchecks `/api/healthz` und
+  `/api/readyz`. Eine Bestands-DB ohne Versionstabelle wird nie automatisch verändert.
+- **Neues Backup-System** (`bin/backup.php`, `bin/scheduler.php`): konsistente Dumps,
+  authentisierte Verschlüsselung mit öffentlichem Schlüssel (der private Schlüssel muss
+  nicht auf dem Server liegen), Prüfsummen-Manifest, Ziele lokal, S3 und rclone,
+  Aufbewahrung täglich/wöchentlich/monatlich, je Mandant, automatischer Restore-Test,
+  Warnungen per Webhook/Mail und im Dashboard.
+- Wiederherstellung nur in eine neue/leere Datenbank oder mit Sicherheits-Backup,
+  Staging und atomarem Tausch; bricht beim ersten Fehler ab.
+- Der alte Backup-Bereich zeigt Status, erstellt und lädt herunter; Cron-URL mit
+  Schlüssel, Schlüsselanzeige und Restore im Browser entfallen (Sicherheitsbefunde B-01 … B-05).
+  Alte Backups lassen sich mit `bin/backup.php legacy-decrypt` weiter öffnen.
+- Doku: `INSTALLATION`, `CONFIGURATION`, `UPDATE`, `BACKUP`, `DISASTER_RECOVERY`.
+
 ### Oberfläche (Phase 5)
 - OpsPilot-Designsystem mit Dark Mode (folgt dem System, umschaltbar), besseren
   Kontrasten, sichtbarem Fokus, Skip-Link und zugänglichen Dialogen.

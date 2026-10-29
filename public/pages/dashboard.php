@@ -56,6 +56,10 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 </div>
 <?php endforeach; endif; ?>
 
+<?php if (hasPerm('manage_settings')) { require_once __DIR__ . '/../../app/lib/Backup.php'; $bkWarn = Backup::dashboardWarning(); if ($bkWarn): ?>
+<div class="alert alert-err" id="backupBanner" style="font-weight:500;font-size:.8rem">Backup: <?php echo e($bkWarn); ?> <a href="einstellungen" style="color:inherit;text-decoration:underline">Einstellungen → Backup</a></div>
+<?php endif; } ?>
+
 <!-- Header -->
 <div class="ph">
   <div class="phl">

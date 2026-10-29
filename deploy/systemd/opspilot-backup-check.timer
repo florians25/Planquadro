@@ -1,0 +1,9 @@
+[Unit]
+Description=OpsPilot Backup-Statusprüfung stündlich
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

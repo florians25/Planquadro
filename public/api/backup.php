@@ -1,250 +1,111 @@
 <?php
 /**
- * Backup & Restore API v6.1.2
- * - AES-256-CBC encrypted backups
- * - Max 10 backups, oldest gets overwritten
- * - Cron endpoint with secret key
+ * Backup-API der Einstellungsseite (Recht manage_settings)
+ * --------------------------------------------------------------------------
+ *   POST {action:"status"}    Status des Mandanten: letzter Lauf, Alter, Ziele, Warnungen,
+ *                             vorhandene Archive (lokal) und Alt-Backups (.epbak)
+ *   POST {action:"create"}    Backup jetzt erstellen (konsistent, mit dem öffentlichen
+ *                             Schlüssel verschlüsselt, an alle Ziele) – app/lib/Backup.php
+ *   GET  ?action=download&name=<archiv>   Archiv herunterladen (bleibt verschlüsselt)
+ *
+ * Entfernt (Befunde B-01…B-05): Cron-Aufruf mit Schlüssel in der URL, Anzeige des
+ * Schlüssels, Restore und Löschen über den Browser. Restore erfolgt mit dem offline
+ * verwahrten privaten Schlüssel per CLI (php bin/backup.php restore, docs/BACKUP.md);
+ * regelmäßige Backups übernimmt bin/scheduler.php bzw. cron/systemd.
  */
-/* Der Cron-Aufruf authentisiert sich über den Backup-Schlüssel, nicht über
-   eine Session – daher ohne CSRF-Token. */
-if (($_GET['action'] ?? '') === 'cron_backup') define('OPSPILOT_CSRF_EXEMPT', true);
-require_once __DIR__.'/../includes/auth.php';
-require_once __DIR__.'/../includes/functions.php';
-require_once __DIR__.'/../includes/security.php';
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/security.php';
+require_once __DIR__ . '/../../app/lib/Backup.php';
 
-$backupDir = __DIR__ . '/../../app/backups';
-if (!is_dir($backupDir)) mkdir($backupDir, 0750, true);
-if (!file_exists($backupDir.'/.htaccess')) file_put_contents($backupDir.'/.htaccess', "Deny from all\n");
+$input = $_SERVER['REQUEST_METHOD'] === 'POST' ? secureJsonInput() : [];
+$action = (string)($input['action'] ?? $_GET['action'] ?? '');
 
-$input = secureJsonInput();
-$action = $input['action'] ?? $_GET['action'] ?? '';
-
-/* === Encryption helpers === */
-function getEncryptionKey() {
-    $keyFile = __DIR__ . '/../../app/backups/.backup_key';
-    if (file_exists($keyFile)) return trim(file_get_contents($keyFile));
-    $key = bin2hex(random_bytes(32));
-    file_put_contents($keyFile, $key);
-    chmod($keyFile, 0600);
-    return $key;
-}
-
-function encryptData($data, $key) {
-    $iv = random_bytes(16);
-    $encrypted = openssl_encrypt($data, 'aes-256-cbc', hex2bin($key), OPENSSL_RAW_DATA, $iv);
-    return base64_encode($iv . $encrypted);
-}
-
-function decryptData($encData, $key) {
-    $raw = base64_decode($encData);
-    if ($raw === false || strlen($raw) < 17) return false;
-    $iv = substr($raw, 0, 16);
-    $encrypted = substr($raw, 16);
-    return openssl_decrypt($encrypted, 'aes-256-cbc', hex2bin($key), OPENSSL_RAW_DATA, $iv);
-}
-
-/* === Rotation: keep max 10 backups === */
-function rotateBackups($dir, $max = 10) {
-    $files = glob($dir . '/backup_*.epbak');
-    if (!$files || count($files) <= $max) return;
-    usort($files, function($a,$b){ return filemtime($a) - filemtime($b); });
-    $toDelete = array_slice($files, 0, count($files) - $max);
-    foreach ($toDelete as $f) unlink($f);
-}
-
-/* === Format bytes === */
-function fmtBytes($b) {
-    if ($b < 1024) return $b . ' B';
-    if ($b < 1048576) return round($b/1024, 1) . ' KB';
-    return round($b/1048576, 1) . ' MB';
-}
-
-/* === Daily cron: no session, auth via key === */
-if ($action === 'cron_backup' && ($_GET['action'] ?? '') === 'cron_backup') {
-    $cronKey = $_GET['key'] ?? $input['key'] ?? '';
-    $expected = ''; try { $expected = getSetting('backup_cron_key', ''); } catch(Exception $e) {}
-    if (!$expected || !$cronKey || !hash_equals($expected, $cronKey)) {
-        http_response_code(403); echo json_encode(['error'=>'Forbidden']); exit;
-    }
-    echo json_encode(performBackup('auto'));
+function backupJson(array $d, int $code = 200): void
+{
+    http_response_code($code);
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    echo json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-/* All other actions require login + permission */
-if (!isLoggedIn()) { http_response_code(403); echo json_encode(['error'=>'Nicht angemeldet']); exit; }
-if (!hasPerm('manage_settings')) { http_response_code(403); echo json_encode(['error'=>'Keine Berechtigung']); exit; }
+if (!isLoggedIn()) backupJson(['success' => false, 'error' => 'Nicht angemeldet'], 403);
+if (!hasPerm('manage_settings')) backupJson(['success' => false, 'error' => 'Keine Berechtigung'], 403);
 
-if ($action === 'create') {
-    echo json_encode(performBackup('manual'));
-    exit;
+$b = new Backup();
+$scope = $b->currentScope();
+$legacyDir = dirname(__DIR__, 2) . '/app/backups';
+
+/** Alt-Backups der Vorversion (nur Self-Hosting, nur Anzeige/Download). */
+function legacyBackups(string $dir): array
+{
+    if (opsMode() === 'saas') return [];
+    $out = [];
+    foreach (glob($dir . '/backup_*.epbak') ?: [] as $f) {
+        $out[] = ['name' => basename($f), 'size_fmt' => Backup::fmtBytes((int)filesize($f)), 'date' => date('d.m.Y H:i', (int)filemtime($f)), 'ts' => (int)filemtime($f)];
+    }
+    usort($out, fn($a, $b) => $b['ts'] <=> $a['ts']);
+    return $out;
 }
 
-if ($action === 'list') {
-    $files = glob($backupDir . '/backup_*.epbak') ?: [];
-    $list = [];
-    foreach ($files as $f) {
-        $name = basename($f);
-        $list[] = [
-            'name' => $name,
-            'size_fmt' => fmtBytes(filesize($f)),
-            'date' => date('d.m.Y H:i:s', filemtime($f)),
-            'ts' => filemtime($f),
-            'type' => (strpos($name, '_auto_') !== false) ? 'auto' : ((strpos($name, '_pre_restore_') !== false) ? 'safety' : 'manual'),
-            'encrypted' => true
-        ];
-    }
-    usort($list, function($a,$b){ return $b['ts'] - $a['ts']; });
-    echo json_encode(['success'=>true, 'backups'=>$list, 'max'=>10, 'count'=>count($list)]);
-    exit;
+function fmtRun(?array $r): ?array
+{
+    if (!$r) return null;
+    $t = strtotime($r['finished_at'] ?? $r['started_at']);
+    return ['status' => $r['status'], 'kind' => $r['kind'], 'archive' => $r['archive'] ? basename($r['archive']) : null,
+            'size_fmt' => isset($r['size_bytes']) ? Backup::fmtBytes((int)$r['size_bytes']) : null,
+            'targets' => $r['targets'] ?? [], 'date' => date('d.m.Y H:i', $t), 'ts' => $t,
+            'message' => isset($r['message']) ? mb_substr((string)$r['message'], 0, 500) : null];
 }
 
-if ($action === 'download') {
-    $name = basename($input['name'] ?? '');
-    if (!$name || !preg_match('/^backup_[\w\-]+\.epbak$/', $name)) {
-        echo json_encode(['success'=>false,'error'=>'Ungültig']); exit;
+switch ($action) {
+case 'status':
+case 'list':
+    $st = $b->status([$scope['scope']]);
+    $s = $st['scopes'][$scope['scope']];
+    $archives = [];
+    foreach ($b->local()->list($scope['scope']) as $o) {
+        $p = Backup::parseName($o['key']);
+        if (!$p || $p['scope'] !== $scope['scope']) continue;
+        $archives[] = ['name' => basename($o['key']), 'kind' => $p['kind'], 'size_fmt' => Backup::fmtBytes($o['size']),
+                       'date' => date('d.m.Y H:i', $p['time']), 'ts' => $p['time']];
     }
-    $path = $backupDir . '/' . $name;
-    if (!file_exists($path)) { echo json_encode(['success'=>false,'error'=>'Nicht gefunden']); exit; }
-    if (filesize($path) > 50 * 1024 * 1024) {
-        echo json_encode(['success'=>false,'error'=>'Zu groß für Browser-Download']); exit;
-    }
-    echo json_encode(['success'=>true,'data'=>base64_encode(file_get_contents($path)),'name'=>$name]);
+    usort($archives, fn($a, $c) => $c['ts'] <=> $a['ts']);
+    backupJson(['success' => true, 'healthy' => $st['healthy'] && $s['healthy'], 'age_hours' => $s['age_hours'],
+        'max_age_hours' => $st['max_age_hours'], 'targets' => $st['targets'], 'external_target' => $st['external_target'],
+        'encryption' => $st['encryption'], 'retention' => $st['retention'],
+        'warnings' => array_values(array_merge($st['warnings'], $s['warnings'])),
+        'last_run' => fmtRun($s['last_run']), 'last_success' => fmtRun($s['last_success']), 'last_restore_test' => fmtRun($s['last_restore_test']),
+        'backups' => $archives, 'legacy' => legacyBackups($legacyDir)]);
+
+case 'create':
+    @set_time_limit(0);
+    try { $r = $b->withLock(fn() => $b->runScope($scope, 'manual')); }
+    catch (BackupException $e) { backupJson(['success' => false, 'error' => $e->getMessage()], 409); }
+    if ($r['status'] === 'failed') backupJson(['success' => false, 'error' => 'Backup fehlgeschlagen: ' . $r['error']]);
+    backupJson(['success' => true, 'status' => $r['status'], 'msg' => 'Backup erstellt: ' . basename($r['archive']),
+        'size' => Backup::fmtBytes($r['size']), 'targets' => $r['targets'], 'warnings' => $r['warnings']]);
+
+case 'download':
+    $name = basename((string)($_GET['name'] ?? $input['name'] ?? ''));
+    $p = Backup::parseName($name);
+    if ($p && $p['scope'] === $scope['scope']) $path = $b->local()->path($scope['scope'] . '/' . $name);
+    elseif (opsMode() !== 'saas' && preg_match('/^backup_[\w\-]+\.epbak$/', $name)) $path = $legacyDir . '/' . $name;
+    else backupJson(['success' => false, 'error' => 'Ungültiger Name'], 400);
+    if (!is_file($path)) backupJson(['success' => false, 'error' => 'Nicht gefunden'], 404);
+    while (ob_get_level()) ob_end_clean();
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="' . $name . '"');
+    header('Content-Length: ' . filesize($path));
+    header('Cache-Control: no-store');
+    header('X-Content-Type-Options: nosniff');
+    readfile($path);
     exit;
-}
 
-if ($action === 'restore') {
-    $name = basename($input['name'] ?? '');
-    if (!$name || !preg_match('/^backup_[\w\-]+\.epbak$/', $name)) {
-        echo json_encode(['success'=>false,'error'=>'Ungültig']); exit;
-    }
-    $path = $backupDir . '/' . $name;
-    if (!file_exists($path)) { echo json_encode(['success'=>false,'error'=>'Nicht gefunden']); exit; }
+case 'cron_backup': case 'setup_cron': case 'get_key': case 'restore': case 'delete':
+    backupJson(['success' => false, 'error' => 'Diese Funktion wurde aus Sicherheitsgründen entfernt. Regelmäßige Backups: bin/scheduler.php bzw. cron; Restore: php bin/backup.php restore (siehe docs/BACKUP.md).'], 410);
 
-    /* Safety backup first */
-    performBackup('pre_restore');
-
-    try {
-        $key = getEncryptionKey();
-        $encData = file_get_contents($path);
-        $sql = decryptData($encData, $key);
-        if ($sql === false) {
-            echo json_encode(['success'=>false,'error'=>'Entschlüsselung fehlgeschlagen. Falscher Schlüssel?']); exit;
-        }
-
-        $db = getDB();
-        $db->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
-        $db->exec('SET FOREIGN_KEY_CHECKS=0');
-        $statements = array_filter(array_map('trim', preg_split('/;\s*\n/', $sql)));
-        $ok = 0;
-        foreach ($statements as $stmt) {
-            if (empty($stmt) || substr($stmt, 0, 2) === '--') continue;
-            try { $db->exec($stmt); $ok++; } catch(Exception $e) {}
-        }
-        $db->exec('SET FOREIGN_KEY_CHECKS=1');
-        $db->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-        echo json_encode(['success'=>true,'msg'=>'Restore abgeschlossen ('.$ok.' Statements). Sicherheits-Backup erstellt.']);
-    } catch(Exception $e) {
-        echo json_encode(['success'=>false,'error'=>'Restore fehlgeschlagen']);
-    }
-    exit;
-}
-
-if ($action === 'delete') {
-    $name = basename($input['name'] ?? '');
-    if (!$name || !preg_match('/^backup_[\w\-]+\.epbak$/', $name)) {
-        echo json_encode(['success'=>false,'error'=>'Ungültig']); exit;
-    }
-    $path = $backupDir . '/' . $name;
-    if (file_exists($path)) unlink($path);
-    echo json_encode(['success'=>true,'msg'=>'Backup gelöscht']);
-    exit;
-}
-
-if ($action === 'setup_cron') {
-    $cronSecret = bin2hex(random_bytes(16));
-    setSetting('backup_cron_key', $cronSecret);
-    $base = (isset($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off'?'https://':'http://') . ($_SERVER['HTTP_HOST']??'localhost');
-    $cronUrl = $base . dirname(dirname($_SERVER['SCRIPT_NAME'])) . '/api/backup?action=cron_backup&key=' . $cronSecret;
-    echo json_encode(['success'=>true,'url'=>$cronUrl,'msg'=>'Cron-URL generiert']);
-    exit;
-}
-
-if ($action === 'get_key') {
-    $key = getEncryptionKey();
-    echo json_encode(['success'=>true,'key'=>$key,'msg'=>'Diesen Schlüssel sicher aufbewahren! Ohne ihn können Backups nicht wiederhergestellt werden.']);
-    exit;
-}
-
-echo json_encode(['error'=>'Unbekannte Aktion']);
-
-/* ============================================================
-   PERFORM BACKUP
-   ============================================================ */
-function performBackup($type = 'manual') {
-    global $backupDir;
-    if (!is_dir($backupDir)) mkdir($backupDir, 0750, true);
-
-    $key = getEncryptionKey();
-    $timestamp = date('Y-m-d_H-i-s');
-    $filename = "backup_{$type}_{$timestamp}.epbak";
-    $filepath = "{$backupDir}/{$filename}";
-
-    try {
-        $db = getDB();
-        $tables = [];
-        foreach ($db->query('SHOW TABLES')->fetchAll(PDO::FETCH_NUM) as $row) $tables[] = $row[0];
-
-        $sql = "-- Einsatzplanung Encrypted Backup\n";
-        $sql .= "-- Type: {$type} | Date: " . date('Y-m-d H:i:s') . " | DB: " . DB_NAME . "\n\n";
-        $sql .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
-
-        foreach ($tables as $table) {
-            $create = $db->query("SHOW CREATE TABLE `{$table}`")->fetch(PDO::FETCH_NUM);
-            $sql .= "DROP TABLE IF EXISTS `{$table}`;\n";
-            $sql .= $create[1] . ";\n\n";
-
-            $colsQ = $db->query("SHOW COLUMNS FROM `{$table}`");
-            $cols = [];
-            foreach ($colsQ->fetchAll(PDO::FETCH_ASSOC) as $col) $cols[] = '`'.$col['Field'].'`';
-            $colStr = implode(',', $cols);
-
-            $rows = $db->query("SELECT * FROM `{$table}`");
-            $batch = [];
-            foreach ($rows as $row) {
-                $vals = [];
-                foreach ($row as $k => $v) {
-                    if (is_numeric($k)) continue;
-                    $vals[] = ($v === null) ? 'NULL' : $db->quote($v);
-                }
-                $batch[] = '(' . implode(',', $vals) . ')';
-                if (count($batch) >= 100) {
-                    $sql .= "INSERT INTO `{$table}` ({$colStr}) VALUES\n" . implode(",\n", $batch) . ";\n";
-                    $batch = [];
-                }
-            }
-            if (!empty($batch)) {
-                $sql .= "INSERT INTO `{$table}` ({$colStr}) VALUES\n" . implode(",\n", $batch) . ";\n";
-            }
-            $sql .= "\n";
-        }
-        $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";
-
-        /* Encrypt and save */
-        $encrypted = encryptData($sql, $key);
-        file_put_contents($filepath, $encrypted);
-
-        /* Rotation: keep max 10 */
-        rotateBackups($backupDir, 10);
-
-        return [
-            'success' => true,
-            'msg' => 'Backup erstellt: ' . $filename,
-            'filename' => $filename,
-            'size' => fmtBytes(filesize($filepath)),
-            'encrypted' => true
-        ];
-    } catch (Exception $e) {
-        return ['success' => false, 'error' => 'Backup fehlgeschlagen'];
-    }
+default:
+    backupJson(['success' => false, 'error' => 'Unbekannte Aktion'], 400);
 }

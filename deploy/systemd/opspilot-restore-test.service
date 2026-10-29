@@ -1,0 +1,24 @@
+# OpsPilot – wöchentlicher Restore-Test
+# Benötigt den PRIVATEN Backup-Schlüssel. Empfohlen: auf einem separaten
+# Prüfsystem ausführen (zweiter Server/VM mit Zugriff auf das externe
+# Backup-Ziel und eigener Wegwerf-Datenbank) statt auf dem Produktivserver –
+# siehe docs/BACKUP.md, „Restore-Test“.
+[Unit]
+Description=OpsPilot Restore-Test (jüngstes Archiv in Wegwerf-Datenbank)
+Wants=network-online.target
+After=network-online.target mariadb.service mysql.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+EnvironmentFile=/etc/opspilot/opspilot.env
+# Schlüssel nur für diesen Dienst lesbar (z. B. root:www-data 0640)
+Environment=OPSPILOT_BACKUP_PRIVATE_KEY_FILE=/etc/opspilot/backup_private.key
+WorkingDirectory=/var/www/opspilot
+ExecStart=/usr/bin/php bin/backup.php restore-test
+Nice=10
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=yes
