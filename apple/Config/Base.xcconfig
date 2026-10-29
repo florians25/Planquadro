@@ -1,0 +1,17 @@
+// Gemeinsame Einstellungen der Apple-App. Signierung (Team-ID) gehört NICHT ins Repo:
+// lokal in Config/Signing.local.xcconfig (siehe Signing.local.xcconfig.example), im CI per
+// xcodebuild-Argument bzw. Secret.
+
+// Bundle-ID (gleich der Capacitor-App: die native App ist ihr Nachfolger im App Store)
+PQ_BUNDLE_ID = de.planquadro.app
+// App Group für Widget-Auszug (App ↔ Widgets/Live-Aktivität/Kurzbefehle)
+PQ_APP_GROUP = group.de.planquadro.app
+// Push (APNs) registrieren: YES/NO – im CI ohne Signierung NO
+PQ_PUSH_ENABLED = YES
+// zusätzliche Swift-Bedingungen (z. B. PQ_NO_LIVE_ACTIVITIES)
+PQ_EXTRA_CONDITIONS =
+
+DEVELOPMENT_TEAM =
+CODE_SIGN_STYLE = Automatic
+
+#include? "Signing.local.xcconfig"

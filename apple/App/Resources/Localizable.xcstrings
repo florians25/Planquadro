@@ -1,0 +1,360 @@
+{
+  "sourceLanguage": "de",
+  "strings": {
+    "Abbrechen": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift, App/Sources/Screens/More/MoreView.swift, App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "Abmelden": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift, App/Sources/Screens/More/MoreView.swift"
+    },
+    "Abo-Link kopieren": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Abwesenheiten": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Adresse": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Aktionen": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "Aktualisieren": {
+      "comment": "Verwendet in App/Sources/PlanquadroApp.swift, App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "Alle gelesen": {
+      "comment": "Verwendet in App/Sources/Screens/Notifications/NotificationsView.swift"
+    },
+    "Alle lokal gespeicherten Daten werden von diesem Gerät gelöscht.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Als Live-Aktivität anzeigen": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/AssignmentDetailView.swift"
+    },
+    "Anmeldedaten liegen im Schlüsselbund dieses Geräts (nicht in iCloud). Offline-Daten werden verschlüsselt gespeichert und beim Abmelden gelöscht.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Anmelden": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Ansicht": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "Antrag stellen": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Art": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Beispieldaten, kein Server.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Bemerkung (optional)": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Bemerkungen": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/AssignmentDetailView.swift"
+    },
+    "Benutzername": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Bereich": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/AssignmentDetailView.swift"
+    },
+    "Bis": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Darstellung": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Das Abo hält Apple Kalender automatisch aktuell. Beim Übernehmen werden nur Einsätze dieses und des nächsten Monats eingetragen, keine Abwesenheiten.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Datenschutz": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Demo-Modus starten (ohne Server)": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Demo: Planänderung simulieren": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Demo: beliebiger Benutzername, Passwort „demo“. Testfälle: „gesperrt“, „neu“, „wartung“.": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Details": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "Die Adresse erhalten Sie von Ihrer Planung bzw. Administration.": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Diese Woche": {
+      "comment": "Verwendet in Shared/WidgetViews.swift, Widgets/PlanquadroWidgets.swift"
+    },
+    "Einsatz": {
+      "comment": "Verwendet in Widgets/PlanquadroWidgets.swift"
+    },
+    "Einsatz- und Teamplanung für Service-Organisationen": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Einsätze in Kalender übernehmen": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Einsätze in den Kalender übernehmen?": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "Einsätze in der Suche (Spotlight)": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Erneut versuchen": {
+      "comment": "Verwendet in App/Sources/Design/Components.swift, App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Farbschema": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Für diesen Monat sind in Ihrem Team keine Personen sichtbar.": {
+      "comment": "Verwendet in App/Sources/Screens/Team/TeamView.swift"
+    },
+    "Gelesen": {
+      "comment": "Verwendet in App/Sources/Screens/Notifications/NotificationsView.swift"
+    },
+    "Gründe von Abwesenheiten anderer sehen Sie nie – nur „A“. Widgets, Sperrbildschirm und Siri zeigen auch Ihre eigenen Abwesenheiten nur als „Abwesend“.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Heute": {
+      "comment": "Verwendet in App/Sources/Design/Components.swift, App/Sources/Screens/Plan/PlanView.swift, Shared/WidgetViews.swift, Widgets/PlanquadroWidgets.swift"
+    },
+    "Hier erscheinen Hinweise zu Planänderungen und Anträgen.": {
+      "comment": "Verwendet in App/Sources/Screens/Notifications/NotificationsView.swift"
+    },
+    "Hinweise": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/AssignmentDetailView.swift"
+    },
+    "Ihr Einsatz heute – Kürzel, Bezeichnung und Ort.": {
+      "comment": "Verwendet in Widgets/PlanquadroWidgets.swift"
+    },
+    "Ihr heutiger Einsatz auf dem Sperrbildschirm. Abwesenheiten erscheinen nur als „Abwesend“.": {
+      "comment": "Verwendet in Widgets/PlanquadroWidgets.swift"
+    },
+    "Ihre Einsätze dieses und des nächsten Monats werden als ganztägige Termine eingetragen.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Ihre Einsätze von Montag bis Sonntag auf einen Blick.": {
+      "comment": "Verwendet in Widgets/PlanquadroWidgets.swift"
+    },
+    "Ihre Einsätze werden als ganztägige Termine eingetragen. Abwesenheiten werden nicht übertragen.": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "In Kalender eintragen": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/AssignmentDetailView.swift"
+    },
+    "In Kalender übernehmen": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "Je Werktag wird ein Antrag gestellt. Wochenenden und Feiertage werden übersprungen.": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Jeder Einsatz an seinem Platz.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Kalender": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Kalender abonnieren": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Kein Eintrag": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/AssignmentDetailView.swift"
+    },
+    "Keine Abwesenheiten in diesem Jahr.": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Keine Analyse-, Tracking- oder Werbedienste. Die App spricht ausschließlich mit dem Planquadro-Server Ihrer Organisation.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Keine Anträge.": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Keine Mitarbeitenden sichtbar": {
+      "comment": "Verwendet in App/Sources/Screens/Team/TeamView.swift"
+    },
+    "Keine Mitteilungen": {
+      "comment": "Verwendet in App/Sources/Screens/Notifications/NotificationsView.swift"
+    },
+    "Kolleginnen und Kollegen": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/AssignmentDetailView.swift"
+    },
+    "Kunde": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/AssignmentDetailView.swift"
+    },
+    "Kürzel, Kunde, Datum oder Name": {
+      "comment": "Verwendet in App/Sources/Screens/Search/SearchView.swift"
+    },
+    "Live": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "Live-Aktivität für heute": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "Live-Aktivität für heutigen Einsatz": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Live-Aktualisierung": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Lokale Daten löschen": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Löschen": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Mandanten-Kürzel (optional)": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Mehr": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Mein Plan": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "Meine Anträge": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Melden Sie sich in der App an, um Ihren Plan hier zu sehen.": {
+      "comment": "Verwendet in Shared/WidgetViews.swift"
+    },
+    "Mitteilungen": {
+      "comment": "Verwendet in App/Sources/Screens/Notifications/NotificationsView.swift"
+    },
+    "Name": {
+      "comment": "Verwendet in App/Sources/Screens/Team/TeamView.swift"
+    },
+    "Name suchen": {
+      "comment": "Verwendet in App/Sources/Screens/Team/TeamView.swift"
+    },
+    "Nicht erreichbar": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Nicht geladen": {
+      "comment": "Verwendet in App/Sources/Design/Components.swift"
+    },
+    "Niemand sonst eingeplant.": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/AssignmentDetailView.swift"
+    },
+    "Nur nötig, wenn Ihr Unternehmen Planquadro als Cloud-Dienst über eine gemeinsame Adresse nutzt.": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Passwort": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Planquadro": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift, App/Sources/Screens/RootView.swift, Shared/WidgetViews.swift"
+    },
+    "Planquadro ist gesperrt": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Planquadro wird gestartet": {
+      "comment": "Verwendet in App/Sources/Screens/RootView.swift"
+    },
+    "Planquadro: bitte anmelden": {
+      "comment": "Verwendet in Shared/WidgetViews.swift"
+    },
+    "Rest": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Senden": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Server": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Server wechseln": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Server ändern": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Server-Adresse": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Sicherheit": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Sie werden abgemeldet und alle lokalen Daten werden gelöscht.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Sie werden abgemeldet. Offline-Daten, Schlüssel und Einstellungen inkl. Server-Adresse werden gelöscht.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Siri, Suche und Widgets": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "So erscheinen Ihre Einsätze auf dem Home-Bildschirm und dem Sperrbildschirm. Halten Sie den Home-Bildschirm gedrückt und tippen Sie auf „Bearbeiten“ → „Widget hinzufügen“.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Standort": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/AssignmentDetailView.swift"
+    },
+    "Suchen": {
+      "comment": "Verwendet in App/Sources/Screens/RootView.swift, App/Sources/Screens/Search/SearchView.swift"
+    },
+    "Team": {
+      "comment": "Verwendet in App/Sources/Screens/Search/SearchView.swift, App/Sources/Screens/Team/TeamView.swift"
+    },
+    "Teilen": {
+      "comment": "Verwendet in App/Sources/Screens/Plan/AssignmentDetailView.swift"
+    },
+    "Urlaub beantragen": {
+      "comment": "Verwendet in App/Sources/PlanquadroApp.swift"
+    },
+    "Version": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Von": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "Wechseln": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Weiter": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Widgets": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Widgets, Sperrbildschirm und Siri zeigen nur Ihre eigenen Einsätze; Abwesenheiten erscheinen dort nur als „Abwesend“.": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Wird geladen …": {
+      "comment": "Verwendet in App/Sources/Design/Components.swift, App/Sources/Screens/Plan/PlanView.swift"
+    },
+    "Zeiträume": {
+      "comment": "Verwendet in App/Sources/Screens/Absences/AbsencesView.swift"
+    },
+    "https://planquadro.firma.de": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "oder": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "z. B. acme": {
+      "comment": "Verwendet in App/Sources/Screens/Auth/AuthViews.swift"
+    },
+    "Über": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Über Planquadro": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "Übernehmen": {
+      "comment": "Verwendet in App/Sources/Screens/More/MoreView.swift"
+    },
+    "–": {
+      "comment": "Verwendet in Shared/WidgetViews.swift"
+    },
+    "„A“ = abwesend (vertraulich). Tippen Sie auf einen Einsatz für Details.": {
+      "comment": "Verwendet in App/Sources/Screens/Team/TeamView.swift"
+    }
+  },
+  "version": "1.0"
+}

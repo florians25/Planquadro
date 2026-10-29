@@ -184,6 +184,19 @@ nichts ändert.
   Screenshot-Demo-Modus mit Beispieldaten (`VITE_SCREENSHOT_DEMO=1`, nie im Release);
   iOS-Build-Check im Simulator. Screenshots liegen im Branch `app-screenshots`;
   Releases erhalten APK und iOS-Simulator-Build.
+- **Apple-App (iPhone und iPad, nativ)** in `apple/`: Swift/SwiftUI mit **Liquid Glass** ab
+  iOS 26 und Rückfall ab iOS 17. Gleicher Funktionsumfang wie die Capacitor-App (Server und
+  Mandant einrichten, Anmeldung per Passwort und Firmenkonto mit PKCE, Tokens im
+  Schlüsselbund, Face ID, Plan als Woche/Monat, Einsatzdetails, Team-Raster mit „A“ für
+  vertrauliche Abwesenheiten, Abwesenheiten und Anträge, Mitteilungen, Live-Aktualisierung,
+  Offline-Lesemodus, Push) plus **Widgets** (Heute, Diese Woche, Sperrbildschirm),
+  **Live-Aktivität**, **Siri/Kurzbefehle** („Wo bin ich morgen eingesetzt?“, „Urlaub
+  beantragen“), Spotlight, Kalender (EventKit, Abo), Suche, iPad-Seitenleiste mit
+  Tastaturkurzbefehlen, Handoff. Logik im Swift-Paket `PlanquadroKit` (auch unter Linux
+  getestet), Projekt per XcodeGen, CI mit Screenshots in Hell/Dunkel (Branch
+  `app-screenshots`, Ordner `ios/`). Die Capacitor-App bleibt für Android und als Rückfall.
+- API v1: neuer Endpunkt `GET/POST calendar` für das persönliche Kalender-Abo (wie
+  *Mein Profil → Kalender-Abo*).
 
 ### Sicherheit und Qualität (Phase 7)
 - Sicherheitsreview der neuen Teile, alle Befunde behoben (Roadmap R-01 … R-10), u. a.:

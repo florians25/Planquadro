@@ -1,0 +1,4 @@
+#include "Base.xcconfig"
+
+// App Store / TestFlight: Produktions-APNs
+PQ_APS_ENVIRONMENT = production

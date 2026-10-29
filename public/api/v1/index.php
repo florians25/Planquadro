@@ -419,6 +419,23 @@ if (preg_match('#^devices/(\d+)$#', $path, $mm) && $method === 'DELETE') {
     apiOut(204);
 }
 
+/* ---------- Kalender-Abo (iCal): eigener Abo-Link, wie unter „Mein Profil“ ---------- */
+if ($path === 'calendar' && ($method === 'GET' || $method === 'POST')) {
+    if (!opsModule('ical')) apiError(403, 'module_disabled', 'Das Kalender-Abo ist für Ihre Organisation deaktiviert.');
+    $s = $db->prepare('SELECT cal_token FROM users WHERE id=?');
+    $s->execute([$myId]);
+    $tok = (string)($s->fetchColumn() ?: '');
+    $created = false;
+    /* POST legt nur an, wenn noch kein Link existiert (bestehende Abos bleiben gültig) */
+    if ($tok === '' && $method === 'POST') {
+        $tok = bin2hex(random_bytes(32));
+        $db->prepare('UPDATE users SET cal_token=? WHERE id=?')->execute([$tok, $myId]);
+        $created = true;
+        try { $db->prepare('INSERT INTO audit_log(user_id,action,details,ip_address) VALUES(?,?,?,?)')->execute([$myId, 'cal_token_create', 'Kalender-Abo (App)', opsClientIp()]); } catch (Throwable $e) {}
+    }
+    apiOut($created ? 201 : 200, ['enabled' => $tok !== '', 'url' => $tok !== '' ? oidcBaseUrl() . '/api/ical?token=' . $tok : null]);
+}
+
 apiError(404, 'not_found', 'Unbekannter Endpunkt.');
 } catch (Throwable $e) {
     error_log('api v1: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());

@@ -1,0 +1,20 @@
+# XcodeGen erzeugt das Projekt – nicht einchecken
+*.xcodeproj/
+*.xcworkspace/
+!PlanquadroKit/.swiftpm/xcode/package.xcworkspace
+# Build
+.build/
+build/
+DerivedData/
+*.xcresult
+# lokale Signierung (Team-ID, Profile)
+Config/Signing.local.xcconfig
+*.mobileprovision
+*.p12
+*.p8
+*.cer
+# Screenshots aus dem CI
+screenshots/
+.DS_Store
+.swiftpm/
+Package.resolved

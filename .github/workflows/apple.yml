@@ -1,0 +1,204 @@
+name: Apple-App
+
+# Native iOS-/iPadOS-App (apple/, Swift/SwiftUI, Liquid Glass ab iOS 26):
+#   1. PlanquadroKit unter Linux bauen und testen (swift test)
+#   2. Auf macOS: Projekt per XcodeGen erzeugen, Paket-Tests, App + Widgets für den Simulator
+#      ohne Signierung bauen, Unit- und UI-Tests, Screenshots (iPhone + iPad, hell/dunkel)
+#   3. Nur auf main, Tags und manuell: Screenshots in den Branch app-screenshots (Ordner ios/)
+#
+# Runner: macos-26 (Xcode 26, iOS-26-SDK). Ist er nicht verfügbar, Repository-Variable
+# APPLE_RUNNER=macos-15 setzen – der Code übersetzt dann ohne Liquid-Glass-APIs
+# (#if compiler(>=6.2)) mit dem neuesten installierten Xcode.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths:
+      - "apple/**"
+      - ".github/workflows/apple.yml"
+      - "public/assets/brand/**"
+      - "mobile/src/api/fixtures/**"
+  pull_request:
+    paths:
+      - "apple/**"
+      - ".github/workflows/apple.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apple-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kit-linux:
+    name: PlanquadroKit (Linux)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container: swift:6.2-noble
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bauen und testen
+        working-directory: apple/PlanquadroKit
+        run: |
+          swift --version
+          swift build
+          swift test --parallel
+
+  ios:
+    name: iOS bauen, testen, Screenshots
+    runs-on: ${{ vars.APPLE_RUNNER || 'macos-26' }}
+    timeout-minutes: 90
+    env:
+      PROJECT: apple/Planquadro.xcodeproj
+      DD: build/DerivedData
+      SIGNING: CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= PQ_PUSH_ENABLED=NO
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode wählen (neuestes, bevorzugt 26)
+        run: |
+          ls /Applications | grep -i xcode || true
+          XC=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1 || true)
+          if [ -z "$XC" ]; then XC=$(ls -d /Applications/Xcode*.app | grep -v -i beta | sort -V | tail -1); fi
+          echo "Xcode: $XC"
+          sudo xcode-select -s "$XC/Contents/Developer"
+          xcodebuild -version
+          swift --version
+          xcrun simctl list runtimes
+
+      - name: XcodeGen
+        run: |
+          brew install xcodegen
+          cd apple && xcodegen generate
+
+      - name: PlanquadroKit testen (macOS, inkl. Keychain/CryptoKit-Pfade)
+        working-directory: apple/PlanquadroKit
+        run: swift test --parallel
+
+      - name: Simulatoren wählen
+        run: |
+          xcrun simctl list devices available -j > /tmp/sims.json
+          IFS=$'\t' read -r IPHONE IPHONE_NAME IPHONE_RT < <(python3 apple/scripts/pick_simulator.py iphone < /tmp/sims.json)
+          IFS=$'\t' read -r IPAD IPAD_NAME IPAD_RT < <(python3 apple/scripts/pick_simulator.py ipad < /tmp/sims.json)
+          echo "iPhone: $IPHONE_NAME ($IPHONE_RT) $IPHONE"
+          echo "iPad:   $IPAD_NAME ($IPAD_RT) $IPAD"
+          { echo "IPHONE=$IPHONE"; echo "IPAD=$IPAD"; echo "IPHONE_NAME=$IPHONE_NAME"; echo "IPAD_NAME=$IPAD_NAME"; } >> "$GITHUB_ENV"
+
+      - name: Bauen (Simulator, ohne Signierung)
+        run: |
+          mkdir -p build
+          if ! xcodebuild build-for-testing -project "$PROJECT" -scheme Planquadro -configuration Debug \
+               -destination "id=$IPHONE" -derivedDataPath "$DD" $SIGNING > build/build.log 2>&1; then
+            grep -E "error:" build/build.log | sort -u | head -80 || true
+            tail -60 build/build.log
+            exit 1
+          fi
+          grep -E "warning:" build/build.log | sort -u | head -40 || true
+          tail -3 build/build.log
+
+      - name: Unit- und UI-Tests (iPhone)
+        run: |
+          if ! xcodebuild test-without-building -project "$PROJECT" -scheme Planquadro -configuration Debug \
+               -destination "id=$IPHONE" -derivedDataPath "$DD" -resultBundlePath build/Tests.xcresult $SIGNING > build/test.log 2>&1; then
+            grep -E "error|failed|Fehler" build/test.log | head -80 || true
+            tail -60 build/test.log
+            exit 1
+          fi
+          grep -E "Test Suite '.*' (passed|failed)|Executed" build/test.log | tail -12
+
+      - name: Screenshots iPhone
+        run: |
+          APP="$DD/Build/Products/Debug-iphonesimulator/Planquadro.app"
+          apple/scripts/screenshots.sh "$APP" "$IPHONE" iphone build/screenshots/ios
+          xcrun simctl shutdown "$IPHONE" || true
+
+      - name: Screenshots iPad
+        run: |
+          APP="$DD/Build/Products/Debug-iphonesimulator/Planquadro.app"
+          PQ_SCREENS="week team absences more widgets login" apple/scripts/screenshots.sh "$APP" "$IPAD" ipad build/screenshots/ios
+          xcrun simctl shutdown "$IPAD" || true
+
+      - name: Geräteangaben
+        if: always()
+        run: |
+          mkdir -p build/screenshots/ios
+          printf 'iPhone: %s\niPad: %s\nXcode: %s\nCommit: %s\n' "$IPHONE_NAME" "$IPAD_NAME" "$(xcodebuild -version | head -1)" "$GITHUB_SHA" > build/screenshots/geraete.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-screenshots
+          path: build/screenshots/ios/*.png
+          if-no-files-found: warn
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: ios-build-logs
+          path: |
+            build/build.log
+            build/test.log
+            build/Tests.xcresult
+          retention-days: 14
+
+  publish-screenshots:
+    name: Screenshots in app-screenshots/ios
+    needs: ios
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: app-screenshots-ios
+      cancel-in-progress: false
+    env:
+      GIT_AUTHOR_NAME: florians25
+      GIT_AUTHOR_EMAIL: 111896304+florians25@users.noreply.github.com
+      GIT_COMMITTER_NAME: florians25
+      GIT_COMMITTER_EMAIL: 111896304+florians25@users.noreply.github.com
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-screenshots
+          path: shots
+
+      - name: Nur den Ordner ios/ ersetzen (Android-Job schreibt android/)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ls shots/*.png >/dev/null
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for attempt in 1 2 3 4 5; do
+            rm -rf pub
+            if git ls-remote --exit-code --heads "$REMOTE" app-screenshots >/dev/null 2>&1; then
+              git clone --quiet --depth 1 --branch app-screenshots "$REMOTE" pub
+            else
+              # Orphan-Branch nur mit Bildern
+              git init --quiet pub
+              git -C pub checkout --quiet --orphan app-screenshots
+              git -C pub remote add origin "$REMOTE"
+            fi
+            rm -rf pub/ios
+            mkdir -p pub/ios
+            cp shots/*.png pub/ios/
+            git -C pub add -A ios
+            if git -C pub diff --cached --quiet; then
+              echo "Keine Änderungen an ios/."
+              exit 0
+            fi
+            git -C pub commit --quiet -m "iOS-Screenshots für ${GITHUB_SHA::7} (${GITHUB_REF_NAME})"
+            if git -C pub push --quiet origin HEAD:app-screenshots; then
+              echo "Veröffentlicht (Versuch $attempt)."
+              exit 0
+            fi
+            echo "Push abgelehnt (paralleler Job?) – neu klonen und erneut versuchen …"
+            sleep $((attempt * 7))
+          done
+          echo "Screenshots konnten nicht veröffentlicht werden." >&2
+          exit 1

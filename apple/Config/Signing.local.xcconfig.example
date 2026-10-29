@@ -1,0 +1,9 @@
+// Kopieren nach Config/Signing.local.xcconfig (wird nicht eingecheckt) und anpassen.
+// Team-ID: developer.apple.com → Membership details.
+
+DEVELOPMENT_TEAM = ABCDE12345
+CODE_SIGN_STYLE = Automatic
+
+// Eigene Bundle-ID/App Group, falls nicht de.planquadro.app (z. B. White-Label-Build):
+// PQ_BUNDLE_ID = com.firma.planquadro
+// PQ_APP_GROUP = group.com.firma.planquadro

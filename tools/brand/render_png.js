@@ -2,7 +2,9 @@
  * Planquadro – PNG-Varianten aus den SVG-Logos rendern (Chromium über Playwright).
  * Aufruf: node tools/brand/render_png.js
  * Schreibt Favicons/PWA-Icons nach public/assets/brand, die App-Icons und
- * Splash-Screens nach mobile/ (Android-mipmaps, iOS AppIcon, PWA-Icons).
+ * Splash-Screens nach mobile/ (Android-mipmaps, iOS AppIcon, PWA-Icons) und die
+ * App-Icons der nativen Apple-App nach apple/ (hell, dunkel, getönt für iOS 18/26).
+ * Nur die Apple-Icons: node tools/brand/render_png.js --apple
  */
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -27,19 +29,35 @@ const jobs = [
   // iOS (ein 1024er-Icon, Xcode erzeugt den Rest); iOS rundet selbst → ohne Radius
   ['planquadro-app-icon-maskable.svg', 1024, 'mobile/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png', { square: true }],
 ];
+// Native Apple-App (apple/): 1024er-Icons für Standard, Dunkel (transparenter Grund,
+// iOS legt den dunklen Hintergrund selbst an) und Getönt (Graustufen, iOS färbt ein)
+const appleOnly = process.argv.includes('--apple');
+const appleIcons = 'apple/App/Assets.xcassets/AppIcon.appiconset';
+const appleJobs = [
+  ['planquadro-app-icon-maskable.svg', 1024, `${appleIcons}/AppIcon-1024.png`, { square: true }],
+  ['planquadro-app-icon-maskable.svg', 1024, `${appleIcons}/AppIcon-1024-dark.png`, { square: true, noBackground: true, transparent: true }],
+  ['planquadro-app-icon-maskable.svg', 1024, `${appleIcons}/AppIcon-1024-tinted.png`, { square: true, noBackground: true, tinted: true }],
+  // Bildmarke für den Startbildschirm (Launch Screen) der Apple-App
+  ['planquadro-mark-white.svg', 240, 'apple/App/Assets.xcassets/LaunchMark.imageset/LaunchMark@2x.png', { transparent: true }],
+  ['planquadro-mark-white.svg', 360, 'apple/App/Assets.xcassets/LaunchMark.imageset/LaunchMark@3x.png', { transparent: true }],
+];
+if (appleOnly) jobs.length = 0;
+jobs.push(...appleJobs);
 // Android: Launcher-Icons je Dichte, Vordergrund für adaptive Icons (108 dp)
-for (const [d, px] of Object.entries({ mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 })) {
+for (const [d, px] of Object.entries(appleOnly ? {} : { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 })) {
   jobs.push(['planquadro-app-icon.svg', px, `mobile/android/app/src/main/res/mipmap-${d}/ic_launcher.png`]);
   jobs.push(['planquadro-app-icon.svg', px, `mobile/android/app/src/main/res/mipmap-${d}/ic_launcher_round.png`, { round: true }]);
   jobs.push(['planquadro-mark-white.svg', px * 2.25, `mobile/android/app/src/main/res/mipmap-${d}/ic_launcher_foreground.png`, { pad: 0.3, transparent: true }]);
 }
 
 function page(svgText, size, o = {}) {
-  const inner = o.square ? svgText.replace(/rx="[\d.]+" fill="#14213D"/, 'fill="#14213D"') : svgText;
+  let inner = o.square ? svgText.replace(/rx="[\d.]+" fill="#14213D"/, 'fill="#14213D"') : svgText;
+  if (o.noBackground) inner = inner.replace(/<rect width="1024" height="1024"[^>]*\/>/, '');
+  const filter = o.tinted ? 'filter:grayscale(1) brightness(1.15);' : '';
   const pad = o.pad ? `padding:${size * o.pad}px;box-sizing:border-box;` : '';
-  return `<html><body style="margin:0;background:${o.transparent ? 'transparent' : 'transparent'}">
+  return `<html><body style="margin:0;background:${o.tinted ? '#000000' : 'transparent'}">
     <div style="width:${size}px;height:${size}px;${pad}${o.round ? 'border-radius:50%;overflow:hidden;' : ''}">
-    ${inner.replace('<svg ', '<svg style="width:100%;height:100%;display:block" ')}</div></body></html>`;
+    ${inner.replace('<svg ', `<svg style="width:100%;height:100%;display:block;${filter}" `)}</div></body></html>`;
 }
 
 function splash(w, h) {
@@ -70,6 +88,10 @@ async function shot(b, viewport, html, file, opts = {}) {
     await shot(b, { viewport: { width: Math.round(size), height: Math.round(size) } }, page(svg(file), Math.round(size), o),
       path.join(root, out), { omitBackground: true });
     console.log('PNG:', out);
+  }
+  if (appleOnly) {
+    await b.close();
+    return;
   }
   // Splash: iOS 2732², Android je Ausrichtung und Dichte
   const splashes = [['mobile/android/app/src/main/res/drawable/splash.png', 480, 320]];

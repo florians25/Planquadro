@@ -362,6 +362,40 @@ auf dem Smartphone (und als Web-App auf dem Startbildschirm).
 Beim Abmelden werden Widget-Inhalt und geplante Erinnerungen gelöscht; bereits übernommene
 Kalendertermine bleiben in Ihrem Kalender (sie gehören Ihnen) und können dort gelöscht werden.
 
+### iPhone & iPad
+
+Auf iPhone und iPad ist Planquadro eine native App im neuen Apple-Design (Liquid Glass ab
+iOS 26, ab iOS 17 nutzbar). Zusätzlich zu den Punkten oben:
+
+- **Plan als Woche oder Monat:** Oben umschalten; in der Woche zeigt eine Karte den
+  heutigen Einsatz. „Heute“ ist immer orange markiert. Ein Tipp auf einen Einsatz öffnet die
+  Details – die Adresse öffnet Apple Karten, die Telefonnummer ruft an, „Teilen“ schickt die
+  Einsatzdaten, „In Kalender eintragen“ legt einen Termin an.
+- **Team-Raster** wie in der Planungsmatrix: Zeilen sind Personen, Spalten Tage. Mit der
+  Suche finden Sie Namen auch ohne Akzente. Bei Kolleginnen und Kollegen steht bei
+  vertraulichen Abwesenheiten nur „A“.
+- **Widgets:** Home-Bildschirm gedrückt halten → *Bearbeiten* → *Widget hinzufügen* →
+  Planquadro: „Heute“, „Diese Woche“ und Sperrbildschirm-Widgets. Sie zeigen nur Ihre eigenen
+  Einsätze; Abwesenheiten erscheinen dort nur als „Abwesend“, weil der Sperrbildschirm auch
+  für andere sichtbar ist. Unter *Mehr → Widgets* sehen Sie eine Vorschau.
+- **Live-Aktivität:** Im Plan über *Aktionen → Live-Aktivität für heute* (oder automatisch,
+  siehe *Mehr*) erscheint Ihr heutiger Einsatz auf dem Sperrbildschirm und in der Dynamic
+  Island.
+- **Siri und Kurzbefehle:** „Wo bin ich morgen eingesetzt in Planquadro?“, „Zeig meinen
+  Plan in Planquadro“, „Urlaub beantragen in Planquadro“. Die Antwort auf die erste Frage
+  kommt ohne die App zu öffnen.
+- **Kalender:** *Mehr → Kalender abonnieren* hält Apple Kalender automatisch aktuell (der
+  Link ist privat). *Einsätze in Kalender übernehmen* trägt die Einsätze dieses und des
+  nächsten Monats einmalig als ganztägige Termine ein – Abwesenheiten nie.
+- **Face ID / Touch ID:** unter *Mehr → Sicherheit*. Danach ist die App beim Start und nach
+  mehr als fünf Minuten im Hintergrund gesperrt; im App-Umschalter ist der Inhalt verdeckt.
+- **Offline:** Ohne Netz sehen Sie den zuletzt geladenen Stand mit dem Hinweis
+  „Offline – Stand: …“. Anträge und „Gelesen“ gehen erst wieder online. Änderungen kommen
+  im Vordergrund sofort (Live-Aktualisierung), sonst per Mitteilung.
+- **iPad:** Seitenleiste statt Tab-Leiste; mit Tastatur ⌘1–⌘5 für die Bereiche, ⌘N für einen
+  neuen Antrag, ⌘R zum Aktualisieren, ⌘← / ⌘→ blättert, ⌘T springt zu heute.
+- **Suche:** eigener Tab (Lupe) – Einsätze nach Kürzel, Kunde oder Datum, Personen nach Namen.
+
 ## 13. Häufige Fragen
 
 **Ich sehe eine Änderung nicht.** Sie ist vermutlich noch ein Entwurf – erst nach dem

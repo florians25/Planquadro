@@ -240,6 +240,17 @@ Push-Registrierung.
 ```
 `provider` ∈ `fcm`, `apns`, `ntfy`. → `201 { "id": 3 }`
 
+### `GET calendar` · `POST calendar`
+Persönliches Kalender-Abo (iCal), dasselbe wie *Mein Profil → Kalender-Abo* in der
+Weboberfläche (nur wenn Modul `ical` aktiv, sonst `403 module_disabled`).
+```json
+{ "enabled": true, "url": "https://<server>/api/ical?token=<64 Hex-Zeichen>" }
+```
+`GET` liefert den bestehenden Link (`enabled: false`, `url: null`, wenn noch keiner
+existiert). `POST` legt einen Link an, falls noch keiner existiert (`201`), und gibt sonst
+den bestehenden unverändert zurück (`200`) – bestehende Abos bleiben gültig. Widerrufen
+und neu erzeugen nur in der Weboberfläche. Die Apple-App öffnet den Link als `webcal://`.
+
 ## Push-Nachrichten
 
 Bei Veröffentlichung einer Planänderung erhalten betroffene Mitarbeiter eine Nachricht:

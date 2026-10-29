@@ -1,0 +1,4 @@
+#include "Base.xcconfig"
+
+// Entwicklungs-APNs; Demo-/Screenshot-Startargumente (-PQDemo, -PQScreen) nur im Debug-Build
+PQ_APS_ENVIRONMENT = development

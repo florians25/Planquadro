@@ -356,6 +356,30 @@ Abwesenheiten, Benachrichtigungen) das rechtfertigen. Die App spricht ausschlie�
 neue **API v1** (Token-Auth, mandantengebunden, dieselben Rechte- und Scope-Prüfungen wie
 die Weboberfläche).
 
+#### Ergänzung 7.0: native Apple-App, Capacitor für Android
+
+Für iPhone und iPad gibt es zusätzlich eine **native App in Swift/SwiftUI** (`apple/`,
+siehe `apple/README.md`); die Capacitor-App bleibt für **Android**, die **PWA** und als
+Rückfall auf iOS erhalten. Gründe für den nativen Weg auf Apple-Geräten:
+
+- **Systemintegration, die eine WebView nicht erreicht:** Widgets (Home- und
+  Sperrbildschirm), Live-Aktivität/Dynamic Island, App Intents mit Siri und Kurzbefehlen,
+  Spotlight, Handoff, EventKit, iPad-Seitenleiste mit Tastaturkurzbefehlen. Diese Funktionen
+  sind nur mit nativen Frameworks (WidgetKit, ActivityKit, AppIntents) möglich und brauchen
+  ohnehin Swift-Code – eine Capacitor-Hülle müsste ihn über Plugins nachbauen.
+- **Liquid Glass (iOS 26):** Glas-Tab-Leiste, Glas-Steuerelemente und Icon-Varianten gibt es
+  nur in SwiftUI/UIKit; eine WebView kann sie höchstens imitieren.
+- **Sicherheit:** Keychain, CryptoKit, LocalAuthentication und Dateischutzklassen direkt
+  statt über Drittanbieter-Plugins.
+- **Aufwand begrenzt:** Die Logik (API-Client, Token-Rotation, Offline-Cache, Sync, SSE,
+  Vertraulichkeitsregeln, Demo-Server) liegt in einem plattformneutralen Swift-Paket
+  (`PlanquadroKit`), das auch unter Linux gebaut und getestet wird. Der Vertrag bleibt die
+  API v1; die Capacitor-App dient als funktionale Referenz (gleiche Fixtures, gleiche Regeln).
+
+Für Android bleibt Capacitor die wirtschaftliche Wahl (ein Codepfad mit der PWA). Beide Apps
+teilen API, Fixtures, Markenwerte und die Vertraulichkeitsregeln; Funktionsgleichstand wird
+über die gemeinsamen Fixtures und Tests gehalten.
+
 ### B.9 Sicherheit (Querschnitt)
 
 - Zentrale CSRF-Prüfung für alle zustandsändernden Requests (Header `X-CSRF-Token`, von
