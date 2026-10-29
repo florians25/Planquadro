@@ -1,3 +1,11 @@
+# Berechtigungsmodell
+
+> **Stand Planquadro 7.0.0-dev:** Rechte stehen als Katalog im Code
+> (`app/lib/Permissions.php`), sechs bisher rollengebundene Prüfungen sind Rechte
+> (Abschnitt 7, Migration 0006). Abschnitte 1–6 beschreiben den Ausgangszustand v6.9.0,
+> gegen den der Rechte-Snapshot (`tests/fixtures/permissions_snapshot.json`) geprüft wird;
+> die Wirkung für alle bestehenden Rollen ist unverändert.
+
 # Bestehendes Berechtigungsmodell (Einsatzplanung v6.9.0)
 
 Stand: 29.10.2026. Dieses Dokument hält den **Ist-Zustand** fest, bevor irgendetwas am
@@ -171,3 +179,76 @@ P-7 sind in Phase 2 behoben (Tests in `tests/Integration/SecurityTest.php` und
 | P-5 | Genehmigter Urlaub/Krankheit nur mit `unlock_vacation` überschreibbar | Abwesenheitsmodul löscht sie ohne Prüfung | Prüfung ergänzt |
 | P-6 | Teamübergreifende Planung im Assistenten nur mit Freigabe | Manager immer, auch ohne `view_all_employees` | **offen – Entscheidung des Product Owners nötig** (siehe Roadmap) |
 | P-7 | Profil-Aktionen nur für angemeldete Benutzer | auch während erzwungenem Passwortwechsel | `requireLogin()` ergänzt |
+
+## 7. Rechte-Katalog und Migration 0006 (Planquadro 7.0.0-dev)
+
+### 7.1 Katalog
+
+`app/lib/Permissions.php` enthält für jedes Recht Schlüssel, Bezeichnung, Beschreibung,
+Gruppe (Planung · Team & Abwesenheiten · Verwaltung · Betrieb) und die Standardrollen einer
+Neuinstallation. `allPermissions()`, die Seite „Rollen & Rechte“, `create_role` und der
+Rechte-Snapshot verwenden ihn. Ein Test stellt sicher, dass die Standardrollen im Katalog
+exakt den Werten einer Neuinstallation entsprechen und kein Recht in der Datenbank fehlt.
+Gespeichert wird weiterhin pro Mandanten-Datenbank (`role_permissions`,
+`permission_user_overrides`); maßgeblich ist die Datenbank.
+
+`manage_users` bleibt im Katalog, wird aber weiterhin nicht ausgewertet (Bezeichnung
+„ohne Wirkung“). Es wurde nicht für die Team-Seite verwendet, weil Bestandsinstallationen
+es abweichend gesetzt haben können – das hätte Rechte verschoben.
+
+### 7.2 Früher rollengebundene Prüfungen
+
+| Recht | Prüfung vorher | Standard (= vorher) |
+|---|---|---|
+| `manage_team` | `canManageUsers()` – Seite Team, Navigation | admin, manager, verwaltung |
+| `manage_config` | `canManageConfig()` – Bereiche, Feiertage, Stammdaten | admin, manager, verwaltung |
+| `bypass_maintenance` | `hasRole('admin','manager')` im Wartungsmodus (Web, API v1) | admin, manager |
+| `manage_maintenance` | `api/maintenance`, `api/cleanup` | admin, manager |
+| `delete_changelog` | `api/changelog` delete | admin, manager |
+| `manage_deputations` | Seite Vertretung, Navigation | admin, manager, teamleiter |
+
+Regeln, damit sich nichts verschiebt (`role_bound` im Katalog):
+- **Administratoren haben diese Rechte immer** – wie bei `hasRole('admin', …)`; weder
+  Rollen-Schalter noch Benutzer-Override entziehen sie. Auf der Rollen-Seite sind sie für die
+  Administrator-Rolle gesperrt (ebenso wie bisher `manage_roles`).
+- **Fehlt die Zeile** in `role_permissions` (Code vor der Migration, Rolle ohne Eintrag),
+  gilt der Katalog-Standard. Eigene Rollen haben im Standard keine dieser Rechte – wie
+  vorher, weil die Rollenprüfung nur den exakten Schlüssel kannte.
+- Für alle anderen Rechte bleibt es bei „fehlt der Eintrag: verweigert“.
+- Neu ist nur die **Einstellbarkeit**: Wer „Rollen & Rechte verwalten“ hat, kann die Rechte
+  anderen Rollen oder einzelnen Personen geben oder entziehen.
+
+Bewusst **weiter an Rollen gebunden** (Wirkung auf Gesundheitsdaten oder auf das
+Verhältnis Vorgesetzter/Mitarbeiter; Umwandlung braucht eine fachliche Entscheidung):
+Urlaubsübersicht (admin, manager, teamleiter – zeigt Kranktage), Navigationsblock
+Abwesenheiten, Vertraulichkeit `canSeeAbsenceDetails`, „alle sehen“ für Administratoren,
+„Meine Mitarbeiter“-Filter, Planungsassistent teamübergreifend (P-6), Auswahl möglicher
+Vorgesetzter/Vertretungen (Zielrolle), SSO-Konfiguration und Passwort-Notfallzugang nur
+für Administratoren, Löschen fremder Vertretungen nur durch Administratoren.
+
+### 7.3 Eigene Rollen je Mandant
+
+Auf „Rollen & Rechte“: anlegen (Rechte einer bestehenden Rolle werden kopiert – die
+wirksamen Werte, inkl. der Rechte aus 7.2), **umbenennen** (Name, Farbe; der Schlüssel bleibt,
+weil er bei Benutzern und Rechten gespeichert ist) und löschen (nur ohne zugeordnete
+Benutzer). System-Rollen können weder umbenannt noch gelöscht werden; die Basisrolle muss
+existieren. Hinweis: Eine **neu** auf Basis „Manager“ angelegte Rolle erhält damit auch
+„Team & Benutzer verwalten“ – Rollen, die vor der Migration angelegt wurden, nicht.
+
+### 7.4 Rollen aus IdP-Gruppen (OIDC)
+
+`security.oidc` (TenantConfig, Seite Organisation – nur Administratoren):
+
+| Schlüssel | Standard | Bedeutung |
+|---|---|---|
+| `group_roles_enabled` | `false` | Zuordnung aktiv; aus = Rolle bleibt, wie in Planquadro gepflegt |
+| `groups_claim` | `groups` | Claim mit den Gruppen (Liste oder durch Komma/Leerzeichen getrennt) |
+| `group_roles` | `[]` | `[{"group": "…", "role": "…"}]`, die erste passende Zeile gilt |
+
+Bei jeder SSO-Anmeldung (Web und App) wird die Rolle gesetzt und im Audit-Log
+(`oidc_role_mapped`) vermerkt. Ohne Treffer bleibt die Rolle. Sicherheit: Die Rolle
+`admin` und Rollen mit `manage_roles` werden nie vergeben (beim Speichern abgelehnt und
+beim Login erneut geprüft); Konten mit diesen Rollen ändert der IdP nie. Eine unzulässige
+erste passende Zeile lässt die Rolle unverändert (kein Ausweichen auf spätere Zeilen).
+Benutzer werden weiterhin nicht automatisch angelegt.
+

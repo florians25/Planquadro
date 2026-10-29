@@ -155,7 +155,12 @@ Umgesetzt:
       Branding (WCAG-Kontrast), Module, Navigation, Dashboard-Widgets, Planungsregeln
 - [x] Stammdaten Kunden, Standorte, Qualifikationen (optional an Einsatzcodes)
 - [x] API v1 (Token-Auth, Refresh-Rotation) und Push (FCM/APNs/ntfy) – `docs/API.md`
-- [x] OIDC/SSO optional (PKCE, JWKS, keine Auto-Anlage)
+- [x] OIDC/SSO optional (PKCE, JWKS, keine Auto-Anlage); optional Rollen aus IdP-Gruppen
+      (Standard aus, nie Administrator-Rechte)
+- [x] Rechte als Code-Katalog (`app/lib/Permissions.php`), Rollen je Mandant (eigene Rollen
+      anlegen/umbenennen/löschen), rollengebundene Prüfungen als Rechte (Migration 0006),
+      Rechte-Snapshot vor/nach Migration (`bin/permissions-snapshot.php`,
+      `PermissionSnapshotTest`) – Ergebnis identisch
 - [x] Request-Kernel (`app/lib/Kernel.php`, geladen von `includes/auth.php`): Request-ID
       (Header `X-Request-ID`, in jeder Log-Zeile), einheitliches JSON-Fehlerformat
       (`request_id` ergänzt, bestehende Felder/HTTP-Codes unverändert), globaler
@@ -173,7 +178,8 @@ Offen (bewusst verschoben, kein Funktionsverlust):
 - `TenantConfig` (Branding, Module, Navigation, Dashboard-Widgets, Planungsregeln,
   Sicherheit) mit Kompatibilitätsschicht für `getSetting()`.
 - Rechte als Code-Katalog, Rollen je Mandant, Scopes; rollengebundene Prüfungen in Rechte
-  überführen; Rechte-Snapshot-Vergleich vor/nach Migration.
+  überführen; Rechte-Snapshot-Vergleich vor/nach Migration. ✅ (Rest: Prüfungen, die bewusst
+  an Rollen gebunden bleiben, siehe `PERMISSIONS.md` Abschnitt 3 – Entscheidung offen)
 - Stammdaten: Standorte, Kunden, Qualifikationen (neue Tabellen, optional verknüpft mit
   Einsatzcodes und Mitarbeitern).
 - Module ein-/ausschaltbar; Navigation und Dashboard aus der TenantConfig.

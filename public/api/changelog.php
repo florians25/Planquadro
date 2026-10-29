@@ -22,7 +22,7 @@ if($action==='add'){
     echo json_encode(['success'=>true,'msg'=>'Changelog-Eintrag gespeichert']);exit;
 }
 if($action==='delete'){
-    if(!hasRole('admin','manager')){echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']);exit;}
+    if(!canDeleteChangelog()){echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']);exit;}
     $db->prepare('DELETE FROM changelog WHERE id=?')->execute([(int)($input['id']??0)]);
     echo json_encode(['success'=>true,'msg'=>'Gelöscht']);exit;
 }

@@ -29,6 +29,20 @@ nichts ändert.
   Kontoanlage; Administratoren behalten den Passwort-Zugang als Notfallweg.
 - Neues Recht „Abwesenheitsdetails aller sehen“ (Personalabteilung); Vorgesetzte sehen
   Details nur noch für ihr Team (Entscheidung E-2).
+- **Rechte als Code-Katalog** (`app/lib/Permissions.php`): alle Rechte mit Beschreibung,
+  Gruppe und Standardrollen an einer Stelle; „Rollen & Rechte“ zeigt sie in vier Gruppen.
+- **Bisher fest an Rollen gebundene Prüfungen sind Rechte** (Migration 0006):
+  Team & Benutzer verwalten, Bereiche/Feiertage/Stammdaten pflegen, im Wartungsmodus
+  weiterarbeiten, Wartung planen & bereinigen, Changelog löschen, Vertretungen einrichten.
+  Standard exakt wie bisher (Rechte-Snapshot vor/nach der Migration identisch),
+  Administratoren behalten sie immer. Jetzt pro Rolle und Person einstellbar.
+- **Eigene Rollen je Mandant** lassen sich zusätzlich umbenennen (Name, Farbe);
+  System-Rollen bleiben unverändert.
+- **SSO: Rollen aus IdP-Gruppen** (optional, Standard aus): Gruppen-Claim konfigurierbar
+  (z. B. `groups`), erste passende Zuordnung setzt die Rolle. Nie Administrator oder
+  Rollen mit „Rollen & Rechte verwalten“; Administrator-Konten ändert der IdP nie.
+- `bin/permissions-snapshot.php`: effektive Rechtematrix aller Benutzer exportieren und
+  mit `--diff` vergleichen (Abbruch bei jeder Abweichung).
 
 ### Request-Kernel (Befund S-20)
 - Jede Antwort trägt eine Request-ID (Header `X-Request-ID`); sie steht auch in jeder

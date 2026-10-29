@@ -71,6 +71,7 @@ mehrfach ausgeführt werden können (`IF NOT EXISTS`, `INSERT IGNORE`).
 | `0002_plan_change_log.sql` | Tabelle `plan_change_log` (Änderungsprotokoll je Zelle) | additiv | `DROP TABLE plan_change_log` |
 | `0004_master_data.sql` | Tabellen `customers`, `locations`, `qualifications`, `user_qualifications`; Spalten `plan_areas.customer_id/location_id` | additiv | Tabellen/Spalten können bleiben |
 | `0005_api_push.sql` | `api_refresh_tokens`, `push_devices`, `push_queue` | additiv | Tabellen löschen |
+| `0006_role_bound_permissions.sql` | neue Rechte `manage_team`, `manage_config`, `bypass_maintenance`, `manage_maintenance`, `delete_changelog`, `manage_deputations` in `role_permissions` – exakt die bisherigen Rollenbindungen, eigene Rollen `0` | additiv (nur `INSERT IGNORE`, idempotent) | Code-Rollback genügt; Bereinigung siehe Abschnitt 4 |
 | `0003_clear_initial_passwords.sql` | leert `users.initial_password` (Klartext-Einmalpasswörter). Das Einmalpasswort bleibt über den Hash gültig; der Wechselzwang bleibt bestehen | Datenbereinigung | nicht umkehrbar – gewollt; Werte wurden nirgends angezeigt |
 
 ### Rechteneutralität von Phase 2
@@ -87,16 +88,58 @@ angezeigte Rechte auf 0 setzen).
 Ziel: Rollen und Rechte werden mandantenfähig, rollengebundene Prüfungen
 (`canManageUsers`, `canManageConfig`, …) werden echte Rechte.
 
-1. **Snapshot vorher:** `php bin/permissions-snapshot.php > before.json` – berechnet für
-   jeden aktiven Benutzer die effektiven Rechte (inkl. rollengebundener Prüfungen,
-   Overrides, Vertretungen) und den Team-Scope (Menge sichtbarer Benutzer-IDs).
-2. **Migration** legt die neuen Rechte (`users.manage`, `config.manage`, …) so an, dass sie
-   exakt die heutigen Rollenbindungen abbilden (z. B. `config.manage` für admin, manager,
-   verwaltung). Bestehende Overrides werden 1:1 übernommen.
-3. **Snapshot nachher** und `php bin/permissions-snapshot.php --diff before.json`.
-   **Jede Abweichung bricht das Deployment ab**, außer sie steht in der Liste der
-   gewollten Fehlerbehebungen (`PERMISSIONS.md` Abschnitt 6, P-1 … P-7).
-4. Der Vergleich läuft zusätzlich als automatisierter Test gegen eine anonymisierte Kopie.
+Umgesetzt mit Migration `0006_role_bound_permissions.sql` (Planquadro 7.0.0-dev).
+
+1. **Backup**, dann **Snapshot vorher** – noch mit dem bisherigen Code-Stand:
+   `php bin/permissions-snapshot.php > before.json` (im SaaS-Betrieb je Mandant mit
+   `--tenant=<slug>`). Berechnet für jeden aktiven Benutzer die effektiven Rechte
+   (Override > Rolle > Standard), die rollengebundenen Prüfungen, den Team-Scope
+   (inkl. Vertretungen), die unterstellten Mitarbeiter und für wen Krankheits-/Urlaubsdetails
+   sichtbar sind. Benutzer werden über den Benutzernamen verglichen.
+2. **Code ausrollen, dann `php bin/migrate.php up`.** 0006 legt die neuen Rechte so an,
+   dass sie exakt die bisherigen Rollenbindungen abbilden:
+
+   | Recht | ersetzt | Standard |
+   |---|---|---|
+   | `manage_team` | `canManageUsers()` (Seite Team) | admin, manager, verwaltung |
+   | `manage_config` | `canManageConfig()` (Bereiche, Feiertage, Stammdaten) | admin, manager, verwaltung |
+   | `bypass_maintenance` | Wartungsmodus-Ausnahme (Web und API v1) | admin, manager |
+   | `manage_maintenance` | `api/maintenance`, `api/cleanup` | admin, manager |
+   | `delete_changelog` | `api/changelog` delete | admin, manager |
+   | `manage_deputations` | Seite Vertretung | admin, manager, teamleiter |
+
+   Eigene Rollen erhalten `0` – auch wenn sie z. B. auf Basis „Manager“ angelegt wurden,
+   denn die frühere Rollenprüfung galt nur für den exakten Rollenschlüssel. Bestehende
+   Zeilen in `role_permissions` und alle Overrides bleiben unverändert (nur `INSERT IGNORE`).
+   Die Reihenfolge Code → Migration ist gefahrlos: Fehlt eine Zeile, wendet der Code für
+   diese sechs Rechte den Katalog-Standard an (identisch zur alten Rollenprüfung).
+3. **Snapshot nachher** und `php bin/permissions-snapshot.php --diff=before.json`.
+   **Jede Abweichung bricht das Deployment ab** (Exit 1). Rechte, die nur im neuen Snapshot
+   vorkommen, sind Ergänzungen (Hinweis); ihre Wirkung wird über die Prüfungen
+   (`checks.can_manage_users` usw.) verglichen.
+4. Automatisiert: `tests/Integration/PermissionSnapshotTest.php` vergleicht für alle
+   Test-Benutzer, zwei eigene Rollen, Overrides und eine Vertretung die Rechtematrix und die
+   Zugriffe auf alle Seiten, Seiten-Aktionen, APIs und API v1 (auch im Wartungsmodus) mit
+   der Referenz `tests/fixtures/permissions_snapshot.json`, die auf dem Code-Stand **vor**
+   der Migration erzeugt wurde – nach der Migration, ohne 0006 (Rückweg) und nach
+   wiederholter Ausführung. Für eine anonymisierte Kopie der Produktivdaten: Schritte 1–3
+   gegen die Kopie.
+
+**Rückweg / Recovery**
+- *Fehler im neuen Code:* vorherigen Code-Stand ausrollen. Der ältere Code wertet die
+  neuen Zeilen nicht aus; das Schema ist unverändert.
+- *Neue Rechte ganz entfernen* (nach Code-Rollback, optional):
+  ```sql
+  DELETE FROM role_permissions WHERE permission IN ('manage_team','manage_config',
+    'bypass_maintenance','manage_maintenance','delete_changelog','manage_deputations');
+  DELETE FROM permission_user_overrides WHERE permission IN ('manage_team','manage_config',
+    'bypass_maintenance','manage_maintenance','delete_changelog','manage_deputations');
+  DELETE FROM schema_migrations WHERE version = 'pq_0006_role_bound_permissions';
+  ```
+  Auch mit dem neuen Code ist das wirkungsneutral (Katalog-Standard greift; im Test
+  abgesichert). Danach ist `migrate up` wieder möglich.
+- *Rechte nach der Migration versehentlich geändert:* `--diff=before.json` zeigt jede
+  Abweichung je Benutzer; zurücksetzen über „Rollen & Rechte“ oder Restore.
 
 ## 5. Schritt 3 – Mandantenfähigkeit (umgesetzt)
 
@@ -117,12 +160,13 @@ Dadurch ist **keine Datenmigration** nötig:
 
 ### Rechte in Phase 3
 
-Rollen und Rechte liegen weiterhin in `role_permissions` je Mandanten-Datenbank – damit
-sind sie automatisch mandantenspezifisch, ohne Migration. Die fest an Rollen gebundenen
-Prüfungen (`canManageUsers`, `canManageConfig`, …) wurden **bewusst nicht** in Rechte
-umgewandelt, weil das bei Installationen mit angepassten Rechten unbeabsichtigte
-Änderungen hätte auslösen können. Neu ist nur das zusätzliche, standardmäßig nirgends
-vergebene Recht `view_absence_details_all` (Entscheidung E-2).
+Rollen und Rechte liegen weiterhin in `role_permissions` und `custom_roles` je
+Mandanten-Datenbank – damit sind sie automatisch mandantenspezifisch („Rollen je Mandant“),
+ohne Datenmigration. Neu ist das zusätzliche, standardmäßig nirgends vergebene Recht
+`view_absence_details_all` (Entscheidung E-2). Die rollengebundenen Prüfungen
+`canManageUsers`, `canManageConfig` u. a. sind seit 0006 Rechte (Abschnitt 4); weil
+`manage_users` in Bestandsinstallationen geändert worden sein kann, wurde es **nicht**
+wiederverwendet, sondern das neue Recht `manage_team` angelegt.
 
 ## 6. Schritt 4 – Umzug auf Docker/Linux (Phase 4, optional)
 

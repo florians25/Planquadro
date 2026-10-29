@@ -21,11 +21,14 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
         if ($role === 'admin' && !in_array('manage_roles', $perms, true)) {
             echo json_encode(['success'=>false,'error'=>'Der Administrator-Rolle kann „Rollen & Rechte verwalten“ nicht entzogen werden.']); exit;
         }
+        if (!array_key_exists($role, allRoles())) { echo json_encode(['success'=>false,'error'=>'Unbekannte Rolle']); exit; }
         $allP = array_keys(allPermissions());
         try {
             $db->beginTransaction();
             foreach ($allP as $pKey) {
                 $granted = in_array($pKey, $perms) ? 1 : 0;
+                /* Früher rollengebundene Rechte hat der Administrator immer (gesperrt) */
+                if ($role === 'admin' && permissionIsRoleBound($pKey)) $granted = 1;
                 $db->prepare('INSERT INTO role_permissions(role,permission,granted) VALUES(?,?,?) ON DUPLICATE KEY UPDATE granted=?')
                    ->execute([$role, $pKey, $granted, $granted]);
             }
@@ -108,14 +111,18 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
         $baseRole = preg_replace('/[^a-z0-9_]/', '', $input['base_role'] ?? 'mitarbeiter');
         if (!$key || !$label || strlen($key) < 2) { echo json_encode(['success'=>false,'error'=>'Schlüssel (mind. 2 Zeichen) und Name erforderlich']); exit; }
         if (strlen($key) > 30) { echo json_encode(['success'=>false,'error'=>'Schlüssel max. 30 Zeichen']); exit; }
+        if (mb_strlen($label) > 100) { echo json_encode(['success'=>false,'error'=>'Name max. 100 Zeichen']); exit; }
+        if (array_key_exists($key, allRoles())) { echo json_encode(['success'=>false,'error'=>'Schlüssel "'.$key.'" existiert bereits.']); exit; }
+        if (!array_key_exists($baseRole, allRoles())) { echo json_encode(['success'=>false,'error'=>'Unbekannte Basisrolle']); exit; }
+        if (!preg_match('/^#[0-9a-fA-F]{6}$/', $color)) $color = '#6b7280';
         try {
             $db->beginTransaction();
             $db->prepare('INSERT INTO custom_roles(role_key,role_label,color,base_role,is_system,sort_order,created_by) VALUES(?,?,?,?,0,100,?)')
                ->execute([$key, $label, $color, $baseRole, $_SESSION['user_id']]);
-            /* Copy permissions from base role */
-            $base = allPermsForRole($baseRole);
+            /* Rechte der Basisrolle kopieren (wirksame Werte, inkl. Katalog-Standard
+               früher rollengebundener Rechte) */
             foreach (allPermissions() as $pKey => $pLabel) {
-                $granted = !empty($base[$pKey]) ? 1 : 0;
+                $granted = roleHasPermission($baseRole, $pKey) ? 1 : 0;
                 $db->prepare('INSERT IGNORE INTO role_permissions(role,permission,granted) VALUES(?,?,?)')->execute([$key, $pKey, $granted]);
             }
             $db->commit();
@@ -127,6 +134,25 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
         }
         exit;
     }
+    if ($act === 'rename_role') {
+        /* Eigene Rollen umbenennen (Anzeigename, Farbe). Der Schlüssel bleibt –
+           er ist bei den Benutzern und Rechten gespeichert. */
+        $key = preg_replace('/[^a-z0-9_]/', '', $input['role_key'] ?? '');
+        $label = trim($input['role_label'] ?? '');
+        $color = preg_replace('/[^#a-fA-F0-9]/', '', $input['color'] ?? '');
+        if (!$key || $label === '') { echo json_encode(['success'=>false,'error'=>'Rolle und Name erforderlich']); exit; }
+        if (mb_strlen($label) > 100) { echo json_encode(['success'=>false,'error'=>'Name max. 100 Zeichen']); exit; }
+        if (!preg_match('/^#[0-9a-fA-F]{6}$/', $color)) $color = '#6b7280';
+        if (in_array($key, SYSTEM_ROLES, true)) { echo json_encode(['success'=>false,'error'=>'System-Rollen können nicht umbenannt werden']); exit; }
+        try {
+            $s=$db->prepare('SELECT is_system FROM custom_roles WHERE role_key=?');$s->execute([$key]);$cr=$s->fetch();
+            if(!$cr) { echo json_encode(['success'=>false,'error'=>'Rolle nicht gefunden']); exit; }
+            if($cr['is_system']) { echo json_encode(['success'=>false,'error'=>'System-Rollen können nicht umbenannt werden']); exit; }
+            $db->prepare('UPDATE custom_roles SET role_label=?, color=? WHERE role_key=?')->execute([$label, $color, $key]);
+            echo json_encode(['success'=>true,'msg'=>'Rolle umbenannt in "'.$label.'".']);
+        } catch(Exception $e) { echo json_encode(['success'=>false,'error'=>'Datenbankfehler']); }
+        exit;
+    }
     if ($act === 'delete_role') {
         $key = preg_replace('/[^a-z0-9_]/', '', $input['role_key'] ?? '');
         if (!$key) { echo json_encode(['success'=>false,'error'=>'Rolle fehlt']); exit; }
@@ -134,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
         try {
             $s=$db->prepare('SELECT is_system FROM custom_roles WHERE role_key=?');$s->execute([$key]);$cr=$s->fetch();
             if(!$cr) { echo json_encode(['success'=>false,'error'=>'Rolle nicht gefunden']); exit; }
-            if($cr['is_system']) { echo json_encode(['success'=>false,'error'=>'System-Rollen können nicht gelöscht werden']); exit; }
+            if($cr['is_system'] || in_array($key, SYSTEM_ROLES, true)) { echo json_encode(['success'=>false,'error'=>'System-Rollen können nicht gelöscht werden']); exit; }
             /* Check no users assigned */
             $s2=$db->prepare('SELECT COUNT(*) c FROM users WHERE role=?');$s2->execute([$key]);
             if((int)$s2->fetch()['c'] > 0) { echo json_encode(['success'=>false,'error'=>'Rolle ist noch Benutzern zugewiesen']); exit; }
@@ -153,33 +179,30 @@ require_once __DIR__ . '/../includes/header.php';
 if(!hasPerm('manage_roles')) { showAccessDenied('Sie benötigen die Berechtigung "Rollen verwalten".'); }
 
 $allPerms = allPermissions();
+$catalog = permissionCatalog();
 $roles = allRoles();
+/* Wirksamer Wert je Rolle (gespeicherter Wert, sonst Katalog-Standard bei
+   früher rollengebundenen Rechten) – sonst würde "Speichern" vor Migration
+   0006 diese Rechte entziehen. */
 $permData = [];
-foreach ($roles as $rKey => $rName) { $permData[$rKey] = allPermsForRole($rKey); }
-/* Check which roles are system roles */
-$systemRoles = ['admin','manager','teamleiter','verwaltung','lager','mitarbeiter','azubi_1','azubi_2','azubi_3'];
+foreach ($roles as $rKey => $rName) {
+    $permData[$rKey] = [];
+    foreach ($allPerms as $pKey => $pl) $permData[$rKey][$pKey] = roleHasPermission($rKey, $pKey);
+}
+$systemRoles = SYSTEM_ROLES;
 try { $s=getDB()->query('SELECT role_key FROM custom_roles WHERE is_system=1'); foreach($s->fetchAll() as $sr) if(!in_array($sr['role_key'],$systemRoles)) $systemRoles[]=$sr['role_key']; } catch(Exception $e) {}
+/* Eigene Rollen: Basisrolle für die Anzeige */
+$baseRoles = [];
+try { foreach (getDB()->query('SELECT role_key, base_role FROM custom_roles WHERE is_system=0')->fetchAll() as $cr) $baseRoles[$cr['role_key']] = $cr['base_role']; } catch(Exception $e) {}
 /* Colors come from roleColor() in functions.php */
-$permData = [];
-foreach ($roles as $rKey => $rName) { $permData[$rKey] = allPermsForRole($rKey); }
-$permGroups = [
-    'Planung' => ['icon'=>'M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z','perms'=>['plan_view','plan_edit','plan_publish_own','plan_publish_all','plan_publish_year','plan_view_internal','view_erl_column','unlock_vacation']],
-    'Verwaltung' => ['icon'=>'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z','perms'=>['manage_users','delete_users','manage_settings','manage_roles']],
-    'Sonstiges' => ['icon'=>'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z','perms'=>['view_gesamtplan_details','approve_requests','view_all_employees','manage_absences','use_planning_assistant','view_absence_details_all']],
+$groupIcons = [
+    'Planung' => 'M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z',
+    'Team & Abwesenheiten' => 'M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z',
+    'Verwaltung' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
+    'Betrieb' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
 ];
-$permDescriptions = [
-    'plan_view'=>'Monats- und Gesamtplan einsehen','plan_edit'=>'Einträge im Monatsplan bearbeiten',
-    'plan_publish_own'=>'Eigene Planänderungen veröffentlichen','plan_publish_all'=>'Änderungen aller Benutzer veröffentlichen',
-    'plan_publish_year'=>'Ganzes Jahr auf einmal veröffentlichen','plan_view_internal'=>'Als intern markierte Einträge sehen',
-    'view_erl_column'=>'Erledigt-Spalte im Plan anzeigen','unlock_vacation'=>'Genehmigten Urlaub entsperren',
-    'manage_users'=>'Mitarbeiter anlegen und bearbeiten','delete_users'=>'Mitarbeiter endgültig löschen',
-    'manage_settings'=>'App-Einstellungen ändern','manage_roles'=>'Diese Seite – Rollen & Rechte verwalten',
-    'view_gesamtplan_details'=>'Details im Gesamtplan einsehen','approve_requests'=>'Änderungsanträge genehmigen/ablehnen',
-    'manage_absences'=>'Modul Abwesenheiten: Urlaub, Krankheit und Sperrtage über Zeiträume erfassen',
-    'use_planning_assistant'=>'Planungsassistent öffnen (auch ohne „Plan bearbeiten“)',
-    'view_absence_details_all'=>'Art und Bemerkung von Krankheit und Urlaub bei ALLEN Mitarbeitern sehen (sonst nur bei unterstellten). Gesundheitsdaten – nur sehr gezielt vergeben.',
-    'view_all_employees'=>'Alle Mitarbeiter in der Planung sehen. Ohne dieses Recht sieht der Benutzer nur Mitarbeiter, bei denen er als Vorgesetzter eingetragen ist.',
-];
+$permGroups = [];
+foreach (permissionsByGroup() as $gName => $keys) $permGroups[$gName] = ['icon' => $groupIcons[$gName] ?? $groupIcons['Betrieb'], 'perms' => $keys];
 $csrf = csrfToken();
 $userCounts = [];
 try { $s=getDB()->query("SELECT role, COUNT(*) c FROM users WHERE active=1 GROUP BY role"); foreach($s->fetchAll() as $r) $userCounts[$r['role']]=(int)$r['c']; } catch(Exception $e){}
@@ -222,12 +245,12 @@ $rPerms = $permData[$rKey]; $clr=roleColor($rKey); ?>
 <div class="rl-panel-title">
 <div class="rl-panel-dot" style="background:<?php echo e($clr);?>"></div>
 <div><h2 style="font-size:1rem;font-weight:700"><?php echo e($rName);?></h2>
-<span class="muted" style="font-size:.75rem"><?php echo $userCounts[$rKey]??0;?> aktive Nutzer</span></div>
+<span class="muted" style="font-size:.75rem"><?php echo $userCounts[$rKey]??0;?> aktive Nutzer<?php if(isset($baseRoles[$rKey])):?> · eigene Rolle, angelegt auf Basis von <?php echo e(roleName($baseRoles[$rKey]));?><?php endif;?></span></div>
 </div>
 <div class="rl-panel-acts">
 <button class="btn btn-outline btn-sm" onclick="rlToggleAll('<?php echo $rKey;?>',true)">Alle an</button>
 <button class="btn btn-outline btn-sm" onclick="rlToggleAll('<?php echo $rKey;?>',false)">Alle aus</button>
-<?php if(!in_array($rKey,$systemRoles)):?><button class="btn btn-outline btn-sm" style="color:var(--err);border-color:var(--err)" onclick="rlDeleteRole('<?php echo $rKey;?>','<?php echo e($rName);?>')">Rolle löschen</button><?php endif;?>
+<?php if(!in_array($rKey,$systemRoles)):?><button class="btn btn-outline btn-sm" data-role-key="<?php echo e($rKey);?>" data-role-label="<?php echo e($rName);?>" data-role-color="<?php echo e($clr);?>" onclick="rlOpenRename(this)">Umbenennen</button><button class="btn btn-outline btn-sm" style="color:var(--err);border-color:var(--err)" onclick="rlDeleteRole('<?php echo $rKey;?>','<?php echo e($rName);?>')">Rolle löschen</button><?php endif;?>
 </div>
 </div>
 
@@ -239,19 +262,21 @@ $rPerms = $permData[$rKey]; $clr=roleColor($rKey); ?>
 </div>
 <?php foreach($gData['perms'] as $pKey):
 if(!isset($allPerms[$pKey])) continue;
-$checked = !empty($rPerms[$pKey]); ?>
+$checked = !empty($rPerms[$pKey]);
+/* Administrator: "Rollen & Rechte verwalten" und früher rollengebundene Rechte sind fest */
+$locked = $rKey === 'admin' && ($pKey === 'manage_roles' || permissionIsRoleBound($pKey)); ?>
 <div class="rl-perm-row">
 <div class="rl-perm-text">
 <span class="rl-perm-label"><?php echo e($allPerms[$pKey]);?></span>
-<span class="rl-perm-hint"><?php echo e($permDescriptions[$pKey]??$pKey);?></span>
+<span class="rl-perm-hint"><?php echo e($catalog[$pKey]['description']??$pKey);?><?php if($locked):?> (für Administratoren immer erteilt)<?php endif;?></span>
 <?php $ov=getUserOverrides($pKey);if($ov):?><span class="rl-override-tags"><?php foreach($ov as $o):?><span class="rl-override-tag <?php echo $o['granted']?'rl-ov-grant':'rl-ov-deny';?>"><?php echo e($o['first_name'].' '.$o['last_name']);?><button class="rl-ov-rm" onclick="rlRemoveOverride(<?php echo $o['user_id'];?>,'<?php echo $pKey;?>',this)">&times;</button></span><?php endforeach;?></span><?php endif;?>
 </div>
 <div class="rl-perm-acts">
 <button type="button" class="rl-user-btn" onclick="rlOpenOverride('<?php echo $pKey;?>','<?php echo e($allPerms[$pKey]);?>','<?php echo $rKey;?>')" title="Einzelne Person zuweisen/verweigern">
 <svg viewBox="0 0 20 20" fill="currentColor" style="width:13px;height:13px"><path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/></svg>
 </button>
-<label class="rl-toggle" title="Für alle in dieser Rolle ein/aus">
-<input type="checkbox" class="rl-cb" data-role="<?php echo $rKey;?>" data-perm="<?php echo $pKey;?>" <?php if($checked) echo 'checked';?>>
+<label class="rl-toggle" title="<?php echo $locked ? 'Für Administratoren fest erteilt' : 'Für alle in dieser Rolle ein/aus';?>">
+<input type="checkbox" class="rl-cb" data-role="<?php echo $rKey;?>" data-perm="<?php echo $pKey;?>" <?php if($checked||$locked) echo 'checked';?><?php if($locked) echo ' disabled data-locked="1"';?>>
 <span class="rl-toggle-track"><span class="rl-toggle-thumb"></span></span>
 </label>
 </div>
@@ -370,6 +395,18 @@ Speichern
 <div class="mf"><button class="btn btn-outline" onclick="cMod('newRoleMod')">Abbrechen</button><button class="btn btn-primary" onclick="rlCreateRole()">Rolle erstellen</button></div>
 </div></div>
 
+<!-- Rename Role Modal -->
+<div class="modal-bg" id="renameRoleMod"><div class="modal modal-sm">
+<div class="mh"><h3>Rolle umbenennen</h3><button class="mx" onclick="cMod('renameRoleMod')">&times;</button></div>
+<div class="mb">
+<input type="hidden" id="rrKey" value="">
+<div class="fg"><label for="rrLabel">Anzeigename</label><input type="text" id="rrLabel" maxlength="100"></div>
+<div class="fg"><label for="rrColor">Farbe</label><input type="color" id="rrColor" value="#6b7280"></div>
+<span class="muted" style="font-size:.65rem">Der Rollen-Schlüssel <code id="rrKeyShow"></code> bleibt unverändert; Benutzer und Rechte bleiben zugeordnet.</span>
+</div>
+<div class="mf"><button class="btn btn-outline" onclick="cMod('renameRoleMod')">Abbrechen</button><button class="btn btn-primary" onclick="rlRenameRole()">Speichern</button></div>
+</div></div>
+
 <style>
 .rl-user-btn{background:none;border:1px solid var(--bd);border-radius:var(--r);padding:3px 5px;cursor:pointer;color:var(--mu);flex-shrink:0}
 .rl-user-btn:hover{background:var(--ibg);color:var(--inf);border-color:var(--inf)}
@@ -401,7 +438,7 @@ function rlSwitch(role){
     document.querySelectorAll('.rl-panel').forEach(function(p){p.classList.toggle('active',p.id==='rlP_'+role);});
 }
 function rlToggleAll(role,state){
-    document.querySelectorAll('.rl-cb[data-role="'+role+'"]').forEach(function(cb){cb.checked=state;});
+    document.querySelectorAll('.rl-cb[data-role="'+role+'"]').forEach(function(cb){if(!cb.dataset.locked)cb.checked=state;});
 }
 function rlSave(role){
     var perms=[];
@@ -485,6 +522,24 @@ function rlCreateRole(){
     fetch(getApiBase()+'rollen',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'create_role',role_key:key,role_label:label,color:color,base_role:base,_token:RL_CSRF})})
     .then(function(r){return r.json();}).then(function(d){
         if(d.success){toast(d.msg,'success');cMod('newRoleMod');setTimeout(function(){location.reload();},800);}
+        else toast(d.error||'Fehler','error');
+    }).catch(function(e){toast(e.message,'error');});
+}
+function rlOpenRename(btn){
+    document.getElementById('rrKey').value=btn.dataset.roleKey;
+    document.getElementById('rrKeyShow').textContent=btn.dataset.roleKey;
+    document.getElementById('rrLabel').value=btn.dataset.roleLabel;
+    document.getElementById('rrColor').value=btn.dataset.roleColor||'#6b7280';
+    oMod('renameRoleMod');
+}
+function rlRenameRole(){
+    var key=document.getElementById('rrKey').value;
+    var label=document.getElementById('rrLabel').value.trim();
+    var color=document.getElementById('rrColor').value;
+    if(!label){toast('Anzeigename eingeben','warning');return;}
+    fetch(getApiBase()+'rollen',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'rename_role',role_key:key,role_label:label,color:color,_token:RL_CSRF})})
+    .then(function(r){return r.json();}).then(function(d){
+        if(d.success){toast(d.msg,'success');cMod('renameRoleMod');setTimeout(function(){location.reload();},800);}
         else toast(d.error||'Fehler','error');
     }).catch(function(e){toast(e.message,'error');});
 }

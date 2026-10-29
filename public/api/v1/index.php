@@ -64,7 +64,7 @@ function apiAuth(): array
     if (is_string($r)) apiError(401, $r, $r === 'token_expired' ? 'Sitzung abgelaufen.' : 'Ungültiges Token.');
     $_SESSION['user_id'] = $r['uid'];
     if (!opsModule('mobile')) apiError(403, 'module_disabled', 'Der App-Zugang ist für Ihre Organisation deaktiviert.');
-    if (isMaintenanceMode() && !hasRole('admin', 'manager')) apiError(503, 'maintenance', (string)getSetting('maintenance_message', 'Wartungsarbeiten.'));
+    if (isMaintenanceMode() && !canBypassMaintenance()) apiError(503, 'maintenance', (string)getSetting('maintenance_message', 'Wartungsarbeiten.'));
     return $r;
 }
 
@@ -197,6 +197,7 @@ if ($path === 'auth/oidc/token' && $method === 'POST') {
     } catch (OidcException $e) { apiError(401, 'invalid_credentials', $e->getMessage()); }
     $u = oidcFindUser($claims);
     if (!$u) apiError(403, 'forbidden', 'Für dieses Firmenkonto gibt es keinen aktiven Zugang.');
+    $u = oidcApplyGroupRole($u, $claims);
     $_SESSION['user_id'] = (int)$u['id'];
     apiOut(200, apiIssuePair((int)$u['id'], null, isset($b['device_name']) ? (string)$b['device_name'] : null, 'oidc') + ['user' => apiMeJson()]);
 }

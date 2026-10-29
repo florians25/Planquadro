@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../app/lib/Security.php';
 require_once __DIR__ . '/../../app/lib/Kernel.php';
 require_once __DIR__ . '/../../app/config/database.php';
+require_once __DIR__ . '/../../app/lib/Permissions.php';
 /* Request-Kernel: Request-ID (Header X-Request-ID, Log-Zeilen) und globaler
    Fehlerrahmen – technische Fehlertexte gehen nur ins Log (Befund S-20).
    API v1 hat einen eigenen Fehlerrahmen und bekommt nur die Request-ID. */
@@ -81,13 +82,20 @@ function hasRole(string ...$r): bool {
 function isAdmin(): bool { return hasRole('admin'); }
 function canEdit(): bool { return hasPerm('plan_edit'); }
 function canSeeDetails(): bool { return hasPerm('view_gesamtplan_details'); }
-/* Benutzer-/Teamverwaltung ausschließlich für Manager, Verwaltung (Service
-   Administration) und Administrator – fest an die Rolle gebunden, damit weder
-   veraltete DB-Rechte noch fehlende Migrationen den Zugriff verändern. */
-function canManageUsers(): bool { return hasRole('admin','manager','verwaltung'); }
-/* Stammdaten/Konfiguration (Einsatzbereiche, Feiertage) – ebenfalls nur
-   Manager, Verwaltung (Service Administration) und Administrator. */
-function canManageConfig(): bool { return hasRole('admin','manager','verwaltung'); }
+/* Früher fest an Rollen gebundene Prüfungen, seit Migration 0006 eigene
+   Rechte (app/lib/Permissions.php, role_bound). Standard unverändert:
+   Benutzer-/Teamverwaltung und Stammdaten admin, manager, verwaltung. */
+function canManageUsers(): bool { return hasPerm('manage_team'); }
+/* Stammdaten/Konfiguration (Einsatzbereiche, Feiertage, Stammdaten) */
+function canManageConfig(): bool { return hasPerm('manage_config'); }
+/* Wartungsmodus-Ausnahme (Standard: admin, manager) */
+function canBypassMaintenance(): bool { return hasPerm('bypass_maintenance'); }
+/* api/maintenance und api/cleanup (Standard: admin, manager) */
+function canManageMaintenance(): bool { return hasPerm('manage_maintenance'); }
+/* Changelog-Einträge löschen (Standard: admin, manager) */
+function canDeleteChangelog(): bool { return hasPerm('delete_changelog'); }
+/* Seite Vertretung (Standard: admin, manager, teamleiter) */
+function canManageDeputations(): bool { return hasPerm('manage_deputations'); }
 function requireConfigManager(): void {
     requireLogin();
     if (!canManageConfig()) {
@@ -110,6 +118,9 @@ function hasPerm(string $perm): bool {
     static $cache = [];
     $key = $uid.'_'.$perm;
     if (isset($cache[$key])) return $cache[$key];
+    /* 0. Früher rollengebundene Rechte hat der Administrator immer
+          (entspricht der bisherigen Prüfung hasRole('admin', …)). */
+    if ($role === 'admin' && permissionIsRoleBound($perm)) { $cache[$key] = true; return true; }
     /* 1. Check user-level override first */
     try {
         $s = getDB()->prepare('SELECT granted FROM permission_user_overrides WHERE user_id=? AND permission=?');
@@ -122,7 +133,9 @@ function hasPerm(string $perm): bool {
         $s = getDB()->prepare('SELECT granted FROM role_permissions WHERE role=? AND permission=?');
         $s->execute([$role, $perm]);
         $r = $s->fetch();
-        $cache[$key] = $r ? (bool)$r['granted'] : false;
+        /* Fehlende Zeile: verweigert – außer bei früher rollengebundenen
+           Rechten, dort gilt der Katalog-Standard (Code vor Migration 0006). */
+        $cache[$key] = $r ? (bool)$r['granted'] : (permissionIsRoleBound($perm) && permissionDefault($perm, $role));
     } catch(Exception $e) {
         /* Fallback to legacy role checks if table doesn't exist yet */
         $legacy = [
@@ -144,7 +157,7 @@ function hasPerm(string $perm): bool {
                Teamleiter werden auf ihr eigenes Team eingeschränkt. */
             'view_all_employees' => !in_array($role, ['manager','teamleiter']),
         ];
-        $cache[$key] = $legacy[$perm] ?? false;
+        $cache[$key] = $legacy[$perm] ?? (permissionIsRoleBound($perm) && permissionDefault($perm, $role));
     }
     return $cache[$key];
 }
@@ -159,28 +172,20 @@ function allPermsForRole(string $role): array {
     } catch(Exception $e) { return []; }
 }
 
+/* Wirksamer Wert eines Rechts für eine Rolle (ohne Benutzer-Overrides) –
+   gleiche Regeln wie hasPerm(). Für die Rollen-Seite und das Kopieren von
+   Rechten beim Anlegen einer Rolle. */
+function roleHasPermission(string $role, string $perm): bool {
+    static $maps = [];
+    if ($role === 'admin' && permissionIsRoleBound($perm)) return true;
+    if (!isset($maps[$role])) $maps[$role] = allPermsForRole($role);
+    if (array_key_exists($perm, $maps[$role])) return $maps[$role][$perm];
+    return permissionIsRoleBound($perm) && permissionDefault($perm, $role);
+}
+
+/* Alle Rechte (Schlüssel => Bezeichnung) aus dem Katalog app/lib/Permissions.php */
 function allPermissions(): array {
-    return [
-        'plan_view' => 'Plan ansehen',
-        'plan_edit' => 'Plan bearbeiten',
-        'plan_publish_own' => 'Eigene Änderungen veröffentlichen',
-        'plan_publish_all' => 'Alle Änderungen veröffentlichen',
-        'plan_publish_year' => 'Jahr veröffentlichen',
-        'plan_view_internal' => 'Interne Einträge sehen',
-        'view_erl_column' => 'Erl.-Spalte sehen',
-        'unlock_vacation' => 'Genehmigten Urlaub entsperren',
-        'manage_users' => 'Mitarbeiter verwalten',
-        'delete_users' => 'Mitarbeiter löschen',
-        'manage_settings' => 'Einstellungen verwalten',
-        'manage_roles' => 'Rollen & Rechte verwalten',
-        'view_gesamtplan_details' => 'Gesamtplan Details sehen',
-        'approve_requests' => 'Anträge genehmigen',
-        'view_all_employees' => 'Alle Mitarbeiter sehen (sonst nur eigenes Team)',
-        /* Bisher geprüft, aber nicht pflegbar (Befund X-03) */
-        'manage_absences' => 'Abwesenheiten erfassen (Modul Abwesenheiten)',
-        'view_absence_details_all' => 'Krankheits-/Urlaubsdetails aller Mitarbeiter sehen',
-        'use_planning_assistant' => 'Planungsassistent nutzen',
-    ];
+    return array_map(function ($p) { return $p['label']; }, permissionCatalog());
 }
 
 /* User-level permission overrides */

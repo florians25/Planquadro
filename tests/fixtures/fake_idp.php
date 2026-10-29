@@ -2,7 +2,8 @@
 /**
  * Minimaler OpenID-Connect-Provider NUR für Tests (php -S … fake_idp.php).
  * /authorize akzeptiert login_hint=<benutzername> statt eines Login-Formulars;
- * tamper=1 erzeugt ein ID-Token mit ungültiger Signatur.
+ * tamper=1 erzeugt ein ID-Token mit ungültiger Signatur; groups=a,b setzt den
+ * Claim "groups" (Liste), groups_claim=<name> legt ihn unter einem anderen Namen ab.
  */
 $dir = sys_get_temp_dir() . '/planquadro-fake-idp';
 if (!is_dir($dir)) mkdir($dir, 0700, true);
@@ -22,7 +23,9 @@ if ($path === '/.well-known/openid-configuration') {
 } elseif ($path === '/authorize') {
     $code = bin2hex(random_bytes(8));
     file_put_contents("$dir/$code.json", json_encode(['nonce' => $_GET['nonce'] ?? '', 'challenge' => $_GET['code_challenge'] ?? '',
-        'user' => $_GET['login_hint'] ?? '', 'client_id' => $_GET['client_id'] ?? '', 'tamper' => !empty($_GET['tamper'])]));
+        'user' => $_GET['login_hint'] ?? '', 'client_id' => $_GET['client_id'] ?? '', 'tamper' => !empty($_GET['tamper']),
+        'groups' => isset($_GET['groups']) ? array_values(array_filter(explode(',', $_GET['groups']), 'strlen')) : null,
+        'groups_claim' => preg_replace('/[^A-Za-z0-9_:.\/-]/', '', $_GET['groups_claim'] ?? 'groups')]));
     header('Location: ' . $_GET['redirect_uri'] . '?' . http_build_query(['code' => $code, 'state' => $_GET['state'] ?? '']));
     http_response_code(302);
 } elseif ($path === '/token') {
@@ -33,8 +36,10 @@ if ($path === '/.well-known/openid-configuration') {
     @unlink($f);
     if (!$c || $b64u(hash('sha256', $_POST['code_verifier'] ?? '', true)) !== $c['challenge']) { http_response_code(400); echo json_encode(['error' => 'invalid_grant']); exit; }
     $h = $b64u(json_encode(['alg' => 'RS256', 'kid' => 'k1', 'typ' => 'JWT']));
-    $p = $b64u(json_encode(['iss' => $iss, 'aud' => $c['client_id'], 'sub' => 'sub-' . $c['user'], 'preferred_username' => $c['user'],
-        'nonce' => $c['nonce'], 'iat' => time(), 'exp' => time() + 300]));
+    $claims = ['iss' => $iss, 'aud' => $c['client_id'], 'sub' => 'sub-' . $c['user'], 'preferred_username' => $c['user'],
+        'nonce' => $c['nonce'], 'iat' => time(), 'exp' => time() + 300];
+    if (($c['groups'] ?? null) !== null) $claims[$c['groups_claim'] ?: 'groups'] = $c['groups'];
+    $p = $b64u(json_encode($claims));
     openssl_sign("$h.$p", $sig, $key, OPENSSL_ALGO_SHA256);
     if ($c['tamper']) $p = $b64u(json_encode(['iss' => $iss, 'aud' => $c['client_id'], 'preferred_username' => 'admin', 'nonce' => $c['nonce'], 'iat' => time(), 'exp' => time() + 300]));
     echo json_encode(['access_token' => 'x', 'token_type' => 'Bearer', 'id_token' => "$h.$p." . $b64u($sig)]);

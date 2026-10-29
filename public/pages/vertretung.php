@@ -3,7 +3,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 requireLogin();
 requireModule('deputation');
-if (!hasRole('admin','manager','teamleiter')) {
+if (!canManageDeputations()) {
     showAccessDenied('Die Vertreterregelung ist nur für Teamleiter, Manager und Administratoren zugänglich.');
 }
 $db = getDB();

@@ -60,6 +60,10 @@ const TENANT_CONFIG_DEFAULTS = [
             'label'                => 'Mit Firmenkonto anmelden',
             'allow_password_login' => true,
             'scopes'               => 'openid profile email',
+            /* Rollen aus IdP-Gruppen (Standard aus = Rolle bleibt, wie in Planquadro gepflegt) */
+            'group_roles_enabled'  => false,
+            'groups_claim'         => 'groups',
+            'group_roles'          => [],   /* [['group' => '…', 'role' => '…'], …] */
         ],
     ],
 ];

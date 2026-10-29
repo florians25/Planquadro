@@ -57,6 +57,7 @@ try {
         oidcAudit(null, 'oidc_unknown_user', 'Kein aktives Konto für ' . substr(hash('sha256', (string)($claims[oidcConfig()['claim']] ?? '')), 0, 12));
         oidcFail('Für Ihr Firmenkonto gibt es keinen aktiven Planquadro-Zugang. Bitte wenden Sie sich an die Administration.');
     }
+    $user = oidcApplyGroupRole($user, $claims);
     opsRegenerateSession();
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['login_time'] = $_SESSION['last_activity'] = time();

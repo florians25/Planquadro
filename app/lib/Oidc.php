@@ -14,9 +14,11 @@
  *  - Prüfung von iss, aud/azp, exp, iat, nonce
  *  - keine automatische Benutzeranlage: der Claim muss einem aktiven
  *    Planquadro-Benutzer (users.username) entsprechen
+ *  - optionale Rollen-Zuordnung aus IdP-Gruppen, nie auf Administrator-Rechte
  */
 
 require_once __DIR__ . '/PlanCells.php';   /* opsAppKey() */
+require_once __DIR__ . '/Permissions.php'; /* SYSTEM_ROLES */
 
 class OidcException extends RuntimeException {}
 
@@ -238,6 +240,74 @@ function oidcFindUser(array $claims): ?array
        ein kompromittierter oder falsch konfigurierter IdP erhält so keine Admin-Rechte. */
     if ($u && $u['role'] === 'admin' && empty(oidcConfig()['allow_admin'])) return null;
     return $u;
+}
+
+/* ---- Rollen aus IdP-Gruppen (optional, Standard aus) ----
+   security.oidc.group_roles_enabled  Zuordnung aktiv
+   security.oidc.groups_claim         Claim mit den Gruppen (Liste oder Text), Standard "groups"
+   security.oidc.group_roles          [['group' => 'cn-planung', 'role' => 'teamleiter'], …]
+   Die erste passende Zeile (Reihenfolge der Liste) bestimmt die Rolle. Ohne
+   Treffer bleibt die Rolle unverändert. Sicherheit: nie die Rolle "admin" oder
+   eine Rolle mit "Rollen & Rechte verwalten" vergeben, und Konten mit solchen
+   Rollen nie über den IdP ändern – sie bleiben Administratoren vorbehalten. */
+
+/** Darf diese Rolle über den IdP vergeben (bzw. ein Konto mit ihr geändert) werden? */
+function oidcRoleAssignable(string $role): bool
+{
+    if ($role === '' || $role === 'admin') return false;
+    $db = getDB();
+    $known = in_array($role, SYSTEM_ROLES, true);
+    if (!$known) {
+        try { $s = $db->prepare('SELECT COUNT(*) FROM custom_roles WHERE role_key = ?'); $s->execute([$role]); $known = (int)$s->fetchColumn() > 0; }
+        catch (Throwable $e) { $known = false; }
+    }
+    if (!$known) return false;
+    try {
+        $s = $db->prepare("SELECT granted FROM role_permissions WHERE role = ? AND permission = 'manage_roles'");
+        $s->execute([$role]);
+        if ((int)$s->fetchColumn() === 1) return false;
+    } catch (Throwable $e) { return false; }
+    return true;
+}
+
+/** Gruppen aus den Claims (Liste oder durch Komma/Leerzeichen getrennter Text) */
+function oidcGroups(array $claims, string $claim): array
+{
+    $v = $claims[$claim] ?? null;
+    if (is_string($v)) $v = preg_split('/[\s,]+/', $v, -1, PREG_SPLIT_NO_EMPTY);
+    if (!is_array($v)) return [];
+    return array_values(array_filter(array_map(function ($g) { return is_scalar($g) ? trim((string)$g) : ''; }, $v), 'strlen'));
+}
+
+/** Rolle laut Gruppen-Zuordnung – null = Rolle bleibt, wie sie ist */
+function oidcMappedRole(array $claims, array $user): ?string
+{
+    $c = oidcConfig();
+    if (empty($c['group_roles_enabled'])) return null;
+    if (!oidcRoleAssignable((string)$user['role'])) return null;   /* Admin-Konten u. Ä. nie ändern */
+    $claim = (string)($c['groups_claim'] ?? 'groups') ?: 'groups';
+    $groups = oidcGroups($claims, $claim);
+    if (!$groups) return null;
+    foreach ((array)($c['group_roles'] ?? []) as $m) {
+        $g = (string)($m['group'] ?? ''); $r = (string)($m['role'] ?? '');
+        if ($g === '' || !in_array($g, $groups, true)) continue;
+        return oidcRoleAssignable($r) ? $r : null;   /* unzulässige Zeile: Rolle bleibt */
+    }
+    return null;
+}
+
+/** Gruppen-Zuordnung anwenden (nach erfolgreicher Anmeldung); liefert den aktuellen Benutzer */
+function oidcApplyGroupRole(array $user, array $claims): array
+{
+    $role = oidcMappedRole($claims, $user);
+    if ($role === null || $role === $user['role']) return $user;
+    getDB()->prepare('UPDATE users SET role = ?, updated_at = NOW() WHERE id = ? AND role = ?')->execute([$role, (int)$user['id'], $user['role']]);
+    try {
+        getDB()->prepare('INSERT INTO audit_log(user_id,action,details,ip_address) VALUES(?,?,?,?)')
+            ->execute([(int)$user['id'], 'oidc_role_mapped', 'Rolle per IdP-Gruppe: ' . $user['role'] . ' → ' . $role, opsClientIp()]);
+    } catch (Throwable $e) {}
+    $user['role'] = $role;
+    return $user;
 }
 
 /* ---- Zwischenstand des Logins (state/nonce/PKCE) ----

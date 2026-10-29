@@ -4,11 +4,12 @@ requireLogin();
 
 /* --------------------------------------------------------------------------
    Wartungsmodus
-   Administratoren und Manager arbeiten weiter – sie sollen die Anwendung
+   Wer das Recht bypass_maintenance hat (Standard: Administratoren und
+   Manager), arbeitet weiter – sie sollen die Anwendung
    waehrend der Wartung ja gerade pruefen koennen. Alle anderen sehen eine
    eigene Seite, die sich selbst aktualisiert, sobald die Wartung endet.
    -------------------------------------------------------------------------- */
-if (isMaintenanceMode() && !hasRole('admin', 'manager')) {
+if (isMaintenanceMode() && !canBypassMaintenance()) {
     $_mUser = currentUser();
     $_mMsg  = getSetting('maintenance_message', 'Das System wird gewartet. Bitte versuchen Sie es später erneut.');
     $_mCo   = getSetting('company_name', 'Planquadro');
@@ -157,6 +158,8 @@ $_bp = bp();
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm5.707 9.707a1 1 0 00-1.414-1.414L10 10.586l-.293-.293a1 1 0 00-1.414 1.414l.293.293-.293.293a1 1 0 101.414 1.414l.293-.293.293.293a1 1 0 001.414-1.414l-.293-.293.293-.293z" clip-rule="evenodd"/></svg>
       <span>Abwesenheiten</span></a><?php endif; ?>
     <?php endif; ?>
+    <?php endif; ?>
+    <?php if (canManageDeputations()): ?>
     <?php if (opsNavVisible('vertretung')): ?><a style="order:<?php echo opsNavOrder('vertretung'); ?>" href="<?php echo $_bp; ?>vertretung" class="nav-link<?php echo $_pg==='vertretung'?' active':''; ?>"<?php if($_pg==='vertretung') echo ' aria-current="page"'; ?> title="Vertretung" aria-label="Vertretung">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7 2a1 1 0 011 1v1h4V3a1 1 0 112 0v1h1a2 2 0 012 2v1H3V6a2 2 0 012-2h1V3a1 1 0 011-1zM3 9h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V9zm4.707 2.293a1 1 0 00-1.414 1.414L7.586 14l-1.293 1.293a1 1 0 101.414 1.414L9 15.414l1.293 1.293a1 1 0 001.414-1.414L10.414 14l1.293-1.293a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293z" clip-rule="evenodd"/></svg>
       <span>Vertretung</span></a><?php endif; ?>

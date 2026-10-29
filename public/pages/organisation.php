@@ -105,11 +105,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                 'label' => mb_substr(trim((string)($_POST['label'] ?? '')), 0, 60) ?: 'Mit Firmenkonto anmelden',
                 'allow_password_login' => !empty($_POST['allow_password_login']),
                 'allow_admin' => !empty($_POST['allow_admin'])];
+            /* Rollen aus IdP-Gruppen: nie Administrator oder Rollen mit "Rollen & Rechte verwalten" */
+            $map = [];
+            $groups = (array)($_POST['group_roles_group'] ?? []); $mroles = (array)($_POST['group_roles_role'] ?? []);
+            foreach ($groups as $i => $g) {
+                $g = trim((string)$g); $r = (string)($mroles[$i] ?? '');
+                if ($g === '' && $r === '') continue;
+                if ($g === '' || mb_strlen($g) > 200) throw new InvalidArgumentException('Gruppenname fehlt oder ist zu lang (max. 200 Zeichen).');
+                if (!array_key_exists($r, allRoles()) || !oidcRoleAssignable($r)) {
+                    throw new InvalidArgumentException('Die Gruppe „' . $g . '“ kann nicht der Rolle „' . roleName($r) . '“ zugeordnet werden (Administrator-Rechte werden nie über den Identity-Provider vergeben).');
+                }
+                $map[] = ['group' => $g, 'role' => $r];
+            }
+            if (count($map) > 50) throw new InvalidArgumentException('Höchstens 50 Gruppen-Zuordnungen.');
+            $gclaim = trim((string)($_POST['groups_claim'] ?? '')) ?: 'groups';
+            if (!preg_match('/^[A-Za-z0-9_:.\/-]{1,100}$/', $gclaim)) throw new InvalidArgumentException('Ungültiger Name für den Gruppen-Claim.');
+            $patch['group_roles_enabled'] = !empty($_POST['group_roles_enabled']);
+            if ($patch['group_roles_enabled'] && !$map) throw new InvalidArgumentException('Für die Rollen-Zuordnung mindestens eine Gruppe eintragen.');
+            $patch['groups_claim'] = $gclaim;
+            $patch['group_roles'] = $map;
             /* Leeres Secret-Feld = unverändert lassen (wird nie an den Browser zurückgegeben) */
             if (($_POST['client_secret'] ?? '') !== '') $patch['client_secret'] = (string)$_POST['client_secret'];
             if (!$patch['allow_password_login'] && !$enabled) $patch['allow_password_login'] = true;
             tcfgSet(['security' => ['oidc' => $patch]]);
-            orgAudit('tenant_config', 'oidc ' . ($enabled ? 'on ' . $issuer : 'off'));
+            orgAudit('tenant_config', 'oidc ' . ($enabled ? 'on ' . $issuer : 'off') . ($patch['group_roles_enabled'] ? ', Gruppen-Rollen: ' . count($map) : ''));
             echo json_encode(['success' => true, 'msg' => 'Anmeldung gespeichert.']); exit;
         }
         if ($act === 'test_oidc') {
@@ -236,6 +255,20 @@ $redirectUri = oidcRedirectUri();
       </div>
       <label class="org-check"><input type="checkbox" name="allow_password_login" value="1" <?php if ($oidc['allow_password_login']) echo 'checked'; ?>> Anmeldung mit Passwort weiterhin erlauben</label>
       <label class="org-check"><input type="checkbox" name="allow_admin" value="1" <?php if (!empty($oidc['allow_admin'])) echo 'checked'; ?>> Administratoren dürfen sich ebenfalls per SSO anmelden (Standard: nur Passwort als Notfallzugang)</label>
+      <fieldset class="org-fs">
+        <legend>Rollen aus Gruppen des Identity-Providers (optional)</legend>
+        <label class="org-check"><input type="checkbox" name="group_roles_enabled" value="1" <?php if (!empty($oidc['group_roles_enabled'])) echo 'checked'; ?>> Rolle bei jeder SSO-Anmeldung aus der ersten passenden Gruppe übernehmen</label>
+        <div class="fg"><label for="oGClaim">Claim mit den Gruppen</label><input id="oGClaim" name="groups_claim" maxlength="100" value="<?php echo e($oidc['groups_claim'] ?? 'groups'); ?>"></div>
+        <table class="tbl org-map"><thead><tr><th scope="col">Gruppe (exakter Wert im Claim)</th><th scope="col">Rolle in Planquadro</th></tr></thead><tbody>
+        <?php $mapRows = array_values((array)($oidc['group_roles'] ?? [])); for ($i = 0; $i < count($mapRows) + 3; $i++): $mr = $mapRows[$i] ?? ['group' => '', 'role' => '']; ?>
+          <tr><td><input name="group_roles_group[]" maxlength="200" aria-label="Gruppe <?php echo $i + 1; ?>" value="<?php echo e($mr['group']); ?>"></td>
+          <td><select name="group_roles_role[]" aria-label="Rolle für Gruppe <?php echo $i + 1; ?>"><option value="">– keine –</option>
+            <?php foreach (allRoles() as $rk => $rl): if (!oidcRoleAssignable($rk)) continue; ?><option value="<?php echo e($rk); ?>" <?php if ($mr['role'] === $rk) echo 'selected'; ?>><?php echo e($rl); ?></option><?php endforeach; ?>
+          </select></td></tr>
+        <?php endfor; ?>
+        </tbody></table>
+        <p class="muted" style="font-size:.75rem">Ohne passende Gruppe bleibt die Rolle unverändert. Die Rolle Administrator und Rollen mit „Rollen &amp; Rechte verwalten“ werden nie vergeben; Konten mit diesen Rollen ändert der Identity-Provider nie. Ausgeschaltet (Standard) gilt ausschließlich die in Planquadro gepflegte Rolle.</p>
+      </fieldset>
       <p class="muted" style="font-size:.78rem">Redirect-URI beim Identity-Provider eintragen: <code><?php echo e($redirectUri); ?></code> (Apps: <code>planquadro://auth</code>). Benutzer werden nicht automatisch angelegt – das Konto muss in Planquadro existieren und aktiv sein.</p>
       <button class="btn btn-primary" type="submit">Anmeldung speichern</button>
       <button class="btn btn-outline" type="button" id="btnOidcTest">Verbindung testen</button>
@@ -256,6 +289,9 @@ $redirectUri = oidcRedirectUri();
 .org-nav li{display:flex;gap:.4rem;align-items:center;padding:.3rem .5rem;border-bottom:1px solid var(--bd)}
 .org-nav li:last-child{border-bottom:0}.org-nav-name{font-weight:600;font-size:.85rem}
 .org-preview{display:flex;align-items:center;gap:.5rem;min-height:34px}
+.org-fs{border:1px solid var(--bd);border-radius:var(--r);padding:.5rem .75rem;display:flex;flex-direction:column;gap:.45rem}
+.org-fs legend{font-size:.8rem;font-weight:600;padding:0 .3rem}
+.org-map input,.org-map select{width:100%}
 </style>
 <script>
 (function(){
