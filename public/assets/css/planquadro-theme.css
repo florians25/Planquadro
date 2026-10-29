@@ -259,3 +259,8 @@ html[data-theme="dark"] .maint-page-eta{color:color-mix(in srgb, #92400e 45%, #f
 html[data-theme="dark"] .maint-active{color:color-mix(in srgb, #92400e 45%, #ffffff)}
 html[data-theme="dark"] .maint-active a{color:color-mix(in srgb, #92400e 45%, #ffffff)}
 /* <<< generated dark mode <<< */
+
+/* ---------- Navigation: kompakt, wenn die Breite nicht reicht (assets/js/nav.js) ---------- */
+.nav-links.nav-compact .nav-link:not(.active) span:not(.nav-beta) { display: none; }
+.nav-links.nav-compact .nav-link:not(.active) .nav-beta { display: none; }
+.nav-links.nav-compact .nav-link { padding-left: .55rem; padding-right: .55rem; }

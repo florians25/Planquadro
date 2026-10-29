@@ -86,6 +86,7 @@ $_bp = bp();
 <title><?php echo e(tcfg('branding.name','Planquadro')); ?><?php echo isset($pageTitle) ? ' – '.e($pageTitle) : ''; ?></title>
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/style.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/style.css'); ?>">
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/planquadro-theme.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/planquadro-theme.css'); ?>">
+<script src="<?php echo $_bp; ?>assets/js/nav.js?v=<?php echo @filemtime(__DIR__.'/../assets/js/nav.js'); ?>" defer></script>
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/planning-plus.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/planning-plus.css'); ?>">
 <link rel="icon" href="<?php echo $_bp; ?>assets/brand/favicon.svg" type="image/svg+xml"><link rel="icon" href="<?php echo $_bp; ?>assets/brand/favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="<?php echo $_bp; ?>assets/brand/apple-touch-icon.png"><meta name="theme-color" content="#14213D">
 <meta name="color-scheme" content="light dark">
