@@ -1,13 +1,20 @@
 <?php
 require_once __DIR__ . '/../../app/lib/Security.php';
 require_once __DIR__ . '/../../app/config/database.php';
-opsStartSession();
-
-/* Jeder zustandsändernde Request (POST/PUT/PATCH/DELETE) an Seiten und APIs
-   braucht ein gültiges CSRF-Token. app.js/header.php senden es automatisch
-   als Header X-CSRF-Token mit. */
-opsEnforceCsrf();
-opsEnforceSessionTimeout();
+/* API v1 (Bearer-Token) arbeitet ohne Cookie-Session: kein Session-Start,
+   kein CSRF (es gibt kein Cookie, das ein Angreifer ausnutzen könnte). Der
+   Benutzer wird nach der Token-Prüfung in $_SESSION['user_id'] gesetzt,
+   damit alle Rechte-/Scope-Funktionen unverändert funktionieren. */
+if (defined('OPSPILOT_STATELESS') && OPSPILOT_STATELESS) {
+    $_SESSION = [];
+} else {
+    opsStartSession();
+    /* Jeder zustandsändernde Request (POST/PUT/PATCH/DELETE) an Seiten und APIs
+       braucht ein gültiges CSRF-Token. app.js/header.php senden es automatisch
+       als Header X-CSRF-Token mit. */
+    opsEnforceCsrf();
+    opsEnforceSessionTimeout();
+}
 
 function isLoggedIn(): bool { return isset($_SESSION['user_id']) && empty($_SESSION['must_change_password']); }
 

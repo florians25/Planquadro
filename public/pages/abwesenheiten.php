@@ -13,6 +13,7 @@
 
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../../app/lib/PlanCells.php';
+require_once __DIR__ . '/../../app/lib/Push.php';
 requireLogin();
 requireModule('absences');
 
@@ -547,6 +548,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                 }
             }
             $db->commit();
+
+            /* Vertretungen über neue Einsätze informieren (die abwesende Person
+               selbst hat die Abwesenheit meist selbst gemeldet). Nur bei
+               sofortiger Veröffentlichung. */
+            if ($publish && $subsUsed) {
+                try {
+                    $notify = [];
+                    foreach ($dates as $d) { $ds = array_key_exists($d, $subMap) ? (int)$subMap[$d] : $sub; if ($ds && isset($subsUsed[$ds])) $notify[$ds][] = $d; }
+                    planNotifyChanges($db, $notify, $ME);
+                } catch (Throwable $e) { error_log('notify: ' . $e->getMessage()); }
+            }
 
             try {
                 $db->prepare('INSERT INTO audit_log(user_id, action, details, ip_address) VALUES(?,?,?,?)')

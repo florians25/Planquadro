@@ -122,6 +122,21 @@ final class TenancyTest extends IntegrationTestCase
         $this->tenantPdo('beta')->exec('DELETE FROM login_attempts');
     }
 
+    public function testApiTokenIsBoundToTenant(): void
+    {
+        $c = $this->client('acme.opspilot.test'); $c->sendCsrf = false;
+        $r = $c->request('POST', '/api/v1/auth/login', json_encode(['username' => 'shared', 'password' => 'Acme-Passwort-1']), ['Content-Type: application/json']);
+        $this->assertSame(200, $r->status, $r->body);
+        $tok = $r->json()['access_token'];
+        $this->assertSame(200, $c->request('GET', '/api/v1/me', null, ['Authorization: Bearer ' . $tok])->status);
+        $b = $this->client('beta.opspilot.test');
+        $this->assertSame(401, $b->request('GET', '/api/v1/me', null, ['Authorization: Bearer ' . $tok])->status, 'Token aus Mandant A gilt nicht in B');
+        /* Zentraler API-Host mit Mandanten-Header */
+        $p = $this->client('api.opspilot.test');
+        $this->assertSame(200, $p->request('GET', '/api/v1/me', null, ['Authorization: Bearer ' . $tok, 'X-OpsPilot-Tenant: acme'])->status);
+        $this->assertSame(401, $p->request('GET', '/api/v1/me', null, ['Authorization: Bearer ' . $tok, 'X-OpsPilot-Tenant: beta'])->status);
+    }
+
     public function testMigrateAllTenants(): void
     {
         [$rc, $out] = TestEnv::runCli(['bin/migrate.php', 'up', '--all-tenants'], self::$saasEnv);

@@ -3,6 +3,7 @@ require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/security.php';
 require_once __DIR__.'/../includes/functions.php';
 require_once __DIR__.'/../../app/lib/PlanCells.php';
+require_once __DIR__.'/../../app/lib/Push.php';
 header('Content-Type: application/json; charset=utf-8');
 if (!isLoggedIn()) { http_response_code(401); echo json_encode(['error'=>'Nicht angemeldet']); exit; }
 
@@ -119,7 +120,7 @@ case 'approve_batch':
     if (!hasPerm('approve_requests')) { echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']); exit; }
     $ids = $input['ids'] ?? [];
     if (empty($ids)) { echo json_encode(['success'=>false,'error'=>'Keine IDs']); exit; }
-    try { $db->beginTransaction(); $done=0;
+    try { $db->beginTransaction(); $done=0; $changedCells=[];
     foreach ($ids as $rid) {
         $rid = (int)$rid;
         $s = $db->prepare("SELECT * FROM change_requests WHERE id=? AND status='pending'");
@@ -142,9 +143,15 @@ case 'approve_batch':
             ['pub' => ['type' => $req['request_type'], 'value' => $req['request_type'] === 'assignment' ? (int)$req['plan_area_id'] : $req['absence_type']], 'request_id' => $rid], (int)$cu['id']);
         $dateF = date('d.m.Y', strtotime($date));
         addNotification($uid, 'Antrag genehmigt', 'Dein Änderungsantrag für den '.$dateF.' wurde genehmigt.', 'mein_plan');
+        $changedCells[$uid][] = $date;
         $done++;
     }
     $db->commit();
+    /* Push an die App (die In-App-Meldung "Antrag genehmigt" gibt es bereits) */
+    try {
+        $q = $db->prepare("INSERT INTO push_queue(user_id,title,body,data) SELECT ?, 'Antrag genehmigt', ?, ? FROM DUAL WHERE EXISTS (SELECT 1 FROM push_devices WHERE user_id=?)");
+        foreach ($changedCells as $pu => $pd) $q->execute([$pu, count($pd).' Antrag/Anträge genehmigt.', json_encode(['type'=>'plan_changed','dates'=>implode(',',$pd)]), $pu]);
+    } catch (Throwable $e) { error_log('push: '.$e->getMessage()); }
     echo json_encode(['success'=>true, 'msg'=>$done.' Antrag/Anträge genehmigt']);
     } catch(Exception $e) { $db->rollBack(); error_log('change_requests: '.$e->getMessage()); echo json_encode(['success'=>false,'error'=>'Datenbankfehler']); }
     exit;

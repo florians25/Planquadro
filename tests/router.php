@@ -27,6 +27,8 @@ if ($path === '/' || $path === '/index.php') {
     $target = '/index.php';
 } elseif (preg_match('#^/(logout|install|oidc)$#', $path, $m)) {
     $target = '/' . $m[1] . '.php';
+} elseif (preg_match('#^/api/v1(/.*)?$#', $path)) {
+    $target = '/api/v1/index.php';
 } elseif (preg_match('#^/api/([a-z0-9_]+)$#', $path, $m) && is_file($docRoot . '/api/' . $m[1] . '.php')) {
     $target = '/api/' . $m[1] . '.php';
 } elseif (preg_match('#^/([a-z_]+)$#', $path, $m) && is_file($docRoot . '/pages/' . $m[1] . '.php')) {
