@@ -1,0 +1,70 @@
+name: Security
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"   # wöchentlich, Montag 03:17 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  dependencies:
+    name: Abhängigkeiten (composer audit, npm audit)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - name: composer audit
+        run: composer audit --no-interaction
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: npm audit (Mobile-App, nur Laufzeitabhängigkeiten, ab "high")
+        working-directory: mobile
+        run: npm ci --no-audit --no-fund && npm audit --omit=dev --audit-level=high
+
+  zap-baseline:
+    name: OWASP ZAP Baseline (passiv, lokale Testinstanz)
+    runs-on: ubuntu-24.04
+    services:
+      db:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: opspilot_zap
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect" --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      OPSPILOT_DB_HOST: 127.0.0.1
+      OPSPILOT_DB_USER: root
+      OPSPILOT_DB_PASS: root
+      OPSPILOT_DB_NAME: opspilot_zap
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_mysql, mbstring, openssl, curl, calendar
+          coverage: none
+      - name: Testinstanz starten
+        run: |
+          php bin/migrate.php up
+          php public/install.php
+          nohup php -S 0.0.0.0:8080 -t public tests/router.php > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -fs http://127.0.0.1:8080/ > /dev/null && break; sleep 1; done
+      - name: ZAP Baseline
+        run: |
+          docker run --rm --network host -v "$PWD:/zap/wrk:rw" -t ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://127.0.0.1:8080/ -r zap-report.html -I || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-report
+          path: zap-report.html
