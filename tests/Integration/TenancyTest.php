@@ -137,6 +137,31 @@ final class TenancyTest extends IntegrationTestCase
         $this->assertSame(401, $p->request('GET', '/api/v1/me', null, ['Authorization: Bearer ' . $tok, 'X-OpsPilot-Tenant: beta'])->status);
     }
 
+    public function testPlatformAdministration(): void
+    {
+        [$rc, $out] = TestEnv::runCli(['bin/tenant.php', 'platform-admin', 'betreiber'], self::$saasEnv);
+        $this->assertSame(0, $rc, $out);
+        preg_match('/Passwort: (\S+)/', $out, $m);
+        /* nicht auf Mandanten-Hosts erreichbar */
+        $this->assertSame(404, $this->client('acme.opspilot.test')->get('/platform/')->status);
+        $c = $this->client('api.opspilot.test');
+        $page = $c->get('/platform/')->body;
+        preg_match('/name="_token" value="([a-f0-9]+)"/', $page, $t);
+        $r = $c->request('POST', '/platform/', http_build_query(['_token' => $t[1], 'action' => 'login', 'username' => 'betreiber', 'password' => 'falsch']), ['Content-Type: application/x-www-form-urlencoded']);
+        $this->assertStringContainsString('falsch', $r->body);
+        $r = $c->request('POST', '/platform/', http_build_query(['_token' => $t[1], 'action' => 'login', 'username' => 'betreiber', 'password' => $m[1]]), ['Content-Type: application/x-www-form-urlencoded']);
+        $this->assertSame(302, $r->status);
+        $page = $c->get('/platform/')->body;
+        $this->assertStringContainsString('Acme GmbH', $page);
+        $this->assertStringContainsString('Beta AG', $page);
+        $this->assertStringContainsString('acme.opspilot.test', $page);
+        /* Mandanten-Session gilt nicht für die Plattform */
+        $tc = $this->client('acme.opspilot.test');
+        $this->assertTrue($this->loginOk($tc, 'shared', 'Acme-Passwort-1'));
+        $tc->host = 'api.opspilot.test';
+        $this->assertStringContainsString('name="password"', $tc->get('/platform/')->body);
+    }
+
     public function testMigrateAllTenants(): void
     {
         [$rc, $out] = TestEnv::runCli(['bin/migrate.php', 'up', '--all-tenants'], self::$saasEnv);
