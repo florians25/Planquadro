@@ -1,0 +1,277 @@
+name: Apps (Android, iOS)
+
+# Echte native Builds der Capacitor-App und Screenshots aus der laufenden Android-App.
+#
+#  - android: Debug-APK (Testbuild) + Screenshot-APK (VITE_SCREENSHOT_DEMO=1, Demo-Daten ohne
+#    Backend) → Emulator → Bildschirme per Deep Link öffnen → PNGs hell/dunkel inkl. Widget
+#  - ios:     Build-Check des Capacitor-iOS-Projekts für den Simulator (ohne Signierung) und
+#    App-Bundle als ZIP. iOS-Screenshots liefert die native SwiftUI-App (eigener Workflow).
+#  - publish-screenshots: Bilder in den Branch `app-screenshots` (nur main, Tags, manueller Start)
+#
+# Tags v*: Dieser Workflow wird von release.yml als wiederverwendbarer Workflow aufgerufen
+# (workflow_call), damit APK und iOS-Simulator-Build ohne doppelte Arbeit am Release hängen.
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+    branches: ["**"]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/apps.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apps-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  NODE_VERSION: "22"
+  JAVA_VERSION: "21"
+  ANDROID_API: "34"
+
+jobs:
+  android:
+    name: Android (APK, Emulator-Screenshots)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Abhängigkeiten
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck, Tests, Web-Build
+        run: |
+          npx tsc --noEmit
+          npx vitest run
+          npx vite build
+
+      - name: Android-Projekt synchronisieren
+        run: npx cap sync android
+
+      - name: Debug-APK (Testbuild, ohne Screenshot-Modus)
+        working-directory: mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --stacktrace assembleDebug
+          name="${GITHUB_REF_NAME//\//-}"
+          mkdir -p ../../out
+          cp app/build/outputs/apk/debug/app-debug.apk "../../out/planquadro-${name}-android-test.apk"
+
+      - name: Screenshot-APK (VITE_SCREENSHOT_DEMO=1, nur für CI)
+        run: |
+          VITE_SCREENSHOT_DEMO=1 npx vite build
+          grep -rq "VITE_SCREENSHOT_DEMO" dist && { echo "::error::Build-Variable nicht ersetzt"; exit 1; } || true
+          npx cap copy android
+          (cd android && ./gradlew --no-daemon assembleDebug)
+          cp android/app/build/outputs/apk/debug/app-debug.apk ../screenshot-demo.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: out/planquadro-*-android-test.apk
+          if-no-files-found: error
+
+      - name: KVM aktivieren
+        working-directory: .
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: AVD-Cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ env.ANDROID_API }}-google_apis-x86_64-pixel_6-v1
+
+      - name: AVD anlegen (Snapshot für den Cache)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ env.ANDROID_API }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "AVD-Snapshot erzeugt."
+
+      - name: Emulator-Screenshots
+        uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 25
+        with:
+          api-level: ${{ env.ANDROID_API }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          working-directory: mobile
+          script: bash scripts/android-screenshots.sh ../screenshot-demo.apk ../android-screenshots
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-screenshots
+          path: android-screenshots/
+          if-no-files-found: warn
+
+  ios:
+    name: iOS (Capacitor-Build-Check, Simulator)
+    runs-on: macos-15
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Abhängigkeiten, Web-Build, iOS-Sync
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          npx cap sync ios
+
+      - name: Swift-Pakete/DerivedData-Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            mobile/ios/App/build/SourcePackages
+            mobile/ios/App/build/ModuleCache.noindex
+          key: ios-spm-${{ runner.os }}-${{ hashFiles('mobile/package-lock.json', 'mobile/ios/App/CapApp-SPM/Package.swift') }}
+          restore-keys: ios-spm-${{ runner.os }}-
+
+      - name: xcodebuild (iphonesimulator, Debug, ohne Signierung)
+        working-directory: mobile/ios/App
+        run: |
+          set -o pipefail
+          xcodebuild -version
+          xcodebuild -project App.xcodeproj -scheme App \
+            -sdk iphonesimulator -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tee ../../../xcodebuild.log | grep -E "error:|warning: .*deprecated|BUILD (SUCCEEDED|FAILED)" || true
+          test -d build/Build/Products/Debug-iphonesimulator/App.app || { echo "::error::App.app wurde nicht gebaut – siehe Artefakt ios-build-log"; exit 1; }
+
+      - name: Start-Test im Simulator
+        working-directory: mobile/ios/App
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          udid=$(xcrun simctl list devices available -j | python3 -c '
+          import json,sys
+          d=json.load(sys.stdin)["devices"]
+          c=[x for k,v in d.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")]
+          pref=[x for x in c if x["name"]=="iPhone 16 Pro"] or c
+          print(pref[0]["udid"])')
+          xcrun simctl boot "$udid" || true
+          xcrun simctl bootstatus "$udid" -b
+          xcrun simctl install "$udid" build/Build/Products/Debug-iphonesimulator/App.app
+          xcrun simctl launch "$udid" de.planquadro.app
+          sleep 15
+          xcrun simctl spawn "$udid" launchctl list | grep -q "de.planquadro.app" || { echo "::error::App läuft nach dem Start nicht"; exit 1; }
+          xcrun simctl io "$udid" screenshot ../../../ios-start.png
+          xcrun simctl shutdown "$udid" || true
+
+      - name: Simulator-App packen
+        working-directory: mobile/ios/App
+        run: |
+          name="${GITHUB_REF_NAME//\//-}"
+          ditto -c -k --sequesterRsrc --keepParent build/Build/Products/Debug-iphonesimulator/App.app "../../../planquadro-${name}-ios-simulator.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-app
+          path: planquadro-*-ios-simulator.zip
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-build-log
+          path: |
+            xcodebuild.log
+            ios-start.png
+          if-no-files-found: ignore
+
+  publish-screenshots:
+    name: Screenshots → Branch app-screenshots
+    needs: android
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: app-screenshots-branch
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-screenshots
+          path: shots
+
+      - name: Commit in app-screenshots (Orphan-Branch nur mit Bildern)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          ls shots/android-*.png >/dev/null 2>&1 || { echo "::error::Keine Screenshots vorhanden"; exit 1; }
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          author=(-c user.name="florians25" -c user.email="111896304+florians25@users.noreply.github.com")
+          if git ls-remote --exit-code --heads "$remote" app-screenshots >/dev/null 2>&1; then
+            git clone --quiet --depth 1 --branch app-screenshots "$remote" site
+          else
+            git init --quiet -b app-screenshots site
+            git -C site remote add origin "$remote"
+          fi
+          # nur die Android-Bilder ersetzen (andere Dateien, z. B. iOS-Screenshots der SwiftUI-App, bleiben)
+          rm -f site/android-*.png
+          cp shots/android-*.png site/
+          git -C site add -A '*.png'
+          if git -C site diff --cached --quiet; then echo "Keine Änderungen."; exit 0; fi
+          git -C site "${author[@]}" commit --quiet -m "Android-Screenshots aus ${REF} (${SHA:0:7})"
+          git -C site push --quiet origin app-screenshots
+          echo "Eingebunden über https://raw.githubusercontent.com/${REPO}/app-screenshots/android-plan-light.png"

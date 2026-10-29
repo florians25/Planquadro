@@ -9,6 +9,8 @@ import { Network } from '@capacitor/network';
 import { PushNotifications, type PushNotificationSchema } from '@capacitor/push-notifications';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
+import { Keyboard } from '@capacitor/keyboard';
 import { BiometricAuth, BiometryType } from '@aparajita/capacitor-biometric-auth';
 import type { DevicePlatform, PushProvider } from '../api/types';
 
@@ -100,6 +102,68 @@ export function onBackButton(cb: () => void): void {
   if (platform === 'android') void App.addListener('backButton', () => cb());
 }
 
+/** URL, mit der die App gestartet wurde (Kaltstart über Deep Link/Schnellaktion/Widget). */
+export async function launchUrl(): Promise<string | null> {
+  if (!isNative) return null;
+  try {
+    return (await App.getLaunchUrl())?.url ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ------------------------------------------------------------------ Haptik
+
+export type HapticKind = 'selection' | 'light' | 'success' | 'error' | 'warning';
+
+/** Haptisches Feedback (nur nativ; respektiert die Systemeinstellung „Vibration“). */
+export function haptic(kind: HapticKind): void {
+  if (!isNative) return;
+  const run = async () => {
+    if (kind === 'selection') await Haptics.selectionChanged();
+    else if (kind === 'light') await Haptics.impact({ style: ImpactStyle.Light });
+    else
+      await Haptics.notification({
+        type: kind === 'success' ? NotificationType.Success : kind === 'error' ? NotificationType.Error : NotificationType.Warning,
+      });
+  };
+  void run().catch(() => undefined);
+}
+
+// ------------------------------------------------------------------ Tastatur
+
+let keyboardOpen = false;
+
+export function isKeyboardOpen(): boolean {
+  return keyboardOpen;
+}
+
+export async function hideKeyboard(): Promise<void> {
+  if (isNative) await Keyboard.hide().catch(() => undefined);
+  (document.activeElement as HTMLElement | null)?.blur?.();
+}
+
+/**
+ * Tastatur: Klasse `kb-open` am <body> (blendet die Tab-Leiste aus) und fokussiertes Feld
+ * in den sichtbaren Bereich scrollen.
+ */
+export function initKeyboard(): void {
+  if (!isNative) return;
+  const show = () => {
+    keyboardOpen = true;
+    document.body.classList.add('kb-open');
+    const el = document.activeElement as HTMLElement | null;
+    if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  };
+  const hide = () => {
+    keyboardOpen = false;
+    document.body.classList.remove('kb-open');
+  };
+  void Keyboard.addListener('keyboardDidShow', show).catch(() => undefined);
+  void Keyboard.addListener('keyboardWillHide', hide).catch(() => undefined);
+  if (platform === 'ios') void Keyboard.setAccessoryBarVisible({ isVisible: true }).catch(() => undefined);
+}
+
 export async function minimizeApp(): Promise<void> {
   if (platform === 'android') await App.minimizeApp().catch(() => undefined);
 }
@@ -132,8 +196,9 @@ export async function closeSystemBrowser(): Promise<void> {
 export async function applyNativeTheme(dark: boolean): Promise<void> {
   if (!isNative) return;
   try {
-    await StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light });
-    if (platform === 'android') await StatusBar.setBackgroundColor({ color: dark ? '#0b1220' : '#0f172a' });
+    // Kopfzeile ist in beiden Themes dunkel (Tinte) → helle Statusleisten-Schrift
+    await StatusBar.setStyle({ style: Style.Dark });
+    if (platform === 'android') await StatusBar.setBackgroundColor({ color: dark ? '#070d18' : '#14213d' });
   } catch {
     /* nicht kritisch */
   }

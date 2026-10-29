@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Farben nach docs/BRAND.md (Tinte #14213D, Quadro-Blau #2557D6, Signal-Orange #FF7A1A) -->
+<resources>
+    <color name="widget_surface">#FFFFFFFF</color>
+    <color name="widget_today_surface">#FFE8EEFC</color>
+    <color name="widget_today_stroke">#FFC9D6F7</color>
+    <color name="widget_text">#FF14213D</color>
+    <color name="widget_text_muted">#FF5B6475</color>
+    <color name="widget_signal_text">#FFC2410C</color>
+
+    <string name="widget_label">Planquadro – Diese Woche</string>
+    <string name="widget_description">Eigene Einsätze heute und in den nächsten Tagen</string>
+    <string name="widget_this_week">Diese Woche</string>
+    <string name="widget_today">Heute</string>
+    <string name="widget_empty">Öffne Planquadro, um deinen Plan zu laden.</string>
+    <string name="widget_free">frei</string>
+
+    <string name="shortcut_plan_short">Mein Plan</string>
+    <string name="shortcut_plan_long">Mein Plan öffnen</string>
+    <string name="shortcut_vacation_short">Urlaub beantragen</string>
+    <string name="shortcut_vacation_long">Urlaub oder Gleitzeit beantragen</string>
+    <string name="shortcut_disabled">Bitte zuerst anmelden</string>
+</resources>

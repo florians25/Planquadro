@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nur Debug-Builds: Vorschau des Home-Screen-Widgets für CI-Screenshots
+     (adb shell am start -n de.planquadro.app/.widget.WidgetPreviewActivity).
+     Release-Builds enthalten diese Activity nicht. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name=".widget.WidgetPreviewActivity"
+            android:exported="true"
+            android:label="Widget-Vorschau"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
+    </application>
+</manifest>

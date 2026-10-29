@@ -27,6 +27,12 @@ import { clearPrefs, DEFAULT_PREFS, loadPrefs, savePrefs, type AppPrefs } from '
 import { WebSecureStore, type SecureStore } from './secure';
 import { applyLivePlan, LiveConnection, planLive } from './live';
 import { runSync, type SyncResult } from './sync';
+import type { PlanDay } from '../api/types';
+import { addDays, todayIso } from '../lib/dates';
+import { calendarEventsFor, CALENDAR_EXPORT_DAYS, syncEventsToCalendar } from '../platform/calendar';
+import { cancelAllReminders, planReminders, REMINDER_DAYS, remindersPermitted, scheduleReminders } from '../platform/reminders';
+import { SCREENSHOT_DEMO } from '../platform/screenshot';
+import { buildWidgetSummary, clearWidget, WIDGET_DAYS, writeWidget } from '../platform/widget';
 
 export type SessionStatus = 'needs_server' | 'needs_login' | 'locked' | 'ready' | 'unavailable';
 
@@ -243,6 +249,7 @@ export class Session {
     this.status = 'ready';
     this.emit();
     void this.registerPush();
+    void this.updateNativeExtras(true);
   }
 
   /** Erneuter Versuch aus dem Status `unavailable`. */
@@ -450,7 +457,8 @@ export class Session {
   // ---------------------------------------------------------------- Push & Sync
 
   private async registerPush(): Promise<void> {
-    if (!isNative || !this.api) return;
+    // Screenshot-Build: keine Berechtigungsdialoge über den Bildschirmen
+    if (!isNative || !this.api || SCREENSHOT_DEMO) return;
     try {
       await initPush({
         onToken: async (reg) => {
@@ -540,10 +548,74 @@ export class Session {
     if (!this.api || !this.cache || this.status !== 'ready') return null;
     try {
       this.lastSync = await runSync(this.api, this.cache);
+      void this.updateNativeExtras(this.lastSync.fullResync || this.lastSync.refreshed.length > 0);
       return this.lastSync;
     } catch {
       return null;
     }
+  }
+
+  // ---------------------------------------------------------------- Widget, Erinnerungen, Kalender
+
+  private extrasAt = 0;
+  private extrasRunning: Promise<void> | null = null;
+
+  /** Eigene Tage ab heute (nur `plan/my` – nie Daten anderer). */
+  async ownUpcomingDays(days: number): Promise<PlanDay[]> {
+    if (!this.api || this.status !== 'ready') return [];
+    const today = todayIso();
+    const plan = await this.api.getMyPlan(today, addDays(today, days - 1));
+    return plan.days;
+  }
+
+  /**
+   * Nach Anmeldung und jedem Sync: Widget-Zusammenfassung schreiben und (falls aktiviert)
+   * lokale Erinnerungen neu planen. Höchstens einmal pro Minute, außer bei Änderungen.
+   */
+  async updateNativeExtras(changed = false): Promise<void> {
+    if (!isNative || this.status !== 'ready' || !this.online) return;
+    if (!changed && Date.now() - this.extrasAt < 60_000) return;
+    if (this.extrasRunning) return this.extrasRunning;
+    this.extrasRunning = (async () => {
+      try {
+        const days = await this.ownUpcomingDays(Math.max(WIDGET_DAYS, REMINDER_DAYS + 1));
+        const today = todayIso();
+        await writeWidget(buildWidgetSummary(days, today, this.me?.tenant.name ?? 'Planquadro'));
+        if (this.prefs.reminders && !SCREENSHOT_DEMO && (await remindersPermitted(false))) {
+          await scheduleReminders(planReminders(days, today, new Date()));
+        }
+        this.extrasAt = Date.now();
+      } catch {
+        /* nächster Sync versucht es erneut */
+      } finally {
+        this.extrasRunning = null;
+      }
+    })();
+    return this.extrasRunning;
+  }
+
+  async setReminders(enabled: boolean): Promise<{ ok: boolean; message: string }> {
+    if (!enabled) {
+      this.prefs.reminders = false;
+      await this.savePrefs();
+      await cancelAllReminders();
+      return { ok: true, message: 'Erinnerungen ausgeschaltet.' };
+    }
+    if (!isNative) return { ok: false, message: 'Nur in der iOS-/Android-App verfügbar.' };
+    if (!(await remindersPermitted(true))) return { ok: false, message: 'Benachrichtigungen sind für Planquadro nicht erlaubt (Systemeinstellungen).' };
+    this.prefs.reminders = true;
+    await this.savePrefs();
+    await this.updateNativeExtras(true);
+    return { ok: true, message: `Erinnerung am Vorabend um 18 Uhr aktiviert.` };
+  }
+
+  /** Eigene Einsätze der nächsten 14 Tage in den Gerätekalender übernehmen. */
+  async exportToCalendar(): Promise<number> {
+    const days = await this.ownUpcomingDays(CALENDAR_EXPORT_DAYS);
+    const res = await syncEventsToCalendar(calendarEventsFor(days), this.prefs.calendarIds ?? {});
+    this.prefs.calendarIds = res.ids;
+    await this.savePrefs();
+    return res.created;
   }
 
   // ---------------------------------------------------------------- Abmelden / Löschen
@@ -557,6 +629,8 @@ export class Session {
       await this.secure.remove(RT_KEY).catch(() => undefined);
     }
     await unregisterPush();
+    await clearWidget();
+    await cancelAllReminders();
     await this.offline.clearAll().catch(() => undefined);
     await this.secure.clear().catch(() => undefined);
     this.cacheKeyPromise = null;
@@ -564,6 +638,9 @@ export class Session {
     this.prefs.lastUserId = null;
     this.prefs.deviceId = null;
     this.prefs.biometric = false;
+    this.prefs.reminders = false;
+    // Termine im Gerätekalender gehören dem Nutzer und bleiben; nur die Zuordnung wird vergessen
+    this.prefs.calendarIds = {};
     await this.savePrefs();
     this.me = null;
     this.cache = null;

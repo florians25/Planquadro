@@ -17,6 +17,10 @@ export interface AppPrefs {
   lastUserId: number | null;
   /** Branding aus GET config für den Start ohne Netz */
   branding: { name: string; primary: string; accent: string; logo_url: string | null } | null;
+  /** Lokale Erinnerung am Vorabend (Rückfall ohne Push) */
+  reminders: boolean;
+  /** Von der App angelegte Kalendertermine: Datum → Termin-ID (gegen Doppelungen) */
+  calendarIds: Record<string, string>;
 }
 
 export const DEFAULT_PREFS: AppPrefs = {
@@ -28,6 +32,8 @@ export const DEFAULT_PREFS: AppPrefs = {
   deviceId: null,
   lastUserId: null,
   branding: null,
+  reminders: false,
+  calendarIds: {},
 };
 
 const KEY = 'planquadro.prefs.v1';

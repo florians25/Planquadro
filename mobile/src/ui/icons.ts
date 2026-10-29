@@ -18,6 +18,7 @@ const paths: Record<string, string> = {
   lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
   check: '<path d="M5 12l5 5L20 7"/>',
+  share: '<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',
 };
 
 export function icon(name: keyof typeof paths | string, cls = 'ic'): SafeHtml {

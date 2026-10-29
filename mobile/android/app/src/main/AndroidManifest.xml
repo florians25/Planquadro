@@ -26,12 +26,18 @@
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- App-Schnellaktionen (lange auf das Symbol tippen): Mein Plan, Urlaub beantragen -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
 
             <!-- OIDC-Rücksprung: planquadro://auth?code=…&state=… -->
             <intent-filter>
@@ -41,7 +47,30 @@
                 <data android:scheme="planquadro" android:host="auth" />
             </intent-filter>
 
+            <!-- Deep Links planquadro://plan|tag|team|abwesenheiten|antrag|mitteilungen|mehr|screen
+                 (Widget, Schnellaktionen, Erinnerungen, CI-Screenshots; Auswertung in
+                 mobile/src/platform/deeplink.ts – unbekannte Ziele werden ignoriert) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="planquadro" />
+            </intent-filter>
+
         </activity>
+
+        <!-- Home-Screen-Widget „Planquadro – Diese Woche“ -->
+        <receiver
+            android:name=".widget.PlanWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_plan_info" />
+        </receiver>
 
         <!-- Standard-Kanal für Push-Nachrichten (FCM) -->
         <meta-data
@@ -65,6 +94,9 @@
     <!-- Android 13+: Laufzeitberechtigung für Benachrichtigungen -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Kalender: nur auf ausdrücklichen Wunsch (Mehr → „In den Kalender übernehmen“), Laufzeitabfrage -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 
     <!-- Karten-, Telefon- und Mail-Apps für Links in den Einsatzdetails (Android 11+ Paketsichtbarkeit) -->
     <queries>

@@ -43,6 +43,11 @@ function serviceWorkerPlugin(): Plugin {
   };
 }
 
+// Schutz: Der Screenshot-Demo-Modus (src/platform/screenshot.ts) darf nie in einen Release-Build.
+if (process.env.VITE_SCREENSHOT_DEMO === '1' && process.env.PQ_RELEASE_BUILD === '1') {
+  throw new Error('VITE_SCREENSHOT_DEMO=1 ist in Release-Builds (PQ_RELEASE_BUILD=1) nicht erlaubt.');
+}
+
 export default defineConfig({
   base: './',
   define: {

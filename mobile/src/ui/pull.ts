@@ -2,6 +2,8 @@
  * Pull-to-Refresh für einen Scroll-Container. Zusätzlich bietet jeder Bildschirm
  * einen sichtbaren „Aktualisieren“-Button (Barrierefreiheit, Desktop).
  */
+import { haptic } from '../platform/native';
+
 const THRESHOLD = 70;
 
 export function attachPullToRefresh(scroller: HTMLElement, indicator: HTMLElement, getHandler: () => (() => Promise<void>) | null): void {
@@ -34,7 +36,9 @@ export function attachPullToRefresh(scroller: HTMLElement, indicator: HTMLElemen
       if (dist <= 0) return;
       const d = Math.min(dist * 0.5, 90);
       indicator.classList.add('visible');
-      indicator.classList.toggle('armed', dist > THRESHOLD);
+      const armed = dist > THRESHOLD;
+      if (armed && !indicator.classList.contains('armed')) haptic('light');
+      indicator.classList.toggle('armed', armed);
       indicator.style.transform = `translateY(${d}px)`;
     },
     { passive: true },

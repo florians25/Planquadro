@@ -2,6 +2,7 @@ import { ApiError, toApiError } from '../api/errors';
 import { safeForeground } from '../lib/color';
 import { formatDateTime } from '../lib/dates';
 import { cssColor, html, type SafeHtml } from '../lib/html';
+import { haptic } from '../platform/native';
 import { icon } from './icons';
 
 /** Farbiger Code-Badge (Farbe/Schrift aus der API, Schrift bei zu wenig Kontrast korrigiert). */
@@ -53,6 +54,8 @@ export function toast(message: string, kind: 'info' | 'ok' | 'error' = 'info'): 
     document.body.appendChild(el);
   }
   el.className = `toast toast-${kind} show`;
+  if (kind === 'ok') haptic('success');
+  else if (kind === 'error') haptic('error');
   el.textContent = message;
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el?.classList.remove('show'), 3500);

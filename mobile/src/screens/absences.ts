@@ -82,6 +82,8 @@ export const absencesScreen: Screen = async (ctx) => {
   const { session } = ctx;
   const year = ctx.args[0] && /^\d{4}$/.test(ctx.args[0]) ? Number(ctx.args[0]) : new Date().getFullYear();
   const approvals = !!session.me?.modules.approvals;
+  // Schnellaktion „Urlaub beantragen“ / Deep Link planquadro://antrag
+  let wantForm = ctx.args.includes('antrag');
   ctx.setTitle('Abwesenheiten');
 
   const toolbar = html`<div class="toolbar" role="group" aria-label="Jahr wählen">
@@ -101,6 +103,14 @@ export const absencesScreen: Screen = async (ctx) => {
       ctx.setDataState(loaded);
       const a = loaded.data;
       ctx.render(html`${toolbar}${account(a)}${approvals ? requestForm() : ''}${requests(a)}${periods(a)}`);
+      if (wantForm) {
+        wantForm = false;
+        const f = ctx.root.querySelector<HTMLElement>('#req-form');
+        if (f) {
+          f.scrollIntoView({ block: 'start' });
+          ctx.root.querySelector<HTMLInputElement>('#req-from')?.focus({ preventScroll: true });
+        } else toast('Anträge sind in dieser Organisation nicht aktiviert.', 'info');
+      }
     } catch (e) {
       if (!ctx.isCurrent()) return;
       ctx.setDataState(null);

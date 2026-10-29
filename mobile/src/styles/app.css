@@ -15,8 +15,9 @@
   --r: 6px; --r2: 10px;
   --sh: 0 1px 3px rgba(0,0,0,.08);
   --tap: 44px;
-  --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
-  --safe-l: env(safe-area-inset-left, 0px); --safe-r: env(safe-area-inset-right, 0px);
+  /* Android (Capacitor 8 SystemBars) setzt --safe-area-inset-*; iOS/Browser liefern env() */
+  --safe-t: var(--safe-area-inset-top, env(safe-area-inset-top, 0px)); --safe-b: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --safe-l: var(--safe-area-inset-left, env(safe-area-inset-left, 0px)); --safe-r: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
   --tabbar-h: 58px;
 }
 
@@ -312,3 +313,9 @@ a.day:hover { background: var(--s); }
 @media (min-width: 700px) {
   .tab { flex-direction: row; gap: .4rem; font-size: .82rem; }
 }
+
+/* Native Ergänzungen: Tastatur offen → Tab-Leiste ausblenden, Platz für das Eingabefeld */
+.kb-open .tabbar { display: none; }
+.kb-open .main { padding-bottom: 1rem; }
+.detail-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+.detail-actions .btn { flex: 1 1 10rem; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; }

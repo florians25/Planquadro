@@ -217,6 +217,21 @@ manuelle Änderungen zu verlieren. Planungen lassen sich speichern und später f
 Die App übernimmt Name, Farben und Logo Ihrer Firma. Ohne App geht alles auch im Browser
 auf dem Smartphone (und als Web-App auf dem Startbildschirm).
 
+**Native Funktionen der App**
+
+| Funktion | So geht’s | Hinweis |
+|---|---|---|
+| **Widget „Diese Woche“** (Android) | Startbildschirm lange antippen → *Widgets* → *Planquadro* | Zeigt heute und die nächsten Tage: Kürzel und Bereich Ihrer eigenen Einsätze. Abwesenheiten stehen nur als „Abwesend“ da, nie mit Grund. Tippen öffnet den Tag in der App. Aktualisiert sich nach jedem Abgleich. |
+| **Schnellaktionen** (Android) | App-Symbol lange antippen | „Mein Plan“ und „Urlaub beantragen“ (öffnet das Antragsformular). |
+| **Teilen** | Einsatzdetails → *Teilen* | Teilt Datum, Bereich und Einsatzort – keine Kontakte, Bemerkungen oder Kolleginnen/Kollegen. Nur für eigene Tage. |
+| **In den Kalender** | Einsatzdetails → *In Kalender* (einzelner Termin mit Dialog) oder *Mehr → Nächste 14 Tage in den Kalender übernehmen* | Nur eigene Einsätze als ganztägige Termine. Erneutes Übernehmen ersetzt die früher angelegten Termine, es entstehen keine Doppelungen. Beim ersten Mal fragt das Gerät nach der Kalenderberechtigung. |
+| **Erinnerung am Vorabend** | *Mehr → Erinnerung am Vorabend* | Lokale Benachrichtigung um 18 Uhr vor jedem Einsatz – funktioniert auch, wenn Ihre Firma keine Push-Nachrichten eingerichtet hat. Standard: aus. |
+| **Zurück-Taste** (Android) | – | Führt innerhalb der App zurück (Details → Plan, andere Bereiche → „Mein Plan“); erst auf „Mein Plan“ geht die App in den Hintergrund. |
+| **Links in die App** | z. B. aus einer Mitteilung oder einem Chat | `planquadro://tag/2026-11-02` öffnet einen Tag, `planquadro://antrag` das Antragsformular. |
+
+Beim Abmelden werden Widget-Inhalt und geplante Erinnerungen gelöscht; bereits übernommene
+Kalendertermine bleiben in Ihrem Kalender (sie gehören Ihnen) und können dort gelöscht werden.
+
 ## 13. Häufige Fragen
 
 **Ich sehe eine Änderung nicht.** Sie ist vermutlich noch ein Entwurf – erst nach dem

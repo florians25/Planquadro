@@ -71,7 +71,12 @@ mobile/
 │   │   └── prefs.ts           nicht geheime Einstellungen (Capacitor Preferences)
 │   ├── platform/
 │   │   ├── native.ts          Capacitor-Plugins (Push, Biometrie, Netzwerk, Browser, Statusleiste …)
-│   │   └── secure-native.ts   Keychain/Keystore (@aparajita/capacitor-secure-storage)
+│   │   ├── secure-native.ts   Keychain/Keystore (@aparajita/capacitor-secure-storage)
+│   │   ├── widget.ts          Widget-Zusammenfassung (nicht vertraulich) + Brücke PlanquadroWidget
+│   │   ├── deeplink.ts        planquadro://… → Hash-Route
+│   │   ├── back.ts            Android-Zurück-Taste
+│   │   ├── share.ts, calendar.ts, reminders.ts   Teilen, Gerätekalender, lokale Erinnerungen
+│   │   └── screenshot.ts      Schalter VITE_SCREENSHOT_DEMO (nur CI)
 │   ├── screens/               ein Modul je Bildschirm (plan, details, team, absences,
 │   │                          notifications, more, setup, login, lock)
 │   ├── ui/                    App-Shell/Router, Tabs, Theme, Komponenten, Pull-to-Refresh, Icons
@@ -100,6 +105,102 @@ Prinzipien:
 - **Barrierefreiheit:** semantisches HTML, Labels, sichtbare Fokusrahmen, Skip-Link,
   Touch-Ziele ≥ 44 px, `aria-current`, Live-Regionen, `prefers-reduced-motion`, `lang="de"`.
 - **Kein Tracking, keine Analytics**, keine externen Schriften/CDNs.
+
+## Native Funktionen
+
+Die Apps sind keine reine Web-Hülle: Folgende Funktionen nutzen native Schnittstellen
+(Plugins bzw. eigener Kotlin-Code). Alle respektieren dieselben Rechte und dieselbe
+Vertraulichkeit wie die Web-Oberfläche; die TS-Logik ist in `tests/native.test.ts` getestet.
+
+| Funktion | Android | iOS (Capacitor) | Umsetzung |
+|---|---|---|---|
+| Push (FCM/APNs), Biometrie, Keychain/Keystore, Offline-Cache | ✓ | ✓ | siehe unten (bestehend) |
+| **Home-Screen-Widget „Diese Woche“** | ✓ | – ¹ | `src/platform/widget.ts` → Plugin `PlanquadroWidget` → `android/app/src/main/java/de/planquadro/app/widget/` (Kotlin, RemoteViews) |
+| **App-Schnellaktionen** „Mein Plan“, „Urlaub beantragen“ | ✓ | – ¹ | `android/app/src/main/res/xml/shortcuts.xml` (öffnen Deep Links) |
+| **Deep Links** `planquadro://…` | ✓ | ✓ | `src/platform/deeplink.ts`, Intent-Filter bzw. `CFBundleURLTypes` |
+| **Zurück-Taste**: Navigation statt App schließen | ✓ | – | `src/platform/back.ts` |
+| **Teilen** eines Einsatztags (Share-Sheet) | ✓ | ✓ | `src/platform/share.ts` (`@capacitor/share`) |
+| **Kalender**: Tag per Termin-Dialog, nächste 14 Tage ohne Doppelungen | ✓ | ✓ | `src/platform/calendar.ts` (`@ebarooni/capacitor-calendar`) |
+| **Lokale Erinnerung** am Vorabend (Rückfall ohne Push, Standard aus) | ✓ | ✓ | `src/platform/reminders.ts` (`@capacitor/local-notifications`) |
+| **Haptik** (Tabs, Pull-to-Refresh, Erfolg/Fehler) | ✓ | ✓ | `haptic()` in `src/platform/native.ts` |
+| **Tastatur** (Tab-Leiste aus, Feld sichtbar), Statusleiste, Safe Area | ✓ | ✓ | `initKeyboard()`, `--safe-area-inset-*` (Capacitor 8 SystemBars) |
+
+¹ Für Apple entsteht eine eigene, voll native SwiftUI-App (Ordner `apple/`); Widget und
+Schnellaktionen für iOS kommen dort. Das Capacitor-iOS-Projekt baut weiter und hat alle
+übrigen Funktionen.
+
+### Widget-Daten (nicht vertraulich)
+
+Nach jedem Sync (und nach der Anmeldung) lädt die App `GET plan/my` für heute + 7 Tage und
+schreibt eine kleine JSON-Zusammenfassung in die privaten SharedPreferences
+`planquadro_widget` (`buildWidgetSummary`): je Tag Datum, Wochentag, Bereichskürzel,
+Bereichsname, geprüfte Farben, Feiertagsname. **Nicht enthalten:** Abwesenheitsart
+(auch eigene → nur „Abwesend“, einheitliche Farbe), Bemerkungen, Kunden, Kontakte,
+Kolleginnen/Kollegen, Daten anderer Personen. Die Kotlin-Seite prüft das Format erneut
+(`WidgetSummary.parse`). Beim Abmelden wird der Inhalt gelöscht. Tippen auf einen Tag →
+`planquadro://tag/<datum>`, auf den Rahmen → „Mein Plan“.
+
+### Deep Links
+
+| Link | Ziel |
+|---|---|
+| `planquadro://auth?code=…&state=…` | OIDC-Rücksprung (unverändert) |
+| `planquadro://plan[/JJJJ-MM]` | Mein Plan |
+| `planquadro://tag/JJJJ-MM-TT` | Einsatzdetails (ohne Datum: nächster Werktag) |
+| `planquadro://team[/JJJJ-MM]` | Team (nur mit Recht `plan_view`, sonst Plan) |
+| `planquadro://abwesenheiten[/JJJJ]` | Abwesenheiten |
+| `planquadro://antrag` (`urlaub`) | Abwesenheiten mit Antragsformular |
+| `planquadro://mitteilungen`, `planquadro://mehr` | Tabs |
+| `planquadro://screen/<ziel>[?theme=light\|dark]` | Alias für CI-Screenshots; `theme` wirkt nur im Screenshot-Build |
+
+Unbekannte oder fehlerhafte Links werden ignoriert. Kommt ein Link vor der Anmeldung bzw.
+Entsperrung, wird er danach geöffnet.
+
+### Kalender
+
+Ein iCal-Abo-Link ist in der API v1 nicht enthalten (der Feed `public/api/ical.php` nutzt ein
+persönliches Token aus dem Profil der Web-Oberfläche). Die App überträgt deshalb Termine
+direkt: **einzeln** über den System-Termin-Dialog (keine Berechtigung nötig, der Nutzer
+speichert selbst) oder **die nächsten 14 Tage** als ganztägige Termine (Kalenderberechtigung;
+die Termin-IDs werden gemerkt und beim nächsten Übernehmen ersetzt).
+
+### Screenshot-/Demo-Modus für native Builds
+
+`VITE_SCREENSHOT_DEMO=1 npx vite build` erzeugt einen Web-Build, der in der nativen App
+ohne Backend mit den Demo-Daten startet, sich automatisch anmeldet, keine
+Berechtigungsdialoge zeigt und `?theme=` in Deep Links auswertet
+(`src/platform/screenshot.ts`). **Nur für CI-Screenshots** – `vite.config.ts` bricht ab,
+wenn zusätzlich `PQ_RELEASE_BUILD=1` gesetzt ist; der Testbuild-APK im Release wird ohne
+die Variable gebaut.
+
+Lokal mit Emulator:
+
+```bash
+VITE_SCREENSHOT_DEMO=1 npx vite build && npx cap copy android
+(cd android && ./gradlew assembleDebug)
+bash scripts/android-screenshots.sh android/app/build/outputs/apk/debug/app-debug.apk /tmp/shots
+```
+
+**Fixtures (wiederverwendbar, z. B. für die SwiftUI-App):** `src/api/fixtures/*.json`
+(`config`, `me`, `team`, `areas`, `absences`, `holidays`, `notifications`) – nur erfundene
+Personen und Firmen, Telefonnummern `000000`/`111111`, E-Mail-Domains `.example`. Die Tagespläne
+erzeugt `src/api/mock.ts` deterministisch aus diesen Dateien (`entryFor`).
+
+### Native Builds und Screenshots in GitHub Actions
+
+Workflow `.github/workflows/apps.yml` (manuell, bei Pushes auf `mobile/**`, bei Tags `v*`
+über `release.yml`):
+
+| Job | Inhalt | Artefakte |
+|---|---|---|
+| `android` | Node 22, Java 21, `npm ci`, Typecheck/Tests/Build, `cap sync android`, `assembleDebug` (Testbuild) und Screenshot-APK; Emulator API 34 (x86_64, KVM) – Bildschirme per `adb shell am start -d planquadro://screen/…`, `screencap` hell und dunkel (`cmd uimode night`), aufgeräumte Statusleiste, Widget über die Debug-Vorschau `WidgetPreviewActivity` (dieselben RemoteViews) | `android-apk`, `android-screenshots` |
+| `ios` | `macos-15`, neuestes Xcode, `cap sync ios`, `xcodebuild … -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO`, Start-Test im Simulator | `ios-simulator-app` (ZIP), `ios-build-log` |
+| `publish-screenshots` | nur `main`, Tags, manueller Start: Android-Bilder in den Orphan-Branch `app-screenshots` (andere Dateien dort bleiben) | – |
+
+Einbinden: `https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/android-plan-light.png`
+(Dateien: `android-{plan,tag,team,abwesenheiten,mitteilungen,mehr,widget}-{light,dark}.png`).
+Das Release (`release.yml`) hängt `planquadro-<tag>-android-test.apk` (debug-signiert) und
+`planquadro-<tag>-ios-simulator.zip` an.
 
 ## Sicherheits- und Offline-Modell
 
@@ -220,6 +321,14 @@ APNs-Geräte-Token (`provider: "apns"`).
 - [ ] Screenshots (Hell/Dunkel), Store-Texte auf Deutsch, Altersfreigabe
 - [ ] Release signiert (Play App Signing / App Store Distribution), Test über TestFlight / interne Tests
 - [ ] Demo-Zugang für die App-Review (z. B. Demo-Modus auf dem Einrichtungsbildschirm)
+- [ ] **Android-Signierung:** Upload-Keystore anlegen, in CI als Secret (`keystore.properties`
+      erzeugen), `signingConfigs.release` + `bundleRelease` (AAB) ergänzen; Play-Konsolen-Konto,
+      Play App Signing; Data-safety-Angaben inkl. Kalender (nur Schreiben auf Nutzerwunsch)
+- [ ] **Push-Schlüssel:** `google-services.json` (FCM) als CI-Secret, FCM-Dienstkonto auf dem
+      Server; APNs-Auth-Key (.p8) mit Key-ID/Team-ID für das Backend
+- [ ] **Apple:** Developer-Programm-Konto, Bundle-ID `de.planquadro.app`, Zertifikate/Profile
+      (bzw. die SwiftUI-App in `apple/` als Store-App), App-Store-Connect-Eintrag
+- [ ] Store-Screenshots aus dem Branch `app-screenshots` übernehmen (Android: Phone, ggf. Tablet nachziehen)
 
 ## Verwendete Pakete
 
@@ -234,7 +343,15 @@ APNs-Geräte-Token (`provider: "apns"`).
 | `@capacitor/browser` | 8.0.x | System-Browser für OIDC und Kartenlinks |
 | `@aparajita/capacitor-secure-storage` | 8.0.x | Keychain/Keystore |
 | `@aparajita/capacitor-biometric-auth` | 10.0.x | Face ID / Touch ID / Fingerabdruck (Major 10 unterstützt Capacitor 8) |
+| `@capacitor/haptics` | 8.0.2 | Haptisches Feedback |
+| `@capacitor/share` | 8.0.3 | System-Teilen |
+| `@capacitor/keyboard` | 8.0.6 | Tastatur-Ereignisse, Resize |
+| `@capacitor/local-notifications` | 8.3.1 | Erinnerung am Vorabend |
+| `@ebarooni/capacitor-calendar` | 8.10.0 | Gerätekalender (Android/iOS) |
 | `vite` 8, `typescript` 7, `vitest` 5, `fake-indexeddb` | – | Build und Tests |
+
+Die neuen Plugins sind in `package.json` auf exakte Versionen festgelegt. Android nutzt
+Kotlin 2.2.20 (`android/variables.gradle`, eine Version für App und Plugins).
 
 Statt `vite-plugin-pwa`/Workbox wird ein kleiner, selbst geschriebener Service Worker
 verwendet (`src/sw/sw.js`, beim Build mit der Dateiliste befüllt). Er cacht nur die

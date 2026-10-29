@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import type { KeyboardResize } from '@capacitor/keyboard';
 
 const config: CapacitorConfig = {
   appId: 'de.planquadro.app',
@@ -28,6 +29,17 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
+    },
+    Keyboard: {
+      // iOS: WebView wird verkleinert, das fokussierte Feld bleibt sichtbar.
+      // Android: Insets übernimmt Capacitor (SystemBars) + windowSoftInputMode=adjustResize.
+      // Enum-Wert als Literal: die Konfiguration wird von der CLI ohne Plugin-Laufzeit geladen
+      resize: 'native' as unknown as KeyboardResize,
+      resizeOnFullScreen: true,
+    },
+    LocalNotifications: {
+      smallIcon: 'ic_stat_planquadro',
+      iconColor: '#2557D6',
     },
     StatusBar: {
       overlaysWebView: false,

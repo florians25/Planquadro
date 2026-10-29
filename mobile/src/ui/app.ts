@@ -1,7 +1,12 @@
 import { html, type SafeHtml } from '../lib/html';
 import {
+  haptic,
+  hideKeyboard,
   hideSplash,
+  initKeyboard,
+  isKeyboardOpen,
   isNative,
+  launchUrl,
   minimizeApp,
   onAppStateChange,
   onAppUrlOpen,
@@ -25,6 +30,11 @@ import { icon } from './icons';
 import { attachPullToRefresh } from './pull';
 import type { Screen, ScreenCtx } from './screen';
 import { setBrand, setThemeMode } from './theme';
+import { decideBack } from '../platform/back';
+import { parseDeepLink } from '../platform/deeplink';
+import { onReminderTap } from '../platform/reminders';
+import { SCREENSHOT_DEMO } from '../platform/screenshot';
+import { todayIso } from '../lib/dates';
 
 interface Tab {
   id: string;
@@ -45,6 +55,9 @@ export class App {
   private unread = 0;
   private lastDataState: Loaded<unknown> | null = null;
   private renderedStatus: string | null = null;
+  /** Deep Link, der vor der Anmeldung/Entsperrung kam – wird danach geöffnet */
+  private pendingHash: string | null = null;
+  private lastUrl: { url: string; at: number } | null = null;
 
   constructor(private readonly root: HTMLElement, private readonly session: Session) {}
 
@@ -82,19 +95,18 @@ export class App {
       }
     });
 
-    onAppUrlOpen((url) => {
-      if (url.startsWith(NATIVE_REDIRECT_URI)) {
-        this.session.completeOidc(url).catch((e) => toast(messageOf(e), 'error'));
-      }
+    onAppUrlOpen((url) => this.handleUrl(url));
+    onReminderTap((url) => this.handleUrl(url));
+    void launchUrl().then((url) => {
+      if (url) this.handleUrl(url);
     });
+    initKeyboard();
 
-    onBackButton(() => {
-      const back = this.shell?.back;
-      if (back && !back.hidden && back.getAttribute('href')) {
-        window.location.hash = back.getAttribute('href')!;
-      } else {
-        void minimizeApp();
-      }
+    onBackButton(() => this.handleBack());
+
+    // Haptik beim Tab-Wechsel
+    document.addEventListener('click', (ev) => {
+      if ((ev.target as HTMLElement).closest('.tabbar .tab')) haptic('selection');
     });
 
     this.session.onSync((r) => {
@@ -115,6 +127,48 @@ export class App {
 
     this.renderForStatus();
     void hideSplash();
+  }
+
+  /** Deep Links (planquadro://…), Schnellaktionen, Widget, Erinnerungen und OIDC-Rücksprung. */
+  handleUrl(url: string): void {
+    // Kaltstart: getLaunchUrl und appUrlOpen können dieselbe URL liefern
+    const now = Date.now();
+    if (this.lastUrl && this.lastUrl.url === url && now - this.lastUrl.at < 1500) return;
+    this.lastUrl = { url, at: now };
+    if (url.startsWith(NATIVE_REDIRECT_URI)) {
+      this.session.completeOidc(url).catch((e) => toast(messageOf(e), 'error'));
+      return;
+    }
+    const link = parseDeepLink(url, todayIso());
+    if (!link || link.type !== 'route') return;
+    if (SCREENSHOT_DEMO && link.theme) {
+      setThemeMode(link.theme);
+      void this.session.setTheme(link.theme);
+    }
+    if (this.session.status === 'ready' && this.shell) {
+      if (window.location.hash === link.hash) this.route();
+      else window.location.hash = link.hash;
+    } else {
+      this.pendingHash = link.hash;
+    }
+  }
+
+  private handleBack(): void {
+    const back = this.shell?.back;
+    const dialog = document.querySelector<HTMLDialogElement>('dialog[open]');
+    const d = decideBack({
+      ready: this.session.status === 'ready' && !!this.shell,
+      dialogOpen: !!dialog,
+      keyboardOpen: isKeyboardOpen(),
+      backHref: back && !back.hidden ? back.getAttribute('href') : null,
+      hash: window.location.hash,
+    });
+    if (d.action === 'close-dialog') dialog?.close('cancel');
+    else if (d.action === 'hide-keyboard') void hideKeyboard();
+    else if (d.action === 'navigate') {
+      haptic('selection');
+      window.location.hash = d.hash;
+    } else void minimizeApp();
   }
 
   private async afterReconnect(): Promise<void> {
@@ -138,7 +192,10 @@ export class App {
       if (this.renderedStatus !== 'ready' || !this.shell) {
         this.mountShell();
         this.renderedStatus = 'ready';
-        if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/') {
+        if (this.pendingHash) {
+          history.replaceState(null, '', this.pendingHash);
+          this.pendingHash = null;
+        } else if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/') {
           history.replaceState(null, '', '#/plan');
         }
         this.route();

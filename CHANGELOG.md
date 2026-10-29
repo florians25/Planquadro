@@ -142,6 +142,19 @@ nichts ändert.
 - iOS-, Android- und Web-App (`mobile/`, Capacitor): persönlicher Plan, Team,
   Abwesenheiten und Anträge, Einsatzdetails mit Kundeninfos, Push, Offline-Lesemodus,
   Biometrie, Dark Mode, Mandanten-Branding. Noch nicht in den Stores veröffentlicht.
+- **Native Funktionen** (zusätzlich, nichts entfällt): Android-Startbildschirm-Widget
+  „Diese Woche“ (Kotlin, nur eigene Einsätze mit Kürzel und Bereich, keine
+  Abwesenheitsgründe; Tippen öffnet den Tag), App-Schnellaktionen „Mein Plan“ und
+  „Urlaub beantragen“, Deep Links `planquadro://plan|tag|team|abwesenheiten|antrag|…`,
+  Zurück-Taste navigiert in der App statt sie zu schließen, Teilen eines Einsatztags
+  (ohne Kontakte/Bemerkungen), Einsätze in den Gerätekalender übernehmen (einzeln mit
+  Termin-Dialog oder die nächsten 14 Tage ohne Doppelungen), optionale lokale Erinnerung
+  am Vorabend als Rückfall ohne Push, Haptik, Tastatur- und Statusleisten-/Safe-Area-Handling.
+- **Echte native Builds in GitHub Actions** (`.github/workflows/apps.yml`): Android-APK und
+  Screenshots aus der laufenden App im Emulator (hell/dunkel, inkl. Widget) über einen
+  Screenshot-Demo-Modus mit Beispieldaten (`VITE_SCREENSHOT_DEMO=1`, nie im Release);
+  iOS-Build-Check im Simulator. Screenshots liegen im Branch `app-screenshots`;
+  Releases erhalten APK und iOS-Simulator-Build.
 
 ### Sicherheit und Qualität (Phase 7)
 - Sicherheitsreview der neuen Teile, alle Befunde behoben (Roadmap R-01 … R-10), u. a.:

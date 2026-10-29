@@ -1,5 +1,6 @@
 import './styles/app.css';
 import { isNative } from './platform/native';
+import { SCREENSHOT_DEMO } from './platform/screenshot';
 import { Session } from './store/session';
 import { App } from './ui/app';
 import { messageOf, toast } from './ui/components';
@@ -17,10 +18,12 @@ async function registerServiceWorker(): Promise<void> {
 async function boot(): Promise<void> {
   const root = document.getElementById('app')!;
   const params = new URLSearchParams(window.location.search);
-  const forceDemo = params.get('mock') === '1';
+  const forceDemo = params.get('mock') === '1' || SCREENSHOT_DEMO;
 
   const session = await Session.create();
   await session.init(forceDemo);
+  // CI-Screenshot-Build: ohne Eingabe mit dem Demo-Konto anmelden
+  if (SCREENSHOT_DEMO && session.status === 'needs_login') await session.login('demo', 'demo');
 
   // Web-OIDC: Rücksprung mit ?code=&state=
   if (session.hasPendingWebOidc()) {

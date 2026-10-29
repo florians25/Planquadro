@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App-Schnellaktionen (lange auf das App-Symbol tippen). Öffnen Deep Links, die die App
+     selbst auswertet (mobile/src/platform/deeplink.ts). -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_plan"
+        android:shortcutDisabledMessage="@string/shortcut_disabled"
+        android:shortcutId="plan"
+        android:shortcutLongLabel="@string/shortcut_plan_long"
+        android:shortcutShortLabel="@string/shortcut_plan_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="planquadro://plan"
+            android:targetClass="de.planquadro.app.MainActivity"
+            android:targetPackage="de.planquadro.app" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_vacation"
+        android:shortcutDisabledMessage="@string/shortcut_disabled"
+        android:shortcutId="antrag"
+        android:shortcutLongLabel="@string/shortcut_vacation_long"
+        android:shortcutShortLabel="@string/shortcut_vacation_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="planquadro://antrag"
+            android:targetClass="de.planquadro.app.MainActivity"
+            android:targetPackage="de.planquadro.app" />
+    </shortcut>
+</shortcuts>

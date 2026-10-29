@@ -57,6 +57,13 @@
 	</dict>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Planquadro verwendet Face ID, um die App zu entsperren und deine Anmeldung zu schützen.</string>
+	<!-- Kalender: nur auf ausdrücklichen Wunsch (Einsatz bzw. nächste 14 Tage in den Kalender übernehmen) -->
+	<key>NSCalendarsUsageDescription</key>
+	<string>Planquadro trägt auf deinen Wunsch eigene Einsätze als Termine in deinen Kalender ein.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>Planquadro trägt auf deinen Wunsch eigene Einsätze als Termine in deinen Kalender ein.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Planquadro trägt eigene Einsätze in deinen Kalender ein und ersetzt dabei früher übernommene Termine, damit keine Doppelungen entstehen.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIBackgroundModes</key>

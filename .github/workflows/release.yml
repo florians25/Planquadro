@@ -82,36 +82,14 @@ jobs:
           IMAGE: ${{ steps.name.outputs.image }}
         run: cosign sign --yes "${IMAGE}@${DIGEST}"
 
-  # Android-Testbuild (debug-signiert, zum Ausprobieren – nicht für den Play Store)
-  android-apk:
+  # Native Apps: Android-Testbuild (debug-signiert, nicht für den Play Store), iOS-Simulator-Build,
+  # Emulator-Screenshots → Branch app-screenshots. Ein Workflow für Push/Tag/manuell (apps.yml),
+  # hier als wiederverwendbarer Workflow, damit die Artefakte in diesem Lauf am Release hängen.
+  apps:
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    uses: ./.github/workflows/apps.yml
     permissions:
-      contents: read
-    defaults:
-      run:
-        working-directory: mobile
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-      - name: Web-Build und Android-Sync
-        run: npm ci --no-audit --no-fund && npm run build && npx cap sync android
-      - name: APK bauen
-        working-directory: mobile/android
-        run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug
-      - name: APK benennen
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk "../planquadro-${GITHUB_REF_NAME}-android-test.apk"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: android-apk
-          path: planquadro-*-android-test.apk
+      contents: write
 
   # Web-App (PWA-Build der Mobile-App) als ZIP
   web-app:
@@ -137,16 +115,27 @@ jobs:
   # GitHub-Release mit Release-Notes (docs/releases/<tag>.md) und den Builds
   github-release:
     if: always() && startsWith(github.ref, 'refs/tags/v')
-    needs: [image, android-apk, web-app]
+    needs: [image, apps, web-app]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+      # Nur die Builds anhängen (nicht die Screenshot-Artefakte)
       - uses: actions/download-artifact@v4
         with:
+          name: android-apk
           path: dist
-          merge-multiple: true
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-simulator-app
+          path: dist
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-app
+          path: dist
         continue-on-error: true
       - name: Release anlegen
         env:

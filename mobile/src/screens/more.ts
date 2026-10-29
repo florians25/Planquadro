@@ -60,6 +60,22 @@ export const moreScreen: Screen = async (ctx) => {
       </div>
     </section>
 
+    <section class="card" aria-labelledby="h-native">
+      <h3 id="h-native">Kalender, Erinnerungen, Widget</h3>
+      ${isNative
+        ? html`<button type="button" class="btn btn-block" data-action="calendar-export">Nächste 14 Tage in den Kalender übernehmen</button>
+          <p class="hint">Nur eigene Einsätze als ganztägige Termine; erneutes Übernehmen ersetzt die zuvor angelegten Termine.</p>
+          <div class="switch-row">
+            <label for="rem-toggle">
+              <span>Erinnerung am Vorabend</span>
+              <span class="hint">Lokale Benachrichtigung um 18 Uhr vor jedem Einsatz – funktioniert auch ohne Push.</span>
+            </label>
+            <input id="rem-toggle" type="checkbox" role="switch" class="switch" ${p.reminders ? 'checked' : ''}>
+          </div>
+          <p class="hint">Widget „Planquadro – Diese Woche“: lange auf den Startbildschirm tippen → Widgets. Es zeigt nur eigene Einsätze (Kürzel und Bereich), keine Abwesenheitsgründe.</p>`
+        : html`<p class="hint">Kalender-Übernahme, Erinnerungen und Startbildschirm-Widget gibt es in der Android-App.</p>`}
+    </section>
+
     <section class="card" aria-labelledby="h-theme">
       <h3 id="h-theme">Darstellung</h3>
       <fieldset class="segmented">
@@ -90,6 +106,12 @@ export const moreScreen: Screen = async (ctx) => {
       const mode = t.value as ThemeMode;
       await session.setTheme(mode);
       setThemeMode(mode);
+    } else if (t.id === 'rem-toggle') {
+      t.disabled = true;
+      const res = await session.setReminders(t.checked);
+      t.checked = session.prefs.reminders;
+      t.disabled = false;
+      toast(res.message, res.ok ? 'ok' : 'error');
     } else if (t.id === 'bio-toggle') {
       t.disabled = true;
       const res = await session.setBiometric(t.checked);
@@ -121,6 +143,17 @@ export const moreScreen: Screen = async (ctx) => {
       } else if (a === 'change-server') {
         if (await confirmDialog('Server wechseln?', 'Du wirst abgemeldet und alle lokalen Daten werden gelöscht.', 'Wechseln')) {
           await session.changeServer();
+        }
+      } else if (a === 'calendar-export') {
+        if (!session.online) {
+          toast('Offline – bitte später erneut versuchen.', 'error');
+          return;
+        }
+        try {
+          const n = await session.exportToCalendar();
+          toast(n ? `${n} ${n === 1 ? 'Einsatz' : 'Einsätze'} in den Kalender übernommen.` : 'Keine Einsätze in den nächsten 14 Tagen.', 'ok');
+        } catch (e) {
+          toast(String((e as Error)?.message) === 'calendar_denied' ? 'Kein Zugriff auf den Kalender (Systemeinstellungen).' : 'Kalender konnte nicht aktualisiert werden.', 'error');
         }
       } else if (a === 'demo-change' && session.mock) {
         const t = todayIso();
