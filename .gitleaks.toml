@@ -12,3 +12,7 @@ paths = [
   '''composer\.lock''',
   '''package-lock\.json''',
 ]
+# Bezeichner, keine Geheimnisse: Speicherschlüssel der App-Einstellungen
+regexes = [
+  '''planquadro\.prefs\.v1''',
+]
