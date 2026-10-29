@@ -1,0 +1,17 @@
+# OpsPilot – stündliche Prüfung: Alarm (Webhook/Mail), wenn das letzte
+# erfolgreiche Backup älter als OPSPILOT_BACKUP_MAX_AGE_HOURS (26 h) ist.
+[Unit]
+Description=OpsPilot Backup-Statusprüfung
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+EnvironmentFile=/etc/opspilot/opspilot.env
+WorkingDirectory=/var/www/opspilot
+ExecStart=/usr/bin/php bin/backup.php status --alert
+StandardOutput=null
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=yes

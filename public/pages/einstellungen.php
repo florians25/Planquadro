@@ -635,14 +635,16 @@ function loadBackups(){
     fetch(getApiBase()+'api/backup',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'status'})})
     .then(function(r){return r.json();}).then(function(d){
         if(!d.success){el.innerHTML='<p class="muted txt-d">'+esc(d.error||'Fehler')+'</p>';return;}
-        var h='<div style="padding:.65rem;border-radius:var(--r);font-size:.78rem;border:1px solid '+(d.healthy?'#bbf7d0;background:#f0fdf4':'#fecaca;background:#fef2f2')+'">';
-        h+='<b>'+(d.healthy?'Backups aktuell':'Backups prüfen')+'</b><br>';
+        var warn=d.warnings&&d.warnings.length;
+        var box=!d.healthy?'#fecaca;background:#fef2f2':(warn?'#fde68a;background:#fffbeb':'#bbf7d0;background:#f0fdf4');
+        var h='<div style="padding:.65rem;border-radius:var(--r);font-size:.78rem;border:1px solid '+box+'">';
+        h+='<b>'+(!d.healthy?'Backups prüfen':(warn?'Backups aktuell – mit Hinweisen':'Backups aktuell'))+'</b><br>';
         h+='Letztes erfolgreiches Backup: '+(d.last_success?esc(d.last_success.date)+' ('+esc(String(d.age_hours))+' h alt, '+esc(d.last_success.size_fmt||'')+')':'<b>keines</b>')+'<br>';
         if(d.last_run)h+='Letzter Lauf: '+esc(d.last_run.date)+' '+backupBadge(d.last_run.status)+'<br>';
         h+='Ziele: '+esc(d.targets.join(', '))+(d.external_target?'':' <b style="color:var(--err)">(kein externes Ziel)</b>')+'<br>';
         h+='Aufbewahrung: '+d.retention.daily+' täglich, '+d.retention.weekly+' wöchentlich, '+d.retention.monthly+' monatlich<br>';
         h+='Letzter Restore-Test: '+(d.last_restore_test?esc(d.last_restore_test.date)+' '+backupBadge(d.last_restore_test.status):'noch keiner');
-        if(d.warnings&&d.warnings.length){h+='<ul style="margin:.4rem 0 0 1rem;color:var(--err)">';d.warnings.forEach(function(w){h+='<li>'+esc(w)+'</li>';});h+='</ul>';}
+        if(warn){h+='<ul style="margin:.4rem 0 0 1rem;color:'+(d.healthy?'#92400e':'var(--err)')+'">';d.warnings.forEach(function(w){h+='<li>'+esc(w)+'</li>';});h+='</ul>';}
         h+='</div>';stEl.innerHTML=h;
         if(cnt)cnt.textContent='('+d.backups.length+')';
         if(!d.backups.length){el.innerHTML='<p class="muted" style="padding:.75rem;text-align:center">Keine Backups vorhanden</p>';}

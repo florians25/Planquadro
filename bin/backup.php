@@ -16,7 +16,9 @@
  *
  * <archiv> = Pfad oder Archivname (wird in den Zielen gesucht, lokal zuerst).
  * Der private Schlüssel wird nur für verify/restore/restore-test/decrypt
- * gebraucht: --key=<datei> oder OPSPILOT_BACKUP_PRIVATE_KEY_FILE.
+ * gebraucht: --key=<datei>, --key=- (Standardeingabe, z. B.
+ * "docker compose exec -T backup php bin/backup.php verify X --key=- < backup_private.key")
+ * oder OPSPILOT_BACKUP_PRIVATE_KEY_FILE.
  * Ausführliche Beschreibung: docs/BACKUP.md
  */
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }

@@ -8,4 +8,6 @@ description = "Testdaten und Beispielwerte"
 paths = [
   '''tests/Support/TestEnv\.php''',
   '''composer\.lock''',
+  # SigV4-Referenztest mit den AWS-Beispielzugangsdaten (EXAMPLEKEY)
+  '''tests/Unit/BackupFormatTest\.php''',
 ]

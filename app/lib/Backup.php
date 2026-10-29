@@ -430,20 +430,37 @@ final class BackupDumper
     {
         if (!BackupDb::validName($db)) throw new BackupException("Ungültiger Datenbankname: $db");
         $mode = strtolower(opsEnv('OPSPILOT_BACKUP_DUMPER', 'auto'));
-        $bin = $mode === 'php' ? null : BackupDb::findBinary(['mariadb-dump', 'mysqldump']);
-        if ($mode === 'native' && !$bin) throw new BackupException('OPSPILOT_BACKUP_DUMPER=native, aber weder mariadb-dump noch mysqldump gefunden.');
         $pdo = BackupDb::pdo($conn, $db);
         $version = (string)$pdo->query('SELECT VERSION()')->fetchColumn();
         $pdo = null;
+        $bin = $mode === 'php' ? null : self::nativeBinary($version, $mode === 'native');
+        if ($mode === 'native' && !$bin) throw new BackupException('OPSPILOT_BACKUP_DUMPER=native, aber weder mariadb-dump noch mysqldump gefunden.');
         $r = $bin ? self::dumpNative($bin, $conn, $db, $outGz) : self::dumpPhp($conn, $db, $outGz);
         ksort($r['tables'], SORT_STRING);
         return $r + ['server_version' => $version];
     }
 
+    private static function clientIsMaria(string $bin): bool
+    {
+        static $cache = [];
+        return $cache[$bin] ??= stripos((string)shell_exec(escapeshellarg($bin) . ' --version 2>&1'), 'mariadb') !== false;
+    }
+
+    /**
+     * Dump-Programm, das zum Server passt. mysqldump 8 scheitert an MariaDB-Servern
+     * (information_schema_stats_expiry), daher im Auto-Modus nur gleiche Familie;
+     * sonst PHP-Dumper. $any = jedes gefundene Programm (OPSPILOT_BACKUP_DUMPER=native).
+     */
+    public static function nativeBinary(string $serverVersion, bool $any = false): ?string
+    {
+        $bin = BackupDb::findBinary(['mariadb-dump', 'mysqldump']);
+        if (!$bin || $any) return $bin;
+        return self::clientIsMaria($bin) === (stripos($serverVersion, 'mariadb') !== false) ? $bin : null;
+    }
+
     private static function dumpNative(string $bin, array $conn, string $db, string $outGz): array
     {
-        $ver = (string)shell_exec(escapeshellarg($bin) . ' --version 2>&1');
-        $isMaria = stripos($ver, 'mariadb') !== false;
+        $isMaria = self::clientIsMaria($bin);
         $def = BackupDb::defaultsFile($conn);
         $args = [$bin, '--defaults-extra-file=' . $def, '--single-transaction', '--quick', '--routines', '--triggers',
                  '--hex-blob', '--no-tablespaces', '--skip-add-locks', '--default-character-set=utf8mb4', '--skip-dump-date', '--add-drop-table'];
@@ -1239,8 +1256,12 @@ final class Backup
 
     public static function privateKey(?string $file = null): string
     {
-        $k = $file !== null ? (is_readable($file) ? (string)file_get_contents($file) : '') : opsEnv('OPSPILOT_BACKUP_PRIVATE_KEY');
-        if (trim($k) === '') throw new BackupException('Privater Schlüssel fehlt (OPSPILOT_BACKUP_PRIVATE_KEY_FILE oder --key=<datei>). Er wird nur für verify/restore benötigt.');
+        if ($file === '-') $k = (string)stream_get_contents(STDIN);
+        elseif ($file !== null) {
+            if (!is_readable($file)) throw new BackupException("Schlüsseldatei $file ist nicht vorhanden oder nicht lesbar (Rechte des ausführenden Benutzers prüfen).");
+            $k = (string)file_get_contents($file);
+        } else $k = opsEnv('OPSPILOT_BACKUP_PRIVATE_KEY');
+        if (trim($k) === '') throw new BackupException('Privater Schlüssel fehlt (--key=<datei>, --key=- für die Standardeingabe oder OPSPILOT_BACKUP_PRIVATE_KEY_FILE). Er wird nur für verify/restore benötigt.');
         return BackupCrypto::parseSecret($k);
     }
 
@@ -1724,7 +1745,11 @@ final class Backup
             if (!$lastOk) $sw[] = 'Noch kein erfolgreiches Backup.';
             elseif ($age > $max) $sw[] = "Letztes erfolgreiches Backup ist {$age} h alt (Grenze {$max} h).";
             if ($last && $last['status'] === 'failed') $sw[] = 'Letzter Backup-Lauf ist fehlgeschlagen: ' . mb_substr((string)$last['message'], 0, 300);
-            if ($last && $last['status'] === 'warning') $sw[] = 'Letzter Backup-Lauf mit Warnung: ' . mb_substr((string)$last['message'], 0, 300);
+            if ($last && $last['status'] === 'warning') {
+                /* Die 3-2-1-Warnung steht bereits global – hier nur weitere Hinweise */
+                $rest = array_filter(explode(' | ', (string)$last['message']), fn($w) => strpos($w, '3-2-1') === false && trim($w) !== '');
+                if ($rest) $sw[] = 'Letzter Backup-Lauf mit Warnung: ' . mb_substr(implode(' | ', $rest), 0, 300);
+            }
             $lt = $tests[0] ?? null;
             if (!$lt) $sw[] = 'Noch kein Restore-Test durchgeführt.';
             elseif ($lt['status'] !== 'ok') $sw[] = 'Letzter Restore-Test fehlgeschlagen.';

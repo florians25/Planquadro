@@ -5,6 +5,8 @@ app/config/secrets.php
 !.env.example
 *.key
 *.pem
+/secrets/
+*.opbak
 
 # Backups und produktive Daten
 app/backups/*

@@ -1,0 +1,148 @@
+# OpsPilot – Self-Hosting mit Docker Compose
+# ---------------------------------------------------------------------------
+# Schnellstart (Details: docs/INSTALLATION.md):
+#   cp .env.example .env            # Werte anpassen
+#   sh docker/init-secrets.sh        # Passwörter + Backup-Schlüsselpaar erzeugen
+#   docker compose up -d --build     # bzw. "docker compose pull" bei fertigem Image
+#   docker compose exec app php public/install.php      # ersten Administrator anlegen
+# Mit HTTPS über Caddy (Let's Encrypt):
+#   docker compose --profile proxy up -d
+#
+# Dienste: app (Apache/PHP, Migrationen beim Start), db (MariaDB 10.11),
+#          backup (Scheduler: tägliches Backup, wöchentlicher Restore-Test,
+#          Alarme), proxy (optional, Profil "proxy": Caddy mit automatischem HTTPS)
+# Secrets liegen als Dateien in ./secrets/ und werden über *_FILE übergeben.
+
+name: opspilot
+
+x-app: &app
+  image: ${OPSPILOT_IMAGE:-opspilot/app:latest}
+  restart: unless-stopped
+  env_file:
+    - path: .env
+      required: false
+  environment: &app-env
+    OPSPILOT_MODE: ${OPSPILOT_MODE:-selfhosted}
+    OPSPILOT_DB_HOST: db
+    OPSPILOT_DB_PORT: "3306"
+    OPSPILOT_DB_NAME: ${OPSPILOT_DB_NAME:-opspilot}
+    OPSPILOT_DB_USER: ${OPSPILOT_DB_USER:-opspilot}
+    OPSPILOT_DB_PASS_FILE: /run/secrets/db_password
+    OPSPILOT_APP_KEY_FILE: /run/secrets/app_key
+    OPSPILOT_BACKUP_PUBLIC_KEY_FILE: /run/secrets/backup_public_key
+    OPSPILOT_STORAGE_DIR: /data/storage
+    OPSPILOT_BACKUP_DIR: /data/backups
+    OPSPILOT_TRUSTED_PROXIES: ${OPSPILOT_TRUSTED_PROXIES:-172.31.250.10}
+  secrets:
+    - db_password
+    - app_key
+    - backup_public_key
+  volumes:
+    - app-data:/data
+  networks:
+    - opspilot
+
+services:
+  app:
+    <<: *app
+    build:
+      context: .
+      args:
+        BASE: ${OPSPILOT_PHP_BASE:-docker.io/library/php:8.3-apache}
+    ports:
+      - "${OPSPILOT_HTTP_BIND:-127.0.0.1}:${OPSPILOT_HTTP_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backup:
+    <<: *app
+    command: ["php", "bin/scheduler.php"]
+    environment:
+      <<: *app-env
+      OPSPILOT_RUN_MIGRATIONS: "0"
+    stop_signal: SIGTERM
+    healthcheck:
+      test: ["CMD", "php", "bin/scheduler.php", "health"]
+      interval: 60s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    depends_on:
+      db:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+
+  db:
+    image: ${OPSPILOT_DB_IMAGE:-docker.io/library/mariadb:10.11}
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${OPSPILOT_DB_NAME:-opspilot}
+      MARIADB_USER: ${OPSPILOT_DB_USER:-opspilot}
+      MARIADB_PASSWORD_FILE: /run/secrets/db_password
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${OPSPILOT_TIMEZONE:-Europe/Berlin}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=${OPSPILOT_DB_BUFFER_POOL:-256M}
+      - --max-allowed-packet=64M
+    secrets:
+      - db_password
+      - db_root_password
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 10
+    networks:
+      - opspilot
+
+  proxy:
+    image: ${OPSPILOT_CADDY_IMAGE:-docker.io/library/caddy:2}
+    profiles: ["proxy"]
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      OPSPILOT_DOMAIN: ${OPSPILOT_DOMAIN:-localhost}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      opspilot:
+        ipv4_address: ${OPSPILOT_PROXY_IP:-172.31.250.10}
+
+networks:
+  opspilot:
+    ipam:
+      config:
+        - subnet: ${OPSPILOT_SUBNET:-172.31.250.0/24}
+
+volumes:
+  db-data:
+  app-data:
+  caddy-data:
+  caddy-config:
+
+secrets:
+  db_password:
+    file: ./secrets/db_password
+  db_root_password:
+    file: ./secrets/db_root_password
+  app_key:
+    file: ./secrets/app_key
+  backup_public_key:
+    file: ./secrets/backup_public.key

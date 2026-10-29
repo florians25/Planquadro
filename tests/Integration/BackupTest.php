@@ -74,7 +74,9 @@ final class BackupTest extends IntegrationTestCase
     /** @dataProvider dumpers */
     public function testBackupRestoreRoundTripPreservesEveryRow(string $dumper): void
     {
-        if ($dumper === 'native' && !\BackupDb::findBinary(['mariadb-dump', 'mysqldump'])) $this->markTestSkipped('mariadb-dump/mysqldump nicht installiert');
+        if ($dumper === 'native' && !\BackupDumper::nativeBinary((string)$this->db()->query('SELECT VERSION()')->fetchColumn())) {
+            $this->markTestSkipped('kein zum Server passendes mariadb-dump/mysqldump installiert (Auto-Modus nutzt dann den PHP-Dumper)');
+        }
         /* Daten mit Sonderzeichen, Binär- und NULL-Werten */
         $this->db()->prepare("INSERT INTO app_settings(setting_key, setting_value) VALUES('backup_test_$dumper', ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)")
              ->execute(["Zeile1\nZeile2 'quote' \\backslash; (),( ümlaut 🚀 \0 null"]);
