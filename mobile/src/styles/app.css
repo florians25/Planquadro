@@ -79,7 +79,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .topbar-title { font-size: 1.05rem; font-weight: 800; letter-spacing: -.01em; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topbar-title:focus { outline: none; }
-.topbar-title:focus-visible { outline: 3px solid var(--focus); }
+.topbar-title:focus-visible { outline: none; } /* nur programmatischer Fokus (Screenreader-Ansage), nicht bedienbar */
 .topbar .btn-icon { color: var(--nv-tx); background: transparent; border-color: transparent; }
 .main { flex: 1; position: relative; padding: .75rem calc(.75rem + var(--safe-r)) calc(var(--tabbar-h) + var(--safe-b) + 1rem) calc(.75rem + var(--safe-l)); outline: none; }
 .screen { max-width: 760px; margin: 0 auto; }

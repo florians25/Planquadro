@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Planquadro: Kopfzeile/Statusleiste (Tinte), siehe docs/BRAND.md -->
+    <color name="pq_bar">#14213D</color>
+</resources>

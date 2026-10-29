@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dunkelmodus: gleiche Farbe wie die dunkle Kopfzeile der App -->
+    <color name="pq_bar">#070D18</color>
+</resources>

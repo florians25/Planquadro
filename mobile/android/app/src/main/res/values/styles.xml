@@ -13,6 +13,11 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Randlose Darstellung (Capacitor 8): hinter der transparenten Statusleiste liegt der
+             Fensterhintergrund – in Kopfzeilenfarbe, mit heller Statusleisten-Schrift -->
+        <item name="android:windowBackground">@color/pq_bar</item>
+        <item name="android:statusBarColor">@color/pq_bar</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
 
