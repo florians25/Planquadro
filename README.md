@@ -51,11 +51,13 @@ Tagen – jedes Feld ein Einsatz. Kurzname: **PQ**.
 **Apps für iOS und Android**
 
 <p>
-<img src="docs/screenshots/app-plan.png" alt="App: Mein Plan" width="23%">
-<img src="docs/screenshots/app-team.png" alt="App: Team" width="23%">
-<img src="docs/screenshots/app-abwesenheiten.png" alt="App: Abwesenheiten" width="23%">
-<img src="docs/screenshots/app-plan-dark.png" alt="App: Mein Plan im Dunkelmodus" width="23%">
+<img src="docs/screenshots/ios-plan.png" alt="iPhone: Mein Plan" width="24%">
+<img src="docs/screenshots/ios-team.png" alt="iPhone: Team" width="24%">
+<img src="docs/screenshots/ios-abwesenheiten.png" alt="iPhone: Abwesenheiten und Urlaubsantrag" width="24%">
+<img src="docs/screenshots/ios-team-dark.png" alt="iPhone: Team im Dunkelmodus" width="24%">
 </p>
+
+<sub>iPhone-Ansicht der App (gleiche Oberfläche wie in der iOS-App, gerendert in iPhone-15-Pro-Größe mit iOS-Sicherheitsbereichen).</sub>
 
 <sub>Alle Namen, Firmen und Daten sind frei erfunden (Demodaten aus <code>php bin/demo.php</code>).</sub>
 

@@ -161,10 +161,10 @@ manuelle Änderungen zu verlieren. Planungen lassen sich speichern und später f
 ## 12. Die App für iOS und Android
 
 <p>
-<img src="screenshots/app-plan.png" alt="App: Mein Plan" width="24%">
-<img src="screenshots/app-team.png" alt="App: Team" width="24%">
-<img src="screenshots/app-abwesenheiten.png" alt="App: Abwesenheiten" width="24%">
-<img src="screenshots/app-mehr.png" alt="App: Mehr" width="24%">
+<img src="screenshots/ios-plan.png" alt="App: Mein Plan" width="24%">
+<img src="screenshots/ios-team.png" alt="App: Team" width="24%">
+<img src="screenshots/ios-abwesenheiten.png" alt="App: Abwesenheiten" width="24%">
+<img src="screenshots/ios-mehr.png" alt="App: Mehr" width="24%">
 </p>
 
 1. App installieren, **Server-Adresse** Ihrer Firma eingeben (erhalten Sie von der Planung).
