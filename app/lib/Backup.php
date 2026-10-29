@@ -405,7 +405,12 @@ final class BackupDb
         $q = fn($v) => '"' . str_replace(['\\', '"', "\n"], ['\\\\', '\\"', '\\n'], (string)$v) . '"';
         $f = tempnam(Backup::tmpBase(), 'opmy');
         chmod($f, 0600);
-        file_put_contents($f, "[client]\nhost=" . $q($c['host']) . "\nport=" . (int)$c['port'] . "\nuser=" . $q($c['user']) . "\npassword=" . $q($c['pass']) . "\n");
+        $ini = "[client]\nhost=" . $q($c['host']) . "\nport=" . (int)$c['port'] . "\nuser=" . $q($c['user']) . "\npassword=" . $q($c['pass']) . "\n";
+        /* MariaDB-Clients ab 11.4 erzwingen TLS standardmäßig; die Anwendung (PDO) verbindet
+           ohne TLS. Gleiches Verhalten, außer OPSPILOT_DB_SSL=1. Eigene Gruppe, damit
+           MySQL-Clients die Option nicht als unbekannt ablehnen. */
+        if (getenv('OPSPILOT_DB_SSL') !== '1') $ini .= "\n[client-mariadb]\nskip-ssl\n";
+        file_put_contents($f, $ini);
         return $f;
     }
 

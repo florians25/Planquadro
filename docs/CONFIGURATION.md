@@ -19,6 +19,7 @@ Secrets als Dateien in `./secrets/` (erzeugt von `sh docker/init-secrets.sh`).
 |---|---|---|
 | `OPSPILOT_DB_HOST` | `localhost` | Host der Datenbank (Compose: `db`) |
 | `OPSPILOT_DB_PORT` | `3306` | Port |
+| `OPSPILOT_DB_SSL` | `0` | `1` = Backup-/Restore-Programme (`mariadb-dump`, `mariadb`) nutzen ihre TLS-Voreinstellung. Standard: ohne TLS wie die Anwendungsverbindung – MariaDB-Clients ab 11.4 würden sonst TLS erzwingen und an Servern ohne TLS scheitern |
 | `OPSPILOT_DB_NAME` | `opspilot` | Datenbank (Self-Hosting); SaaS: Fallback, die Mandanten-DB kommt aus `tenants.db_name` |
 | `OPSPILOT_DB_USER` | – | Benutzer |
 | `OPSPILOT_DB_PASS` ✱ | – | Passwort (Compose: `OPSPILOT_DB_PASS_FILE=/run/secrets/db_password`) |
