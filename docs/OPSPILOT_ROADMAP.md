@@ -40,7 +40,7 @@ Changelog · Datenschutzseite · Login-Sperre, Captcha, Passwortrichtlinie.
 ### Befunde
 
 Schweregrad: **K** kritisch · **H** hoch · **M** mittel · **N** niedrig.
-Status: ✅ behoben (Phase 2) · ⏳ geplant (Phase) · ❓ Entscheidung nötig · ⏳ geplant (Phase) · ❓ Entscheidung nötig.
+Status: ✅ behoben · ⏳ geplant (Phase) · ❓ Entscheidung nötig.
 
 #### Sicherheit und Berechtigungen
 
@@ -62,13 +62,13 @@ Status: ✅ behoben (Phase 2) · ⏳ geplant (Phase) · ❓ Entscheidung nötig 
 | S-14 | M | Profil- und Rollen-AJAX ohne `requireLogin()` (erzwungener Passwortwechsel umgehbar) | `pages/profil.php`, `pages/rollen.php` | ✅ |
 | S-15 | M | „Niemand außer …“ löscht Overrides aller Benutzer statt nur der Rolle | `pages/rollen.php` | ✅ |
 | S-16 | M | Admin kann sich `manage_roles` entziehen und sperrt damit alle aus | `pages/rollen.php` | ✅ Admin-Rolle schreibgeschützt |
-| S-17 | M | Planungsassistent: Manager planen immer teamübergreifend, auch ohne `view_all_employees` | `pages/planungsassistent.php` | ❓ fachliche Entscheidung |
-| S-18 | M | `view_all_employees` (Planungs-Scope) öffnet zugleich Gesundheitsdaten aller | `canSeeAbsenceDetails()` | ❓ fachliche Entscheidung, ⏳ Phase 3 |
+| S-17 | M | Planungsassistent: Manager planen immer teamübergreifend, auch ohne `view_all_employees` | `pages/planungsassistent.php` | ✅ entschieden (E-1): bleibt wie bisher |
+| S-18 | M | `view_all_employees` (Planungs-Scope) öffnet zugleich Gesundheitsdaten aller | `canSeeAbsenceDetails()` | ✅ (E-2): nur Vorgesetzten-Beziehung, neues Recht `view_absence_details_all` |
 | S-19 | M | Meldungen (`announcements active`) ohne Login abrufbar | `api/announcements` | ✅ Login erforderlich |
 | S-20 | M | Fehlermeldungen geben Datenbankdetails an den Client (`$e->getMessage()`) | diverse APIs | ✅ für geänderte Endpunkte, ⏳ Rest in Phase 3 (Kernel) |
 | S-21 | N | `onclick='…<?php echo e(...)?>…'` – `&#039;` wird im Handler zu `'` | `monatsplanung`, `rollen` | ⏳ Phase 5 (Inline-Handler ersetzen) |
 | S-22 | N | CSP mit `unsafe-inline` | `.htaccess` | ⏳ Phase 5 |
-| S-23 | N | Passwortrichtlinie Standard 6 Zeichen, 30-Tage-Zwangswechsel (entspricht nicht NIST/BSI) | Einstellungen | ⏳ Phase 3 (TenantConfig, Standard 12 Zeichen, kein Zwangsablauf) |
+| S-23 | N | Passwortrichtlinie Standard 6 Zeichen, 30-Tage-Zwangswechsel (entspricht nicht NIST/BSI) | Einstellungen | ✅ entschieden (E-4): bleibt (6 Zeichen, 30 Tage), weiter einstellbar |
 
 #### Datenintegrität und Mehrbenutzerbetrieb
 
@@ -103,9 +103,28 @@ Status: ✅ behoben (Phase 2) · ⏳ geplant (Phase) · ❓ Entscheidung nötig 
 | X-02 | `genehmigungen.php` sendet `Location` nach HTML-Ausgabe (Umleitung wirkungslos) | ✅ |
 | X-03 | Rechte `manage_absences`, `use_planning_assistant` nicht in der Rechte-Oberfläche pflegbar | ✅ |
 
+#### Sicherheitsreview der neuen Plattformteile (Phase 7)
+
+Unabhängiges Review von Mandanten, TenantConfig, OIDC, API v1 und Push. Alle Befunde
+behoben und mit Regressionstests abgesichert (`tests/Integration/SecurityReviewTest.php`,
+`tests/Unit/OidcSsrfTest.php`, `TenancyTest`).
+
+| ID | Sev | Befund | Status |
+|---|---|---|---|
+| R-01 | H | Recht „Einstellungen verwalten“ konnte SSO auf einen eigenen IdP umstellen und sich so als Administrator anmelden | ✅ SSO nur durch Admins; Admin-Konten standardmäßig nicht per SSO |
+| R-02 | H | Konfliktvorschau (`save_bulk check_conflicts`) zeigte Urlaubs-/Krankheitsart ohne Detailrecht | ✅ nur „Abwesend“ |
+| R-03 | H | SaaS: plattformweites `OPSPILOT_OIDC_CLIENT_SECRET` ging an den vom Mandanten gewählten Token-Endpunkt | ✅ nur für festgelegten `OPSPILOT_OIDC_ISSUER` |
+| R-04 | M | SSRF über Issuer/Discovery-URL | ✅ SaaS: keine internen Ziele, IP-Pinning |
+| R-05 | M | App-Sitzungen überlebten Passwortwechsel; Rotation verlängerte die Laufzeit | ✅ Widerruf, absolute Laufzeit, Prüfungen beim Refresh |
+| R-06 | M | Mandanten-Header auch für Nicht-API-Pfade (`?x=/api/v1/`) | ✅ nur Pfad `/api/v1/…` |
+| R-07 | N | Plattform-Admin ohne gesetzten `OPSPILOT_PLATFORM_HOST` auf jedem Host | ✅ verweigert |
+| R-08 | N | Passwort-Orakel bei „nur SSO“; Laufzeitunterschied bei unbekannten Benutzern | ✅ einheitliche Antwort, Dummy-Hash |
+| R-09 | M | SSO-Rücksprung in echten Browsern durch `SameSite=Strict` gebrochen | ✅ Zwischenstand in eigenem Lax-Cookie |
+| R-10 | M | API-SSO ohne Pflicht für PKCE-Verifier/nonce | ✅ Pflicht, App sendet nonce |
+
 ---
 
-## Phase 2 – Stabilisierung (aktuell, Branch `claude/opspilot-codebase-analysis-41d0wu`)
+## Phase 2 – Stabilisierung ✅
 
 Ziel: Fehler beheben, Mehrbenutzerbetrieb absichern, Testnetz aufspannen – **ohne**
 sichtbare Änderung etablierter Abläufe.
@@ -119,12 +138,26 @@ sichtbare Änderung etablierter Abläufe.
 - [x] Optimistic Concurrency (D-01/D-02), Änderungsprotokoll (D-06)
 - [x] Integritätsbefunde D-03 … D-05, D-08, D-10
 - [x] Alt-Migrationen auch auf MySQL 8 lauffähig (MariaDB-Syntax wird übersetzt)
-- [ ] Offene Entscheidungen S-17, S-18 klären
-- [ ] Planungsassistent (`apply`) in `plan_change_log` protokollieren und Revisionen prüfen
-- [ ] Bemerkungen (`api/save_remark`) mit Revisionsprüfung
-- [ ] Verbleibende Endpunkte ohne Fehlertext-Weitergabe (S-20) – mit Request-Kernel in Phase 3
+- [x] Entscheidungen S-17, S-18 (E-1, E-2) umgesetzt
+- [x] Planungsassistent (`apply`/Rückgängig) sperrt, protokolliert, überschreibt keine fremden Entwürfe
+- [x] Bemerkungen (`api/save_remark`) mit Revisionsprüfung
+- [x] Session-Timeout wird durchgesetzt (Einstellung war bis v6.9.0 wirkungslos)
+- [ ] Verbleibende Endpunkte ohne Fehlertext-Weitergabe (S-20) – mit dem Request-Kernel
 
-## Phase 3 – Plattform
+## Phase 3 – Plattform ✅ (Kern) · ⏳ Rest
+
+Umgesetzt:
+- [x] Mandantenfähigkeit mit **einer Datenbank je Mandant** + Plattform-DB (Begründung:
+      `ARCHITECTURE.md` B.3), Auflösung per Host, Sitzungsbindung je Mandant,
+      `bin/tenant.php` (create/adopt/suspend/domain/platform-admin), `migrate --all-tenants`,
+      Plattform-Administration `/platform/`, Isolationstests
+- [x] TenantConfig mit Kompatibilitätsschicht (bisherige Einstellungen bleiben gültig):
+      Branding (WCAG-Kontrast), Module, Navigation, Dashboard-Widgets, Planungsregeln
+- [x] Stammdaten Kunden, Standorte, Qualifikationen (optional an Einsatzcodes)
+- [x] API v1 (Token-Auth, Refresh-Rotation) und Push (FCM/APNs/ntfy) – `docs/API.md`
+- [x] OIDC/SSO optional (PKCE, JWKS, keine Auto-Anlage)
+
+Offen (bewusst verschoben, kein Funktionsverlust):
 
 - Request-Kernel (`app/Kernel`): einheitlich Login, CSRF, Fehlerformat, Audit, Request-ID.
 - Mandanten: `tenants`, `tenant_domains`, `tenant_id` in allen Fachtabellen, Mandant 1 für
@@ -138,7 +171,8 @@ sichtbare Änderung etablierter Abläufe.
 - Module ein-/ausschaltbar; Navigation und Dashboard aus der TenantConfig.
 - API v1 (REST, JSON, Token-Auth) als Grundlage für Mobile.
 - Server-Sent Events für Live-Aktualisierung.
-- OIDC/SSO optional.
+- OIDC/SSO optional. ✅
+- Ursprünglich geplante `tenant_id`-Spalten entfallen durch die Datenbank je Mandant.
 
 ## Phase 4 – Deployment, Backup, Recovery
 
@@ -156,7 +190,14 @@ sichtbare Änderung etablierter Abläufe.
 - Disaster-Recovery-Handbuch (`docs/DISASTER_RECOVERY.md`) mit RPO/RTO.
 - Release-Workflow: Image-Build und -Signatur bei Tag (Push in Registry erst nach Freigabe).
 
-## Phase 5 – Oberfläche
+## Phase 5 – Oberfläche ✅ (ohne CSP-Umbau)
+
+Umgesetzt: Designsystem mit Tokens und Dark Mode (`docs/DESIGN_SYSTEM.md`), Kontraste,
+Fokus, Skip-Link, Dialog-ARIA, Tastaturbedienung der Matrix, Filter „Nur Änderungen“,
+Leistung großer Pläne (Beispiel Monatsplan: 856 → 68 Abfragen, 293 → 54 ms).
+Offen: Inline-Handler entfernen / CSP ohne `unsafe-inline` (S-21, S-22), virtuelles Scrollen,
+Drag-and-Drop.
+
 
 - OpsPilot-Designsystem (Design Tokens als CSS-Variablen, Light/Dark, Mandantenfarben).
 - Bessere Kontraste (WCAG 2.2 AA), Fokus-Stile, Tastaturbedienung der Planungsmatrix,
@@ -167,7 +208,12 @@ sichtbare Änderung etablierter Abläufe.
   Werkzeug-Klick (nicht als Ersatz).
 - Inline-Handler entfernen → CSP ohne `unsafe-inline`.
 
-## Phase 6 – Mobile
+## Phase 6 – Mobile ✅ (Code, noch nicht in den Stores)
+
+Umgesetzt in `mobile/` (Capacitor 8, TypeScript, Vite): alle unten genannten Funktionen,
+108 Tests, End-to-End gegen das echte Backend geprüft. Store-Veröffentlichung braucht
+Signierschlüssel, Apple-/Google-Konten und Ihre Freigabe (`mobile/README.md`).
+
 
 - Mobile-Web-App (TypeScript) als PWA + Capacitor-Hülle für iOS/Android (Begründung:
   `ARCHITECTURE.md` B.8).
@@ -177,7 +223,13 @@ sichtbare Änderung etablierter Abläufe.
   Offline-Lesemodus (verschlüsselter Cache, Sync per `since`-Cursor), Dark Mode, Branding
   aus der TenantConfig.
 
-## Phase 7 – Qualitätssicherung
+## Phase 7 – Qualitätssicherung ✅ (laufend)
+
+Umgesetzt: Integrationstests über HTTP für Rechte, Scope, Mandanten, API, OIDC, Push und
+Nebenläufigkeit; CI auf MariaDB 10.11 und MySQL 8.0 (PHP 8.1/8.3), Mobile-Tests,
+Secret-Scan (gitleaks), Abhängigkeits-Audit und OWASP-ZAP-Baseline (`security.yml`),
+Sicherheitsreview R-01 … R-10.
+
 
 - Integrationstests aller Endpunkte (Rechte × Rollen × Scope × Mandant).
 - Nebenläufigkeitstests (parallele Speicher-/Veröffentlichungsvorgänge).
@@ -192,8 +244,8 @@ sichtbare Änderung etablierter Abläufe.
 
 | # | Frage | Empfehlung |
 |---|---|---|
-| E-1 | S-17: Sollen Manager im Assistenten ohne Freigabe teamübergreifend planen? | Wie Teamleiter an die Einstellung koppeln |
-| E-2 | S-18: Soll „darf alle planen“ auch Gesundheitsdaten aller freigeben? | Nein – Vertraulichkeit an Vorgesetzten-Beziehung binden |
+| E-1 | S-17: Sollen Manager im Assistenten ohne Freigabe teamübergreifend planen? | ✅ entschieden: ja, bleibt wie bisher |
+| E-2 | S-18: Soll „darf alle planen“ auch Gesundheitsdaten aller freigeben? | ✅ entschieden: nein, umgesetzt |
 | E-3 | Lizenz des Repositorys (derzeit „Alle Rechte vorbehalten“, Repository öffentlich) | Klären, ob die Rechte am Code bei Ihnen liegen; bis dahin Repository privat schalten |
-| E-4 | Passwortrichtlinie: 30-Tage-Zwangswechsel beibehalten? | Abschaffen, Mindestlänge 12 (BSI/NIST) |
-| E-5 | Branch-Modell: `main` (geschützt) ← `develop` ← `feature/*`, Releases per Tag | so einrichten, sobald `main` befüllt werden darf |
+| E-4 | Passwortrichtlinie: 30-Tage-Zwangswechsel beibehalten? | ✅ entschieden: bleibt (6 Zeichen, 30 Tage) |
+| E-5 | Branch-Modell: `main` (geschützt) ← `develop` ← `feature/*`, Releases per Tag | ✅ freigegeben; `main` und `develop` angelegt (Branch-Schutz in den GitHub-Einstellungen aktivieren) |

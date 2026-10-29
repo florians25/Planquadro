@@ -2,6 +2,56 @@
 
 *Copyright © 2026 Florian-Fynn Scheibel. Alle Rechte vorbehalten.*
 
+## OpsPilot 7.0.0-dev – Phasen 3–7 „Plattform, Oberfläche, Apps, QS“ (unveröffentlicht)
+
+Alle bisherigen Funktionen, Daten, Rechte und Abläufe bleiben erhalten. Neue Funktionen
+sind optional oder standardmäßig so eingestellt, dass sich für bestehende Installationen
+nichts ändert.
+
+### Plattform (Phase 3)
+- **Mandantenfähigkeit** (`OPSPILOT_MODE=saas`): eine Datenbank je Mandant, Auflösung per
+  Domain, mandantengebundene Sitzungen. Self-Hosting (Standard) bleibt eine Einzel-Installation.
+  `bin/tenant.php` legt Mandanten an oder übernimmt eine bestehende Installation
+  unverändert (`adopt`). Plattform-Administration unter `/platform/`.
+- **Organisation** (neue Seite): Branding (Name, Farben mit automatischer Kontrastprüfung,
+  Logo), Module ein-/ausschalten, Reihenfolge und Sichtbarkeit der Navigation,
+  Dashboard-Widgets, Planungsregeln. Bisherige Einstellungen werden übernommen.
+- **Stammdaten**: Kunden, Standorte, Qualifikationen; Einsatzcodes optional verknüpfbar.
+- **Anmeldung per Firmenkonto (OpenID Connect)**, optional. Keine automatische
+  Kontoanlage; Administratoren behalten den Passwort-Zugang als Notfallweg.
+- Neues Recht „Abwesenheitsdetails aller sehen“ (Personalabteilung); Vorgesetzte sehen
+  Details nur noch für ihr Team (Entscheidung E-2).
+
+### API und Push
+- REST-API v1 für die Apps (`docs/API.md`): Token-Anmeldung mit rotierenden
+  Refresh-Tokens, persönlicher Plan, Team, Abwesenheiten, Anträge, Einsatzdetails,
+  Synchronisation.
+- Push bei veröffentlichten Planänderungen (FCM, APNs, ntfy für Self-Hosting) über eine
+  Warteschlange und `bin/push-worker.php`.
+
+### Oberfläche (Phase 5)
+- OpsPilot-Designsystem mit Dark Mode (folgt dem System, umschaltbar), besseren
+  Kontrasten, sichtbarem Fokus, Skip-Link und zugänglichen Dialogen.
+- Planungsmatrix per Tastatur bedienbar; Filter „Nur Änderungen“ für Entwürfe.
+- Große Pläne laden deutlich schneller (Monatsplan im Test: 856 → 68 Abfragen).
+
+### Mobile-Apps (Phase 6)
+- iOS-, Android- und Web-App (`mobile/`, Capacitor): persönlicher Plan, Team,
+  Abwesenheiten und Anträge, Einsatzdetails mit Kundeninfos, Push, Offline-Lesemodus,
+  Biometrie, Dark Mode, Mandanten-Branding. Noch nicht in den Stores veröffentlicht.
+
+### Sicherheit und Qualität (Phase 7)
+- Sicherheitsreview der neuen Teile, alle Befunde behoben (Roadmap R-01 … R-10), u. a.:
+  SSO-Einrichtung nur durch Administratoren, keine Abwesenheitsarten in der
+  Konfliktvorschau ohne Detailrecht, Passwortwechsel beendet App-Sitzungen,
+  SSO funktioniert mit strikten Sitzungs-Cookies.
+- CI: Tests auf MariaDB und MySQL, Mobile-Tests, Secret-Scan, Abhängigkeits-Audit,
+  OWASP-ZAP-Baseline.
+
+### Hinweis zum Update
+`php bin/migrate.php up` spielt die Migrationen 0004 (Stammdaten) und 0005 (API/Push) ein.
+Neue Umgebungsvariablen sind optional (`docs/ARCHITECTURE.md`, `docs/API.md`).
+
 ## OpsPilot 7.0.0-dev – Phase 2 „Stabilisierung“ (unveröffentlicht)
 
 Basis ist Einsatzplanung v6.9.0. Alle Funktionen und Abläufe bleiben erhalten; die
