@@ -137,6 +137,35 @@ nichts ändert.
   prüfen, unveröffentlichte Entwürfe → veröffentlichen, Unterbesetzung, unverplante
   Tage, nächster Monat), Mitarbeitende zuerst ihre Woche; „Heute“ im Kopf. Alle
   bisherigen Widgets bleiben und sind weiter abschaltbar (neues Widget „Planungs-Kennzahlen“).
+- **Planungsassistent neu gestaltet** – geführter Ablauf in vier Schritten
+  (① Zeitraum & Team → ② Bedarf & Regeln → ③ Vorschlag prüfen → ④ Übernehmen) statt
+  sechs Formularseiten; alle bisherigen Optionen, Regeln und Ansichten bleiben erhalten:
+  - Sinnvolle Voreinstellungen: Zeitraum Rest des Monats bzw. nächster Monat mit
+    Schnellwahl, eigenes Team; Pflicht ist nur der Einsatzbereich.
+  - Progressive Offenlegung: Wochentags-Bedarf, Sondertage, Qualifikation, Azubi-Regeln
+    und Experten-Optionen eingeklappt, mit Kurzfassung der aktuellen Werte.
+  - **Live-Vorschau** im gewohnten Raster bereits in Schritt 1 und 2, rechnet bei jeder
+    Änderung neu (Handänderungen werden nie stillschweigend verworfen).
+  - Prüfliste erklärt jeden Befund („was tun?“) mit Sprung zur Zelle bzw. zu passenden
+    Personen; Kennzahlen Blocker/Warnungen filtern per Klick.
+  - **Übernahme mit Probelauf**: der Server zeigt vorab „27 Einsätze für 9 Personen,
+    3 Konflikte übersprungen“, gruppiert nach Grund; offene Entwürfe von Kollegen sind im
+    Raster markiert und lassen sich nur bewusst ersetzen; inzwischen geänderte Zellen
+    werden über Zell-Revisionen erkannt und übersprungen.
+  - **Rückgängig deutlich sichtbar**: nach der Übernahme, im Kopf und auf der Startseite
+    („Letzte Übernahmen“, auch nach einem Neuladen).
+  - Startseite mit Vorlagen (mit einem Klick verwenden, aktualisieren), letzten
+    Übernahmen und gespeicherten Planungen (Status „übernommen“ wird jetzt gepflegt).
+  - Tastatur (Pfeiltasten im Raster, Kontextmenü-Taste/Umschalt+F10, Reiter), ARIA,
+    hell/dunkel, Tablet; eigener Bestätigungsdialog statt `confirm()`.
+  - Neu in der Oberfläche: „Reservierte Ausbildungsplätze pro Tag“ (gab es bisher nur in
+    der Konfiguration).
+  - Technik: Logik in `app/lib/PlanningAssistant.php` (Algorithmus unverändert, gegen den
+    alten Stand mit identischen Ergebnissen verglichen), Oberfläche in
+    `assets/js/assistant-core.js`/`assistant.js`/`assets/css/assistant.css`, strikte CSP
+    auch für diese Seite; neue Aktionen `apply_preview`, `run_list`; Migration
+    `0010_planning_run_source` (Übernahme ↔ gespeicherte Planung). Gespeicherte Planungen
+    und Vorlagen bestehender Installationen werden weiter geladen.
 
 ### Mobile-Apps (Phase 6)
 - iOS-, Android- und Web-App (`mobile/`, Capacitor): persönlicher Plan, Team,

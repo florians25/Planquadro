@@ -126,8 +126,10 @@ aus eigenen Dateien oder mit der Nonce des Requests. Daher gilt:
   Eigenschaft (`el.onclick = …`) und `addEventListener` sind erlaubt, `javascript:`-URLs,
   `eval`/`new Function` und String-`setTimeout` nicht.
 - Inline-`style`-Attribute bleiben erlaubt.
-- Übergangsweise gelockert ist nur `OPS_CSP_LEGACY_PAGES` (Planungsassistent bis zum
-  Neubau); die Liste muss mit der Ausnahmeliste im Test übereinstimmen.
+- `OPS_CSP_LEGACY_PAGES` (gelockerte `script-src` für Seiten im Umbau) ist leer; die Liste
+  muss mit der Ausnahmeliste im Test übereinstimmen.
+- JSON-Datenblöcke (`<script type="application/json">`) tragen ebenfalls die Nonce
+  (Beispiel: Planungsassistent).
 
 ## Migrationen
 

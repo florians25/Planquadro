@@ -60,7 +60,7 @@ selbst prüfen.
 | Abwesenheiten | `pages/abwesenheiten.php` | Zeiträume erfassen, Vertretungsvorschläge |
 | Vertretung | `pages/vertretung.php` | befristete Übertragung des Team-Scopes (`deputations`) |
 | Anträge | `pages/genehmigungen.php`, `api/change_requests` | Änderungsanträge von Mitarbeitern (optional) |
-| Planungsassistent | `pages/planungsassistent.php` (3 800 Zeilen) | Bedarfsplanung, Automatik, gespeicherte Planungen (`planning_runs`, `planning_profiles`) |
+| Planungsassistent | `pages/planungsassistent.php` (Aufbau), `app/lib/PlanningAssistant.php` (Algorithmus, Übernahme), `assets/js/assistant*.js` | Bedarfsplanung, Automatik, gespeicherte Planungen (`planning_runs`, `planning_profiles`) |
 | Team | `pages/mitarbeiter.php` | Benutzer, Rollen, Vorgesetzte (bis zu 4), Einmalpasswörter |
 | Rollen & Rechte | `pages/rollen.php` | Rollenrechte, Benutzer-Overrides, eigene Rollen |
 | Bereiche (Einsatzcodes) | `pages/planbereiche.php` | `plan_areas`: Kürzel, Farben, Typ kunde/allgemein |

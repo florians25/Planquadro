@@ -12,11 +12,11 @@ use Planquadro\Tests\Support\IntegrationTestCase;
 final class CspTest extends IntegrationTestCase
 {
     /** Seiten, die noch umgebaut werden (siehe tests/Unit/NoInlineHandlersTest::ALLOW) */
-    private const PENDING = ['/planungsassistent'];
+    private const PENDING = [];
 
     private const PAGES = ['/dashboard', '/mein_plan', '/monatsplanung', '/gesamtplan', '/jahresuebersicht',
         '/urlaubsplanung', '/abwesenheiten', '/genehmigungen', '/mitarbeiter', '/planbereiche', '/feiertage',
-        '/stammdaten', '/rollen', '/einstellungen', '/organisation', '/profil', '/vertretung', '/datenschutz'];
+        '/stammdaten', '/rollen', '/einstellungen', '/organisation', '/profil', '/vertretung', '/datenschutz', '/planungsassistent'];
 
     private function assertStrictPage(string $label, string $csp, string $body): void
     {
@@ -64,6 +64,7 @@ final class CspTest extends IntegrationTestCase
 
     public function testPendingPagesStillLoad(): void
     {
+        $this->assertIsArray(self::PENDING);
         foreach (self::PENDING as $p) {
             $r = $this->as('admin')->get($p);
             $this->assertSame(200, $r->status, $p);

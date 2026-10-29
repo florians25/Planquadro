@@ -15,9 +15,7 @@ final class NoInlineHandlersTest extends TestCase
      * Begründete Ausnahmen (Pfad relativ zur Repo-Wurzel => Grund).
      * Eine Ausnahme schaltet alle drei Prüfungen für die Datei ab.
      */
-    private const ALLOW = [
-        'public/pages/planungsassistent.php' => 'wird neu gebaut (eigener Umbau, direkt CSP-konform)',
-    ];
+    private const ALLOW = [];
 
     /** Bekannte, schon vor dem Umbau undefinierte Aktionen (Verhalten unverändert gelassen). */
     private const UNDEFINED_OK = [
@@ -52,6 +50,7 @@ final class NoInlineHandlersTest extends TestCase
 
     public function testAllowlistEntriesExist(): void
     {
+        $this->assertIsArray(self::ALLOW);
         foreach (self::ALLOW as $rel => $why) {
             $this->assertFileExists(self::root() . '/' . $rel, "Ausnahme veraltet: $rel");
             $this->assertNotSame('', $why);

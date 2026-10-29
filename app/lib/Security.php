@@ -238,7 +238,7 @@ function opsCspNonce(): string
  * sonst ignorierten Browser 'unsafe-inline'). Eintrag entfernen, sobald die Seite
  * CSP-konform ist (tests/Unit/NoInlineHandlersTest prüft die Liste mit).
  */
-const OPS_CSP_LEGACY_PAGES = ['planungsassistent'];
+const OPS_CSP_LEGACY_PAGES = [];
 
 /** Policy-Text; $frameAncestors z. B. "'none'" für die Plattform-Administration. */
 function opsContentSecurityPolicy(string $frameAncestors = "'self'", bool $legacyInline = false): string

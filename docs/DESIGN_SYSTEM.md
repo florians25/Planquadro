@@ -187,3 +187,41 @@ Tokens (hell/dunkel): `--pq-week-line`, `--pq-cross`, `--pq-hl-ring`, `--pq-unde
 - Desktop-Seiten zeigen weiterhin den Hinweis, bieten jetzt aber **„Trotzdem anzeigen“**
   (horizontal scrollbar), z. B. für einen kurzen Blick auf den Gesamtplan.
 - Für die mobile Nutzung ist die App (`mobile/`) vorgesehen.
+
+## Planungsassistent – Bausteine (`pqa-`)
+
+Eigenes Stylesheet `public/assets/css/assistant.css`, nur Tokens aus `style.css` und
+`planquadro-theme.css`; hell und dunkel, Druck immer hell. Logik ohne DOM in
+`public/assets/js/assistant-core.js` (getestet in `tests/js/assistant.test.mjs`),
+Oberfläche in `assistant.js`. CSP: kein Inline-Skript außer dem JSON-Datenblock
+(`<script type="application/json" nonce>`), keine Inline-Handler; Einsatzfarben setzt das
+Skript per CSSOM (`data-css` → `element.style.cssText`), nicht als `style`-Attribut im Markup.
+
+| Baustein | Klasse | Verwendung |
+|---|---|---|
+| Schrittleiste | `.pqa-steps` / `.pqa-step` (`.is-active`, `.is-done`) | Geführter Ablauf; `<nav>` + `<ol>`, aktiver Schritt mit `aria-current="step"`, Kurzfassung je Schritt in `<small>` |
+| Karte mit Abschnitt | `.card.pqa-sec`, `.pqa-h2`, `.pqa-h3` | Formulargruppen je Schritt |
+| Einklappbereich | `details.pqa-more` + `.pqa-sum` | Progressive Offenlegung; die Kurzfassung der Einstellungen steht rechts in der Zeile |
+| Umschalter | `.pqa-toggles` / `label.pqa-tg > input + span` | Mehrfachauswahl (Wochentage, Rollen, Lehrjahre, Bereiche); echte Checkboxen, Fokusrahmen am `span` |
+| Segmentschalter | `.pqa-seg` (Radio) | Eine aus wenigen Optionen (Stammbereich, Personenkreis) |
+| Auswahlkarten | `.pqa-radio-cards` | Optionen mit Erklärung (Umgang mit belegten Tagen) |
+| Schalter | `label.pqa-switch > input[role=switch] + span` | An/aus (Azubis einbeziehen, Nur Verplante) |
+| Zahlen-Stepper | `.pqa-stepper` | −/+ für zentrale Zahlen (Bedarf, Mindestbesetzung); Touch ≥ 44 px |
+| Zahlenzeile | `.pqa-num-row` + `.pqa-num` | Beschriftung links mit Erklärung, Zahl rechts |
+| Pille | `.pqa-pill` (`.is-on`, `aria-pressed`) | Schnellwahl Zeitraum, Filter der Prüfliste |
+| Kennzahl | `.pqa-kpis` / `.pqa-kpi` (`.is-ok/.is-part/.is-bad`), `.pqa-bar` | Abdeckung, Plätze, Personen, Blocker, Warnungen; Blocker/Warnungen filtern per Klick |
+| Raster | `table.pt.pqa-pt` (`.is-compact` für die Live-Vorschau), `.pqa-cell` | Grundlage ist die Planungstabelle der Monatsplanung; Zellen `pick`, `bad`, `foreign`, `fromfree`, `fromplan`, `abs`, `lock`, `skip`, `repl`, `school`; Spaltenkopf `.pqa-dh` als Schaltfläche; roving tabindex (eine Zelle per Tab erreichbar, Pfeiltasten über `PQACore.gridMove`) |
+| Live-Vorschau | `.pqa-live` | Schritte 1–2: Kennzahlen + kompaktes Raster, rechnet 650 ms nach der letzten Eingabe neu; unter 1280 px unterhalb des Formulars |
+| Prüfpunkt | `.pqa-cf` (`.is-block/.is-warn/.is-info`) + `.pqa-cf-help` | Befund, Erklärung „was tun“ (`PQACore.explain`), Sprung zur Zelle / passende Personen |
+| Übernahme | `.pqa-apply`, `.pqa-facts`, `.pqa-skip`, `.pqa-done` | Zusammenfassung des Probelaufs („27 Einsätze für 9 Personen, 3 Konflikte übersprungen“), übersprungene Zellen nach Grund gruppiert |
+| Rückgängig | `.pqa-btn-undo`, `.pqa-undo-pill` | Deutlich sichtbar in Schritt 4, im Kopf und auf der Startseite |
+| Fußleiste | `.pqa-foot` | Klebt unten: Hinweis zum Schritt, Zurück, Weiter mit sprechender Beschriftung („Vorschlag prüfen“, „Als Entwurf übernehmen“ in Grün) |
+| Menü | `.pqa-menu` / `.pqa-menu-list[role=menu]` | „Mehr“: seltene Aktionen; Pfeiltasten, Esc gibt den Fokus zurück |
+| Bestätigung | Dialog `#ovAsk` (Bauweise `.modal-bg`) | Ersetzt `confirm()`: Ersetzen, Löschen, Rückgängig, Neu berechnen |
+
+Barrierefreiheit: Fokus bei „Neue Planung“ im Pflichtfeld, Fehlermeldung am Feld
+(`aria-invalid`, `aria-describedby`), Ansagen über eine `role=status`-Region, Ansicht-Reiter
+als `role=tablist` mit Pfeiltasten, Kontextmenü per Kontextmenü-Taste oder Umschalt+F10,
+jede Rasterzelle mit sprechender Beschriftung („Berger, Jonas – Mo 02.11.: geplant SWN …“).
+Responsiv: zweispaltig ab 1280 px (Formular | Vorschau bzw. Raster | Prüfung), darunter
+einspaltig; Schrittleiste unter 900 px ohne Kurzfassung.

@@ -149,7 +149,7 @@ Die API v1 (`docs/API.md`) nutzt exakt dieselben Funktionen (`hasPerm`, `canEdit
 |---|---|
 | mitarbeiter | save, toggle, save_supervisors, promote, save_subordinates, reset_pw → keine; delete_user → `delete_users` |
 | rollen | save_perms, add_override, remove_override, get_overrides, nobody_except, create_role, delete_role → `manage_roles` + CSRF |
-| planungsassistent | generate, candidates, suggest, apply → Scope; plan_* → Eigentümer/freigegeben; undo, profile_* → Eigentümer oder `manage_settings`; Urlaub überschreiben → `unlock_vacation`; intern → `plan_view_internal` |
+| planungsassistent | generate, candidates, suggest, apply_preview, apply → Scope; run_list → eigene Läufe (alle mit `manage_settings`); plan_* → Eigentümer/freigegeben; undo, profile_* → Eigentümer oder `manage_settings`; Urlaub überschreiben → `unlock_vacation`; intern → `plan_view_internal` |
 | abwesenheiten | list, impact, save, delete → Scope |
 | einstellungen | save_settings, import_holidays, get_audit_log, clear_audit_log, get_login_stats, clear_lockouts → `manage_settings` |
 | vertretung | create (eigene Vertretung), delete (eigene; admin alle) |

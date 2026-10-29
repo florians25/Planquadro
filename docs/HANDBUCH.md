@@ -164,10 +164,140 @@ mit Ihren Rechten, nicht mehr.
 
 ## 8. Planungsassistent
 
-Der **Assistent** schlägt Pläne vor: Sie wählen Zeitraum, Personen und Bereiche, er verteilt
-unter Berücksichtigung von Abwesenheiten, Feiertagen und Regeln. Vorschläge werden erst mit
-**Übernehmen** zu Entwürfen; **Rückgängig** nimmt eine Übernahme zurück, ohne spätere
-manuelle Änderungen zu verlieren. Planungen lassen sich speichern und später fortsetzen.
+Der **Assistent** plant Einsätze und Kundenprojekte über mehrere Tage oder Wochen: Sie legen
+fest, *wo*, *wann* und *wie viele* – er schlägt die Besetzung vor und beachtet dabei
+Abwesenheiten, Feiertage, Berufsschule, Azubi-Regeln und Belastungsgrenzen. Übernommen wird
+immer nur als **Entwurf**; veröffentlicht wird wie gewohnt in der Monatsplanung. Jede
+Übernahme lässt sich mit einem Klick zurücknehmen.
+
+Aufruf: Navigation **Assistent** oder in der Monatsplanung über die Schaltfläche
+„Assistent“. Voraussetzung ist das Recht *Planungsassistent nutzen* (oder *Planen*).
+
+### Übersicht
+
+Die Startseite zeigt drei Bereiche:
+
+- **Vorlagen** – gespeicherte Vorgaben wiederkehrender Einsätze. **Verwenden** startet
+  eine neue Planung mit diesen Vorgaben (liegt der Zeitraum der Vorlage in der
+  Vergangenheit, beginnt er heute).
+- **Letzte Übernahmen** – Ihre Übernahmen, die noch Entwürfe enthalten, mit
+  **Rückgängig**. Angezeigt wird, wie viele Einträge noch als Entwurf offen sind.
+- **Gespeicherte Planungen** – eigene und freigegebene Planungen mit Bereich, Zeitraum,
+  Abdeckung, Status (*Entwurf* oder *übernommen*). **Öffnen** prüft die Planung frisch
+  gegen den aktuellen Plan und zeigt sie in Schritt 3; die gespeicherte Besetzung bleibt
+  erhalten.
+
+**Neue Planung** startet den Ablauf in vier Schritten. Die Schrittleiste oben zeigt zu
+jedem Schritt eine Kurzfassung und lässt sich jederzeit anklicken.
+
+### Schritt 1 – Zeitraum & Team
+
+1. **Einsatzbereich / Kunde** wählen – das ist die einzige Pflichtangabe.
+   Optional eine **Bezeichnung** (steht als Bemerkung an jedem Eintrag). Unter
+   *Bemerkung und Sichtbarkeit*: eigene Bemerkung und „interne Eintragung“ (nur mit dem
+   Recht *Interne Einträge sehen*).
+2. **Zeitraum**: vorbelegt ist der Rest des Monats (bei weniger als 10 Resttagen der
+   nächste Monat). Schnellwahl: *Rest des Monats*, *nächster*, *übernächster Monat*,
+   *nächste 2 Wochen* – oder Von/Bis frei eintragen. Höchstens 120 Tage je Lauf.
+3. **Einsatztage** (Mo–So) und ob **Feiertage** übersprungen werden.
+4. **Team**: *Eigenes Team* oder – für Manager immer, für Teamleiter nur, wenn in den
+   Einstellungen freigegeben – *Teamübergreifend* (bitte vorher absprechen;
+   Abwesenheitsgründe anderer Teams bleiben verborgen). **Rollen** eingrenzen (ohne
+   Auswahl alle). Unter *Einzelne Personen …* lassen sich Personen **fest** einplanen
+   (an jedem möglichen Tag) oder **ausschließen** – mit Suche, Filtern (Stammbereich,
+   Kundenerfahrung, ohne Azubis, Wochenend-Freigabe, gut umplanbar), Sortierung und
+   Sammelaktionen für alle sichtbaren Personen.
+
+Sobald Bereich und Zeitraum stehen, erscheint rechts die **Live-Vorschau**: das Raster
+(Zeilen = Mitarbeitende, Spalten = Tage, farbige Kürzel) mit Abdeckung, Plätzen,
+Personen, Blockern und Warnungen. Sie rechnet bei jeder Änderung neu.
+
+### Schritt 2 – Bedarf & Regeln
+
+- **Personen pro Tag** (Soll) und **Mindestbesetzung** (darunter: Blocker) mit −/+.
+- *Je Wochentag abweichend* und *Sondertage* (Datum, Personen, Notiz; 0 nimmt den Tag
+  heraus).
+- **Wer passt am besten?** Stammbereich *bevorzugen*, *ausschließlich* oder *egal*,
+  Mindestzahl aus dem Stammbereich, Kundenerfahrung mitgewichten; unter *Qualifikation*
+  Mindest-OS-Level (mit Anzahl je Tag) und bevorzugte Ausbildungsberufe.
+- **Auszubildende** einbeziehen und Lehrjahre wählen; unter *Azubi-Regeln*: höchstens
+  Azubis pro Tag, reservierte Ausbildungsplätze, Höchstanteil, Betreuungsschlüssel,
+  „nie allein“, Berufsschultage aussparen, kein Wochenenddienst.
+- **Experten-Optionen** (eingeklappt, die Kurzfassung steht in der Überschrift):
+  Tage am Stück und Tage im Zeitraum je Person, Wochenend-Freigabe beachten;
+  **Umgang mit belegten Tagen** – *nichts überschreiben* (empfohlen), *andere Einsätze
+  ersetzen* oder *auch Abwesenheiten* (nur mit dem Recht *Urlaub entsperren*);
+  welche Innendienst-Bereiche als freie Kapazität gelten, Innendienst aktiv auflösen,
+  Kundenbindung beachten; Gewichtung (Kontinuität, Gleichverteilung, Stammbereich,
+  Qualifikation).
+
+Sperrtage und Berufsschule werden **nie** überschrieben – unabhängig von jeder Einstellung.
+Die Vorgaben aus *Einstellungen → Planung* sind voreingestellt.
+
+### Schritt 3 – Vorschlag prüfen
+
+Oben stehen die Kennzahlen (Abdeckung, besetzte Plätze, eingesetzte Personen, Blocker,
+Warnungen) und eine Zeile, woher die Besetzung kommt (Stammbereich, Azubis, aufgelöster
+Innendienst, ersetzte Einsätze).
+
+- **Raster** (wie in der Monatsplanung): Klick auf eine Zelle setzt oder entfernt die
+  Person. Ist die Zelle belegt, fragt der Assistent, ob der Eintrag ersetzt werden soll
+  (bei Abwesenheiten mit deutlichem Hinweis). **Rechtsklick** – oder per Tastatur die
+  Kontextmenü-Taste bzw. Umschalt+F10 – bietet: Tag ein-/austragen, passende Personen,
+  Person ganz aus dem Vorschlag nehmen, ausschließen, an allen möglichen Tagen
+  einplanen, Entwurf eines Kollegen bewusst ersetzen. Ein Klick auf den **Spaltenkopf**
+  zeigt passende Personen für den Tag (leicht Umplanbare zuerst).
+- **Tastatur**: Tab springt ins Raster, Pfeiltasten bewegen, Pos1/Ende zum Zeilenanfang
+  bzw. -ende (mit Strg: erste/letzte Zeile), Bild auf/ab zehn Zeilen, Leertaste oder
+  Eingabe schaltet die Zelle um.
+- Ansichten **Raster**, **Tage** (je Tag Besetzung, nur Tage mit offenen Plätzen) und
+  **Auslastung** (Tage je Person). *Nur Verplante* blendet Unbeteiligte aus,
+  *Sortieren* ordnet nach aktueller Auslastung, *Drucken* öffnet eine Druckfassung
+  (auch „Als PDF speichern“; enthält bewusst keine Abwesenheitsgründe).
+- Die **Prüfung** rechts listet Blocker, Warnungen und Hinweise – jeweils mit einer
+  Erklärung, was zu tun ist, und den Sprüngen *Zur Zelle* bzw. *Personen zeigen*.
+  Ein Klick auf die Kennzahl *Blocker* oder *Warnungen* filtert die Liste.
+- Zellen mit dem **offenen Entwurf eines Kollegen** sind orange umrandet: Dieser Entwurf
+  bleibt bei der Übernahme stehen, außer Sie ersetzen ihn bewusst.
+
+Ändern Sie danach noch Vorgaben, rechnet der Assistent automatisch neu – solange Sie im
+Vorschlag nichts von Hand geändert haben. Mit Handänderungen erscheint stattdessen der
+Hinweis **Neu berechnen** (verwirft die Handänderungen erst nach Rückfrage).
+
+### Schritt 4 – Übernehmen
+
+Bevor etwas gespeichert wird, prüft der Server die Übernahme und zeigt eine klare
+Zusammenfassung, z. B. **„27 Einsätze für 9 Personen, 3 Konflikte übersprungen“**:
+wie viele Einträge auf freie Tage fallen, Innendienst auflösen, Einsätze ersetzen oder
+Abwesenheiten überschreiben, und welche Zellen aus welchem Grund **übersprungen** werden
+(Sperrtag, Berufsschule, geschützte Abwesenheit, bereits geplant, offener Entwurf eines
+anderen Planers, inzwischen geändert, kein Planungsrecht). Darunter stehen alle Vorgaben
+im Überblick – **Ändern** springt direkt zum Feld.
+
+**Jetzt als Entwurf übernehmen** schreibt die Entwürfe. Danach:
+
+- **Übernahme rückgängig machen** – im Schritt 4 und oben als Hinweis „… Einträge
+  übernommen · Rückgängig“; später auch auf der Startseite unter *Letzte Übernahmen*.
+  Rückgängig entfernt nur die Entwürfe, die noch aus dieser Übernahme stammen; Zellen,
+  die inzwischen jemand von Hand geändert hat, bleiben erhalten.
+- **Zur Monatsplanung** – dort prüfen und wie gewohnt veröffentlichen.
+
+Hat sich eine Zelle zwischen Prüfung und Übernahme geändert, wird sie übersprungen und
+gemeldet. Jede Übernahme und jede Rücknahme steht im Änderungsprotokoll.
+
+### Speichern und Vorlagen
+
+- **Speichern** (oben) sichert Vorgaben und Besetzung als *Planung* – optional für andere
+  Planende freigegeben. Eigene Planungen werden beim erneuten Speichern überschrieben,
+  fremde als neue Planung angelegt. Nach einer Übernahme wird die gespeicherte Planung
+  automatisch aktualisiert und als *übernommen* markiert.
+- **Mehr → Als Vorlage sichern** sichert nur die Vorgaben (nicht die Besetzung), mit
+  Name, Kurzbeschreibung und Freigabe. Ist eine Vorlage geladen, kann sie direkt
+  aktualisiert werden. **Vorlagen** (oben) öffnet die Liste zum Verwenden oder Löschen.
+- **Mehr → Zurücksetzen** verwirft alle Eingaben; **Mehr → Drucken / PDF**.
+
+Ungespeicherte Eingaben bleiben im Browser-Tab erhalten, bis Sie ihn schließen; beim
+Verlassen mit ungespeichertem Vorschlag fragt der Browser nach.
 
 ## 9. Team, Rollen und Rechte
 

@@ -67,7 +67,7 @@ Status: ✅ behoben · ⏳ geplant (Phase) · ❓ Entscheidung nötig.
 | S-19 | M | Meldungen (`announcements active`) ohne Login abrufbar | `api/announcements` | ✅ Login erforderlich |
 | S-20 | M | Fehlermeldungen geben Datenbankdetails an den Client (`$e->getMessage()`) | diverse APIs | ✅ Request-Kernel (`app/lib/Kernel.php`): generische Meldung + Request-ID, Details nur im Log |
 | S-21 | N | `onclick='…<?php echo e(...)?>…'` – `&#039;` wird im Handler zu `'` | `monatsplanung`, `rollen` | ✅ Inline-Handler durch `data-action` ersetzt, Werte per `opsActionAttr()` als JSON escaped |
-| S-22 | N | CSP mit `unsafe-inline` | `.htaccess` | ✅ CSP aus PHP mit Nonce je Request, `script-src` ohne `unsafe-inline`/`unsafe-eval` (Übergang: `planungsassistent` bis zum Neubau) |
+| S-22 | N | CSP mit `unsafe-inline` | `.htaccess` | ✅ CSP aus PHP mit Nonce je Request, `script-src` ohne `unsafe-inline`/`unsafe-eval` (Planungsassistent seit Neubau ebenfalls strikt) |
 | S-23 | N | Passwortrichtlinie Standard 6 Zeichen, 30-Tage-Zwangswechsel (entspricht nicht NIST/BSI) | Einstellungen | ✅ entschieden (E-4): bleibt (6 Zeichen, 30 Tage), weiter einstellbar |
 
 #### Datenintegrität und Mehrbenutzerbetrieb
@@ -238,7 +238,12 @@ Entwurf (fachlich ohne Wirkung, zählt aber als Änderung); Woche kopieren > 500
 Teilen; Mobile-App: Pull-to-Refresh, Wochenübersicht, Kollegen-Suche.
 Strikte CSP (S-21, S-22): alle Inline-Handler durch Ereignis-Delegation (`data-action`,
 `public/assets/js/actions.js`) ersetzt, Inline-Skripte mit Nonce, CSP-Header aus PHP;
-Ausnahme bis zu seinem Neubau ist der Planungsassistent (gelockerte `script-src` nur dort).
+seit dem Neubau des Planungsassistenten ohne Ausnahme.
+Planungsassistent neu ✅: geführter Ablauf in vier Schritten mit Live-Vorschau, Probelauf
+vor der Übernahme („27 Einsätze für 9 Personen, 3 Konflikte übersprungen“), sichtbarem
+Rückgängig (auch auf der Startseite), Vorlagen-Schnellstart, Tastaturbedienung im Raster;
+Logik testbar in `app/lib/PlanningAssistant.php` (Algorithmus unverändert). Offen dazu:
+mehrere Bereiche in einem Lauf, Bedarf je Tageszeit/Schicht, Vorschau auf Smartphones.
 Offen: Verschieben per Langdruck auf Touch-Geräten, Verschieben mehrerer Zellen auf einmal.
 
 
