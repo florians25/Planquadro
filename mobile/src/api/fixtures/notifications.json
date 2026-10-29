@@ -1,0 +1,8 @@
+{
+  "unread": 2,
+  "items": [
+    { "id": 5, "title": "Plan veröffentlicht", "message": "Der Plan für November wurde veröffentlicht.", "link": "mein_plan", "is_read": false, "created_at": "2026-10-29T17:56:31+01:00" },
+    { "id": 4, "title": "Plan geändert", "message": "Dein Einsatz am 02.11. wurde geändert.", "link": "mein_plan", "is_read": false, "created_at": "2026-10-28T11:20:00+01:00" },
+    { "id": 3, "title": "Antrag genehmigt", "message": "Dein Gleitzeitantrag für den 02.10. wurde genehmigt.", "link": null, "is_read": true, "created_at": "2026-09-22T08:00:00+02:00" }
+  ]
+}

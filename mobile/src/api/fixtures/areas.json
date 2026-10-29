@@ -1,0 +1,25 @@
+[
+  {
+    "id": 3, "code": "K1", "name": "Kunde Nord", "type": "kunde", "color": "#dc2626", "fg": "#ffffff",
+    "remarks": "Rollout Phase 2",
+    "customer": { "name": "Kunde Nord GmbH", "address": "Musterstr. 1, 50667 Köln", "contact": "Frau Beispiel",
+                  "phone": "+49 221 000000", "email": "it@kunde-nord.example", "notes": "Zugang über Tor 3" },
+    "location": { "name": "Köln Nord", "address": "Neusser Str. 100, 50733 Köln", "lat": 50.96, "lng": 6.95 }
+  },
+  {
+    "id": 4, "code": "K2", "name": "Klinikum Süd", "type": "kunde", "color": "#2563eb", "fg": "#ffffff",
+    "remarks": "Arbeitsplatztausch Station 4",
+    "customer": { "name": "Klinikum Süd gGmbH", "address": "Klinikweg 5, 53111 Bonn", "contact": "Herr Probe",
+                  "phone": "+49 228 111111", "email": null, "notes": "Anmeldung an der Pforte, Ausweis mitbringen" },
+    "location": null
+  },
+  {
+    "id": 5, "code": "BÜ", "name": "Büro", "type": "intern", "color": "#facc15", "fg": "#111827",
+    "remarks": null, "customer": null,
+    "location": { "name": "Zentrale", "address": "Hauptstraße 1, 50667 Köln", "lat": null, "lng": null }
+  },
+  {
+    "id": 6, "code": "HO", "name": "Homeoffice", "type": "intern", "color": "#a3e635", "fg": "#111827",
+    "remarks": null, "customer": null, "location": null
+  }
+]

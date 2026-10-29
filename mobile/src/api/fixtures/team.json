@@ -1,0 +1,10 @@
+[
+  { "id": 12, "name": "Muster, Max", "role_label": "Techniker", "is_me": true },
+  { "id": 14, "name": "Beispiel, Erika", "role_label": "Technikerin", "is_me": false },
+  { "id": 15, "name": "Schmidt, Jonas", "role_label": "Techniker", "is_me": false },
+  { "id": 16, "name": "Yılmaz, Aylin", "role_label": "Projektleitung", "is_me": false },
+  { "id": 17, "name": "Weber, Lukas", "role_label": "Techniker", "is_me": false },
+  { "id": 18, "name": "Nowak, Sophie", "role_label": "Technikerin", "is_me": false },
+  { "id": 19, "name": "Fischer, Ben", "role_label": "Auszubildender", "is_me": false },
+  { "id": 20, "name": "Becker, Lea", "role_label": "Technikerin", "is_me": false }
+]

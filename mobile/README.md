@@ -1,0 +1,249 @@
+# OpsPilot App (iOS, Android, PWA)
+
+Mobile App für Mitarbeitende: eigener Plan, Einsatzdetails, Teamübersicht, Abwesenheiten,
+Mitteilungen – mit Offline-Lesemodus, Push und optionaler biometrischer Entsperrung.
+
+Eine Codebasis (Vite + TypeScript, kein UI-Framework) erzeugt die **PWA** für den Browser
+und die **iOS-/Android-Apps** über **Capacitor 8** (Entscheidung siehe
+`docs/ARCHITECTURE.md`, Abschnitt B.8). Die App spricht ausschließlich die **API v1**
+(`docs/API.md`, verbindlicher Vertrag).
+
+## Schnellstart im Browser mit Demo-Daten
+
+```bash
+cd mobile
+npm ci
+npm run dev            # http://localhost:5173/?mock=1
+```
+
+- `?mock=1` oder auf dem Einrichtungsbildschirm **„Demo-Modus starten (ohne Server)“**
+  schaltet auf einen eingebauten Fake-Server (`src/api/mock.ts` + `src/api/fixtures/*.json`).
+  Der echte API-Client (Header, Fehlerformat, Token-Refresh) läuft dabei vollständig mit.
+- Anmeldung: beliebiger Benutzername, Passwort `demo`.
+  Fehlerfälle: Benutzer `gesperrt` (account_locked), `neu` (password_change_required),
+  `wartung` (maintenance), falsches Passwort (invalid_credentials).
+- Das Access-Token lebt im Demo-Modus nur 120 s, damit der automatische Refresh sichtbar wird.
+- Unter **Mehr → „Demo: Planänderung simulieren“** wird ein Sync mit geänderten Tagen ausgelöst.
+- Offline-Modus testen: DevTools → Network → „Offline“; die zuletzt geladenen Daten werden
+  mit Hinweis „Offline – Stand: …“ angezeigt.
+
+Gegen einen echten Server: beim ersten Start die Server-Adresse eingeben (z. B.
+`https://opspilot.firma.de`; `/api/v1/` wird ergänzt) und bei SaaS mit zentralem Host
+optional das Mandanten-Kürzel (Header `X-OpsPilot-Tenant`).
+
+## Befehle
+
+| Befehl | Zweck |
+|---|---|
+| `npm run dev` | Entwicklungsserver |
+| `npm run build` | `tsc --noEmit` (strict) + Produktions-Build nach `dist/` inkl. Service Worker |
+| `npm run test` | Vitest-Unit-Tests |
+| `npm run preview` | gebaute PWA lokal ausliefern |
+| `npm run icons` | Platzhalter-Icons (PWA, Android, iOS) neu erzeugen |
+| `npm run cap:sync` | Build + Web-Assets/Plugins in die nativen Projekte kopieren |
+| `npm run android` / `npm run ios` | Build, Sync und Android Studio / Xcode öffnen |
+
+## Architektur
+
+```
+mobile/
+├── index.html                 CSP, Manifest, lang="de"
+├── capacitor.config.ts        App-ID de.opspilot.app, Name „OpsPilot“
+├── vite.config.ts             Build, Vitest-Konfiguration, Service-Worker-Generator
+├── public/                    manifest.webmanifest, Icons
+├── scripts/gen-icons.mjs      Platzhalter-Icons ohne Abhängigkeiten
+├── src/
+│   ├── main.ts                Start: Session laden, OIDC-Rücksprung (Web), App starten, SW registrieren
+│   ├── api/
+│   │   ├── types.ts           Typen 1:1 nach docs/API.md
+│   │   ├── client.ts          ApiClient: Bearer, Tenant-Header, Single-Flight-Refresh, alle Endpunkte
+│   │   ├── errors.ts          ApiError, Abbildung {error:{code,message}} → deutsche Meldungen
+│   │   ├── mock.ts            Fake-Server für den Demo-Modus
+│   │   └── fixtures/          Beispieldaten (JSON)
+│   ├── store/
+│   │   ├── session.ts         Server-Einrichtung, Login/OIDC, Sperre, Logout, Löschen, Push, Sync
+│   │   ├── secure.ts          Sicherer Speicher (Interface + Web-Fallback)
+│   │   ├── crypto.ts          AES-GCM (WebCrypto)
+│   │   ├── cache.ts           verschlüsselter Offline-Cache je Server/Mandant/Benutzer
+│   │   ├── sync.ts            GET sync → betroffene Monate neu laden, full_resync
+│   │   ├── data.ts            Laden mit Offline-Fallback; Schreiben nur online
+│   │   ├── kv.ts              IndexedDB-Wrapper
+│   │   └── prefs.ts           nicht geheime Einstellungen (Capacitor Preferences)
+│   ├── platform/
+│   │   ├── native.ts          Capacitor-Plugins (Push, Biometrie, Netzwerk, Browser, Statusleiste …)
+│   │   └── secure-native.ts   Keychain/Keystore (@aparajita/capacitor-secure-storage)
+│   ├── screens/               ein Modul je Bildschirm (plan, details, team, absences,
+│   │                          notifications, more, setup, login, lock)
+│   ├── ui/                    App-Shell/Router, Tabs, Theme, Komponenten, Pull-to-Refresh, Icons
+│   ├── lib/                   Datum/KW, Farben/Kontrast, URL, PKCE, HTML-Escaping
+│   ├── sw/sw.js               Service-Worker-Vorlage (App-Shell-Cache)
+│   └── styles/app.css         Design-Tokens Hell/Dunkel, Komponenten
+├── tests/                     Vitest
+├── android/                   natives Android-Projekt (Capacitor)
+└── ios/                       natives iOS-Projekt (Capacitor, Swift Package Manager)
+```
+
+Prinzipien:
+
+- **Kein Framework:** Bildschirme sind Funktionen `(ctx) => Promise<void>`, die mit dem
+  escapenden Template-Tag `html\`…\`` rendern (`src/lib/html.ts`). Interpolationen werden
+  immer escaped; Farben aus der API werden vor Verwendung in `style` validiert.
+- **Hash-Routing:** `#/plan/2026-11`, `#/tag/2026-11-02[/user_id]`, `#/team/2026-11`,
+  `#/abwesenheiten/2026`, `#/mitteilungen`, `#/mehr` – funktioniert identisch in PWA und App.
+- **Tabs nach Rechten:** Plan · Team (nur `permissions.plan_view`) · Abwesenheiten (nur Modul
+  `absences`) · Mitteilungen (mit Ungelesen-Badge) · Mehr. Antragsformular nur bei Modul `approvals`.
+- **Branding:** `tenant.branding.primary/accent` werden je Theme kontrastgeprüft
+  (`src/lib/color.ts`): Füllfarbe ≥ 3:1 zur Fläche, Text/Link ≥ 4,5:1, Schrift auf der
+  Markenfarbe wird automatisch Schwarz/Weiß gewählt. Gleiches gilt für Code-Badges, wenn
+  das gelieferte `fg` nicht lesbar ist.
+- **Dunkelmodus:** folgt `prefers-color-scheme`, manuell übersteuerbar (Mehr → Darstellung).
+- **Barrierefreiheit:** semantisches HTML, Labels, sichtbare Fokusrahmen, Skip-Link,
+  Touch-Ziele ≥ 44 px, `aria-current`, Live-Regionen, `prefers-reduced-motion`, `lang="de"`.
+- **Kein Tracking, keine Analytics**, keine externen Schriften/CDNs.
+
+## Sicherheits- und Offline-Modell
+
+| Daten | Ort | Schutz |
+|---|---|---|
+| Access-Token (15 min) | nur Arbeitsspeicher | – |
+| Refresh-Token (30 Tage, rotierend) | nativ: Keychain (`whenUnlockedThisDeviceOnly`, kein iCloud-Sync) / Android Keystore; Web: IndexedDB | Web: AES-GCM mit nicht exportierbarem WebCrypto-Schlüssel |
+| Offline-Cache (Plan, Team, Abwesenheiten, Details, Mitteilungen, `me`) | IndexedDB | AES-GCM-256; Schlüssel nativ als Zufallsmaterial im Keychain/Keystore, Web als nicht exportierbarer `CryptoKey`; Datensatz-ID als AAD (keine Vertauschung) |
+| Einstellungen (Server, Theme, Biometrie an/aus, Push-ID) | Capacitor Preferences / localStorage | nicht geheim |
+
+- **Token-Refresh:** proaktiv 30 s vor Ablauf und reaktiv bei `401 token_expired`. Ein
+  Single-Flight-Lock sorgt dafür, dass parallele Requests genau **einen** Refresh auslösen –
+  wichtig, weil die Wiederverwendung eines Refresh-Tokens serverseitig die ganze
+  Token-Familie sperrt. Das neue Refresh-Token wird **vor** der Verwendung persistiert.
+  `401 invalid_token` bzw. fehlgeschlagener Refresh → lokale Tokens weg, neu anmelden.
+  Netzwerkfehler beim Refresh behalten das Refresh-Token.
+- **Biometrie (optional, Standard aus):** Ist sie aktiv, gibt die App das Refresh-Token erst
+  nach erfolgreicher Face ID / Touch ID / Fingerabdruck-Prüfung frei – beim Start und nach
+  > 5 min im Hintergrund (dabei wird das Access-Token verworfen). Ohne verfügbare Biometrie
+  wird die Option deaktiviert und auf die Passwort-Anmeldung zurückgefallen.
+  Hinweis: Die Sperre wird in der App durchgesetzt; das verwendete Secure-Storage-Plugin
+  bindet den Keychain-Eintrag nicht hardwareseitig an `biometryCurrentSet`.
+- **Abmelden:** `DELETE devices/{id}`, `POST auth/logout` (mit Refresh-Token), danach werden
+  Offline-Cache, sicherer Speicher, Schlüssel und Benutzerzuordnung gelöscht – auch wenn der
+  Server nicht erreichbar ist. **„Lokale Daten löschen“** setzt zusätzlich alle Einstellungen
+  inkl. Server zurück. Ein Server- oder Benutzerwechsel verwirft den alten Cache.
+- **Offline:** Lesen zeigt die zuletzt geladenen Daten mit Banner „Offline – Stand: …“
+  (auch bei `503 maintenance`). **Schreibzugriffe werden nie in eine Warteschlange gestellt**:
+  ohne Verbindung erscheint eine Meldung (Anträge, Gelesen-Markierungen).
+- **Sync:** beim Start, beim Zurückkehren in die App, nach Wiederverbindung, bei Pull-to-Refresh
+  und bei Push `plan_changed`: `GET sync?since=<cursor>`; geänderte Tage → betroffene, bereits
+  gecachte Monate (Plan, Team, Abwesenheitsjahr) werden neu geladen, Detail-Einträge der Tage
+  verworfen. `full_resync: true` → Cache des Benutzers leeren. Der Cursor wird erst nach
+  erfolgreichem Nachladen gespeichert.
+- **Transport:** nur HTTPS. Klartext-HTTP ausschließlich für `localhost`, `127.0.0.1`,
+  `10.0.2.2` (Android: `res/xml/network_security_config.xml`; iOS: ATS mit
+  `NSAllowsLocalNetworking`; Eingabeprüfung in `src/lib/url.ts`). Android lässt nur
+  System-CAs zu. App-Backups (Android) sind deaktiviert.
+- **CSP** in `index.html`: keine Inline-Skripte, keine fremden Skriptquellen.
+
+## OIDC („Mit Firmenkonto anmelden“)
+
+Erscheint, wenn `GET config` → `auth.oidc.enabled` und `authorize_url` gesetzt sind.
+Ablauf: Authorization Code + PKCE (S256) im **System-Browser** (`@capacitor/browser`),
+Rücksprung über `opspilot://auth?code=…&state=…` (Android Intent-Filter, iOS
+`CFBundleURLTypes`), `state` wird geprüft, dann `POST auth/oidc/token` mit `code`,
+`code_verifier`, `redirect_uri`. `response_type`, `scope` (Standard `openid profile`),
+`redirect_uri`, `code_challenge(_method)` und `state` ergänzt die App; `client_id` muss in
+`authorize_url` enthalten sein. In der PWA ist die Redirect-URI die Seiten-URL der App.
+
+## Android bauen (Android Studio)
+
+Voraussetzungen: Node 22+, JDK 21, Android Studio (SDK 36).
+
+```bash
+npm ci
+npm run android        # build + cap sync android + Android Studio öffnen
+```
+
+In Android Studio: Gerät/Emulator wählen → Run. Gegen einen lokalen Server im Emulator
+`http://10.0.2.2:<port>` verwenden.
+
+Release-Build: *Build → Generate Signed App Bundle* (AAB). Keystore und Passwörter **nicht**
+committen (`*.jks`, `*.keystore`, `keystore.properties` sind in `.gitignore`). Für CI z. B.
+`keystore.properties` aus Secrets erzeugen und in `android/app/build.gradle` als
+`signingConfigs.release` einbinden. Play App Signing aktivieren.
+
+## iOS bauen (Xcode auf macOS)
+
+Voraussetzungen: macOS mit Xcode 26+, Apple-Developer-Konto. Das Projekt nutzt den
+**Swift Package Manager** (keine CocoaPods nötig).
+
+```bash
+npm ci
+npm run ios            # build + cap sync ios + Xcode öffnen
+```
+
+In Xcode: Target *App* → *Signing & Capabilities* → Team wählen; Capabilities
+**Push Notifications** und **Background Modes → Remote notifications** sind über
+`App/App.entitlements` bzw. `Info.plist` vorbereitet. Archivieren: *Product → Archive*
+→ App Store Connect.
+
+## Push einrichten
+
+Push ist nur in den nativen Apps aktiv. **In der PWA wird Push bewusst übersprungen**
+(Web Push auf iOS nur für installierte PWAs und vertraglich nicht vorgesehen); der Plan wird
+dort beim Öffnen/Fokussieren und per Pull-to-Refresh synchronisiert.
+
+Ablauf: Berechtigung anfragen → Token von FCM (Android) bzw. APNs (iOS) →
+`POST devices {platform, provider: "fcm"|"apns", token, app_version}` → ID wird für
+`DELETE devices/{id}` beim Abmelden gespeichert. Nachricht mit `data.type = "plan_changed"`
+→ `GET sync`; Tippen auf die Nachricht öffnet „Mein Plan“.
+
+**Android (FCM):** In der Firebase-Konsole ein Projekt anlegen, Android-App mit Paketname
+`de.opspilot.app` registrieren, `google-services.json` herunterladen und nach
+`android/app/google-services.json` legen. Das Gradle-Plugin wird nur angewandt, wenn die
+Datei existiert. Serverseitig wird ein FCM-Dienstkonto (HTTP v1 API) benötigt.
+
+**iOS (APNs):** Im Apple-Developer-Portal einen **APNs-Auth-Key (.p8)** erzeugen; Key-ID,
+Team-ID und Bundle-ID `de.opspilot.app` erhält das Backend. Die App liefert das rohe
+APNs-Geräte-Token (`provider: "apns"`).
+
+> **`google-services.json`, `GoogleService-Info.plist`, `.p8`-Schlüssel, Keystores und
+> Provisioning-Profile werden NICHT committet** (siehe `.gitignore`). Sie gehören in den
+> Secret-Speicher der Build-Pipeline bzw. auf den Server.
+
+## Store-Release-Checkliste
+
+- [ ] Version in `package.json`, Android `versionCode`/`versionName`
+      (`android/app/build.gradle`) und iOS `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` erhöhen
+- [ ] Finale App-Icons und Splash-Screens (z. B. `npx @capacitor/assets generate`) statt Platzhalter
+- [ ] `npm run test` und `npm run build` grün; `npx cap sync`
+- [ ] Push mit Produktions-FCM/APNs getestet (`aps-environment` = production beim Archivieren)
+- [ ] OIDC-Rücksprung `opspilot://auth` beim Identity Provider registriert
+- [ ] Datenschutzerklärung-URL, Datenschutz-Angaben (App Store „App Privacy“, Play „Data safety“):
+      keine Tracking-/Analysedaten; verarbeitet werden Name, Dienstplan, Abwesenheiten (auf Gerät verschlüsselt)
+- [ ] Exportkonformität: nur Standard-Kryptografie (`ITSAppUsesNonExemptEncryption = false`)
+- [ ] Screenshots (Hell/Dunkel), Store-Texte auf Deutsch, Altersfreigabe
+- [ ] Release signiert (Play App Signing / App Store Distribution), Test über TestFlight / interne Tests
+- [ ] Demo-Zugang für die App-Review (z. B. Demo-Modus auf dem Einrichtungsbildschirm)
+
+## Verwendete Pakete
+
+| Paket | Version | Zweck |
+|---|---|---|
+| `@capacitor/core`, `cli`, `android`, `ios` | 8.6.0 | Laufzeit, native Projekte |
+| `@capacitor/push-notifications` | 8.1.x | FCM/APNs |
+| `@capacitor/preferences` | 8.0.x | nicht geheime Einstellungen |
+| `@capacitor/app` | 8.1.x | Lebenszyklus, URL-Schema, Zurück-Taste |
+| `@capacitor/network` | 8.0.x | Online-/Offline-Erkennung |
+| `@capacitor/splash-screen`, `status-bar` | 8.0.x | Darstellung |
+| `@capacitor/browser` | 8.0.x | System-Browser für OIDC und Kartenlinks |
+| `@aparajita/capacitor-secure-storage` | 8.0.x | Keychain/Keystore |
+| `@aparajita/capacitor-biometric-auth` | 10.0.x | Face ID / Touch ID / Fingerabdruck (Major 10 unterstützt Capacitor 8) |
+| `vite` 8, `typescript` 7, `vitest` 5, `fake-indexeddb` | – | Build und Tests |
+
+Statt `vite-plugin-pwa`/Workbox wird ein kleiner, selbst geschriebener Service Worker
+verwendet (`src/sw/sw.js`, beim Build mit der Dateiliste befüllt). Er cacht nur die
+App-Shell, niemals API-Antworten.
+
+## Hinweise für das Backend
+
+- **CORS:** Die App ruft die API per `fetch` aus der WebView auf. Erlaubte Origins:
+  `https://localhost` (Android), `capacitor://localhost` (iOS) und der Ursprung der PWA.
+  Benötigte Header: `Authorization`, `Content-Type`, `X-OpsPilot-Tenant`; Preflight `OPTIONS`.
+- `GET config`/`branding/logo` müssen ohne Token und mit CORS erreichbar sein.
+- `POST devices` sollte je Token idempotent sein (die App registriert bei jedem Start).

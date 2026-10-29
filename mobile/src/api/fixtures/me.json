@@ -1,0 +1,11 @@
+{
+  "user": { "id": 12, "username": "mmuster", "first_name": "Max", "last_name": "Muster", "role": "mitarbeiter", "role_label": "Techniker" },
+  "permissions": { "plan_view": true, "plan_edit": false, "approve_requests": false, "view_all_employees": true },
+  "modules": { "absences": true, "approvals": true, "assistant": false, "ical": true },
+  "tenant": {
+    "name": "OpsPilot Demo GmbH",
+    "slug": "demo",
+    "branding": { "primary": "#e2001a", "accent": "#2563eb", "logo_url": null }
+  },
+  "server_time": "2026-10-29T18:00:00+01:00"
+}
