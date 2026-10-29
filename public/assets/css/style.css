@@ -1,10 +1,10 @@
 /* === Planquadro Einsatzplanung v6.1.8 – Full UI === */
 :root {
   --bg: #f3f4f6; --card: #ffffff; --tx: #111827; --tx2: #374151; --mu: #6b7280;
-  --bd: #e5e7eb; --bd2: #d1d5db; --p: #e2001a; --pl: #ff1a33; --pbg: #fde8e8; --ph: #b30016;
+  --bd: #e5e7eb; --bd2: #d1d5db; --p: #2557d6; --pl: #4c7bf0; --pbg: #e8eefc; --ph: #1b44ae;
   --ok: #16a34a; --okbg: #dcfce7; --wn: #d97706; --wnbg: #fef3c7;
   --err: #dc2626; --errbg: #fef2f2; --inf: #0284c7; --ibg: #e0f2fe;
-  --nv: #0f172a; --nvh: #1e293b; --r: 6px; --r2: 10px; --s: #f8fafc;
+  --nv: #14213d; --nvh: #1d2d52; --r: 6px; --r2: 10px; --s: #f8fafc;
   --sh: 0 1px 3px rgba(0,0,0,.08); --sh2: 0 4px 12px rgba(0,0,0,.1);
   /* Planungstabelle: Breiten der fixierten Spalten (responsiv überschreibbar) */
   --col-name: 130px; --col-info: 60px; --col-ru: 48px; --col-day: 38px;
@@ -31,7 +31,7 @@ a:hover { text-decoration: underline; }
 .nav { background: var(--nv); display: flex; align-items: center; height: 48px; padding: 0 .75rem; position: sticky; top: 0; z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,.2); gap: .5rem; }
 .nav-brand { color: #fff; font-weight: 800; font-size: .95rem; text-decoration: none; display: flex; align-items: center; flex-shrink: 0; }
 .nav-brand:hover { text-decoration: none; }
-.nav-brand-icon { background: var(--p); display: inline-flex; align-items: center; justify-content: center; padding: .3rem; border-radius: 5px; line-height: 0; }
+.nav-brand-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
 .nav-links { display: flex; align-items: center; gap: 1px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; -ms-overflow-style: none; }
 .nav-links::-webkit-scrollbar { display: none; }
 .nav-icon { width: 15px; height: 15px; flex-shrink: 0; }
@@ -151,7 +151,7 @@ td.tbl-acts .btn { margin-right: .2rem; }
 .r-mitarbeiter { background: #f1f5f9; color: #334155; }
 .r-verwaltung { background: #fef3c7; color: #92400e; }
 .r-azubi_1, .r-azubi_2, .r-azubi_3 { background: #dcfce7; color: #166534; }
-.nav-badge.r-manager { background: rgba(226,0,26,.2); color: #93c5fd; }
+.nav-badge.r-manager { background: rgba(37,87,214,.2); color: #93c5fd; }
 .nav-badge.r-teamleiter { background: rgba(129,140,248,.2); color: #a5b4fc; }
 .nav-badge.r-mitarbeiter { background: rgba(255,255,255,.1); color: rgba(255,255,255,.7); }
 .nav-badge.r-verwaltung { background: rgba(251,191,36,.2); color: #fcd34d; }
@@ -315,7 +315,7 @@ td.tbl-acts .btn { margin-right: .2rem; }
 .tbs { margin-left: auto; }
 .inp-sm { padding: .3rem .5rem; font-size: .8rem; border: 1px solid var(--bd); border-radius: var(--r); background: #fff; }
 .inp-sm:focus { outline: none; border-color: var(--pl); }
-.tool-active { box-shadow: 0 0 0 2.5px var(--pl); outline: 2px solid rgba(226,0,26,.15); }
+.tool-active { box-shadow: 0 0 0 2.5px var(--pl); outline: 2px solid rgba(37,87,214,.15); }
 .abs-btn { min-width: 36px; }
 .abs-btn-grp { display: flex; flex-direction: column; gap: 2px; align-items: center; }
 .abs-btn-grp .abs-btn { width: 100%; }
@@ -676,7 +676,7 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
 
 /* === CUSTOM CONFIRM/PROMPT MODALS === */
 .prompt-input { width: 100%; padding: .55rem .7rem; border: 1.5px solid var(--bd); border-radius: 6px; font-size: .88rem; resize: vertical; font-family: inherit; margin-top: .5rem; }
-.prompt-input:focus { outline: none; border-color: var(--p); box-shadow: 0 0 0 3px rgba(226,0,26,.06); }
+.prompt-input:focus { outline: none; border-color: var(--p); box-shadow: 0 0 0 3px rgba(37,87,214,.06); }
 
 /* === CUSTOM DROPDOWN (Eigenentwicklung) === */
 .cdrop { position: relative; display: inline-block; }
@@ -778,7 +778,7 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
   .vis-week-header span { border-right: 1px solid #bbb !important; font-size: 8pt; font-weight: 700; }
   .vis-day { display: block !important; min-height: 50px !important; padding: .3rem !important; border-right: 1px solid #bbb !important; border-bottom: 1px solid #bbb !important; break-inside: avoid; font-size: 8pt !important; }
   .vis-day[style] { background: inherit; }
-  .vis-day-today { border: 2px solid #e2001a !important; }
+  .vis-day-today { border: 2px solid #2557d6 !important; }
   .vis-day-hol { background: #fff1f2 !important; border-left: 3px solid #ef4444 !important; }
   .vis-day-ferien { background: #eff6ff !important; border-left: 3px solid #60a5fa !important; }
   .vis-day-outside { background: #f8f8f8 !important; opacity: .3; }
@@ -945,7 +945,7 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
     box-shadow: 0 0 0 2px var(--nv);
 }
 @media (min-width: 900px) {
-    .approval-pill { position: static; margin-left: 6px; box-shadow: 0 1px 3px rgba(226,0,26,.35); }
+    .approval-pill { position: static; margin-left: 6px; box-shadow: 0 1px 3px rgba(37,87,214,.35); }
 }
 
 /* -- Alle Plan-Zellen brauchen position:relative für Fähnchen -- */
@@ -1121,7 +1121,7 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
 .vis-day[style]:hover { background: unset; filter: brightness(1.06); }
 .vis-day-num { font-size: 1.05rem; font-weight: 800; color: var(--tx); }
 .vis-day-wd { font-size: .62rem; color: var(--mu); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; margin-left: .3rem; }
-.vis-day-today { background: #fff5f5 !important; box-shadow: inset 0 0 0 2px var(--p); }
+.vis-day-today { background: var(--pbg) !important; box-shadow: inset 0 0 0 2px var(--p); }
 .vis-day-today .vis-day-num { color: var(--p); }
 .vis-day-filled { border-left-width: 4px !important; border-left-style: solid !important; }
 .vis-day-hol { background: #fef2f2 !important; border-left: 4px solid #ef4444 !important; }
@@ -1172,7 +1172,7 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
 }
 .dash-week-day:last-child { border-right: none; }
 .dash-week-day:hover { background: #fafbfc; }
-.dash-week-today { background: #fef2f2 !important; box-shadow: inset 0 -3px 0 var(--p); }
+.dash-week-today { background: var(--pbg) !important; box-shadow: inset 0 -3px 0 var(--p); }
 .dash-week-today::before { content: 'Heute'; position: absolute; top: 4px; right: 4px; font-size: .5rem; font-weight: 700; color: var(--p); text-transform: uppercase; letter-spacing: .04em; }
 .dash-week-hol { background: #fff5f5 !important; }
 .dash-week-ferien { background: #f0f7ff !important; }
@@ -1260,7 +1260,7 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
 }
 @keyframes liveEditPulse {
     0%,100% { box-shadow: 0 0 0 2px var(--p); }
-    50% { box-shadow: 0 0 0 2px var(--p), 0 0 8px rgba(226,0,26,.4); }
+    50% { box-shadow: 0 0 0 2px var(--p), 0 0 8px rgba(37,87,214,.4); }
 }
 
 /* -- Mein-Plan Tab-Navigation -- */
@@ -1449,7 +1449,7 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
     background: linear-gradient(135deg, var(--p), var(--pl));
     color: #fff; font-size: 1rem; font-weight: 800;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 12px rgba(226,0,26,.2); flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(37,87,214,.2); flex-shrink: 0;
 }
 .profile-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; }
 .profile-stat { text-align: center; padding: .75rem .5rem; border: 1px solid var(--bd); border-radius: var(--r); }
@@ -1709,7 +1709,7 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
   .mp-ag-todaybtn { display: block; width: 100%; text-align: center; margin: 0 0 .85rem; padding: .55rem; background: var(--p); color: #fff; border: none; border-radius: 11px; font-weight: 800; font-size: .9rem; text-decoration: none; letter-spacing: .02em; }
   .mp-ag-todaybtn:active { background: var(--ph); }
   .mp-ag-flash { animation: mpAgFlash 1.4s ease; }
-  @keyframes mpAgFlash { 0%, 100% { box-shadow: 0 0 0 0 rgba(226,0,26,0); } 30% { box-shadow: 0 0 0 3px rgba(226,0,26,.55); } }
+  @keyframes mpAgFlash { 0%, 100% { box-shadow: 0 0 0 0 rgba(37,87,214,0); } 30% { box-shadow: 0 0 0 3px rgba(37,87,214,.55); } }
   .mp-ag-summary { display: flex; gap: .5rem; margin-bottom: .9rem; }
   .mp-ag-sum-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .12rem; padding: .6rem .3rem; background: #fff; border: 1px solid var(--bd); border-radius: 13px; }
   .mp-ag-sum-n { font-size: 1.3rem; font-weight: 800; color: var(--p); line-height: 1; }
@@ -1736,7 +1736,7 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
 .modal.user-flat { max-width: 940px; width: 95vw; }
 .uf-head { display: none; }
 .user-flat .uf-head { display: flex; align-items: center; gap: .85rem; padding: 1rem 1.25rem; margin: 0; border-bottom: 1px solid var(--bd); background: #fff; }
-.uf-av { width: 52px; height: 52px; border-radius: 14px; background: var(--p); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; flex: none; box-shadow: 0 2px 6px rgba(226,0,26,.28); }
+.uf-av { width: 52px; height: 52px; border-radius: 14px; background: var(--p); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; flex: none; box-shadow: 0 2px 6px rgba(37,87,214,.28); }
 .uf-name { font-size: 1.15rem; font-weight: 800; line-height: 1.1; }
 .uf-meta { display: flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--mu); margin-top: .15rem; }
 .uf-role { font-weight: 700; color: var(--p); }
@@ -1864,7 +1864,7 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
 .nav-link-assistant .nav-icon { color: var(--pl); }
 .nav-link-assistant.active .nav-icon { color: #fff; }
 
-.btn-assistant { background: var(--pbg); color: var(--p); border: 1px solid rgba(226,0,26,.28); }
+.btn-assistant { background: var(--pbg); color: var(--p); border: 1px solid rgba(37,87,214,.28); }
 .btn-assistant:hover { background: var(--p); color: #fff; border-color: var(--p); }
 .btn-assistant svg { flex-shrink: 0; }
 
@@ -1872,7 +1872,7 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
             padding: 0 .25rem; margin-left: .25rem; border-radius: 3px;
             background: rgba(255,255,255,.16); color: #fff; line-height: 14px; }
 .btn-beta { font-size: .55rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
-            padding: 0 .25rem; border-radius: 3px; background: rgba(226,0,26,.12); color: var(--p); line-height: 14px; }
+            padding: 0 .25rem; border-radius: 3px; background: rgba(37,87,214,.12); color: var(--p); line-height: 14px; }
 .btn-assistant:hover .btn-beta { background: rgba(255,255,255,.25); color: #fff; }
 @media (max-width: 900px) { .nav-beta { display: none; } }
 

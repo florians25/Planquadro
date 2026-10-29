@@ -24,6 +24,7 @@ if (isMaintenanceMode() && !hasRole('admin', 'manager')) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="refresh" content="60">
+<link rel="icon" href="<?php echo bp(); ?>assets/brand/favicon.svg" type="image/svg+xml"><link rel="icon" href="<?php echo bp(); ?>assets/brand/favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="<?php echo bp(); ?>assets/brand/apple-touch-icon.png"><meta name="theme-color" content="#14213D">
 <title>Wartung – <?php echo e($_mCo); ?> Einsatzplanung</title>
 <link rel="stylesheet" href="<?php echo bp(); ?>assets/css/style.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/style.css'); ?>">
 </head>
@@ -80,10 +81,11 @@ $_bp = bp();
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script>/* Farbschema vor dem ersten Rendern setzen (kein Aufblitzen) */(function(){try{var t=localStorage.getItem('op-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');document.documentElement.setAttribute('data-theme-pref',t);}catch(e){}})();</script>
+<script>/* Farbschema vor dem ersten Rendern setzen (kein Aufblitzen) */(function(){try{var t=localStorage.getItem('pq-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');document.documentElement.setAttribute('data-theme-pref',t);}catch(e){}})();</script>
 <title><?php echo e(tcfg('branding.name','Planquadro')); ?><?php echo isset($pageTitle) ? ' – '.e($pageTitle) : ''; ?></title>
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/style.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/style.css'); ?>">
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/planquadro-theme.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/planquadro-theme.css'); ?>">
+<link rel="icon" href="<?php echo $_bp; ?>assets/brand/favicon.svg" type="image/svg+xml"><link rel="icon" href="<?php echo $_bp; ?>assets/brand/favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="<?php echo $_bp; ?>assets/brand/apple-touch-icon.png"><meta name="theme-color" content="#14213D">
 <meta name="color-scheme" content="light dark">
 <meta name="csrf-token" content="<?php echo csrfToken(); ?>">
 <style><?php echo opsBrandCss(); ?></style>
@@ -121,7 +123,7 @@ $_bp = bp();
 <div id="appLoader"><div class="loader-dots"><span></span><span></span><span></span></div><div class="loader-text"><?php echo e(tcfg('branding.name','Planquadro')); ?></div></div>
 <div id="toasts" class="toast-wrap"></div>
 <nav class="nav">
-  <a href="<?php echo $_bp; ?>dashboard" class="nav-brand" aria-label="<?php echo e(tcfg('branding.name','Planquadro')); ?> – Dashboard"><?php if (tcfg('branding.logo')): ?><img src="<?php echo $_bp; ?>api/branding?logo=1" alt="" class="nav-brand-logo"><?php else: ?><span class="nav-brand-icon"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect x="3" y="6" width="26" height="23" rx="3" stroke="#fff" stroke-width="2.5"/><path d="M3 12h26" stroke="#fff" stroke-width="2.5"/><path d="M9 3v5M23 3v5" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><rect x="7" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="14" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="21" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="7" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="14" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="21" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".3"/></svg></span><?php endif; ?></a>
+  <a href="<?php echo $_bp; ?>dashboard" class="nav-brand" aria-label="<?php echo e(tcfg('branding.name','Planquadro')); ?> – Dashboard"><?php if (tcfg('branding.logo')): ?><img src="<?php echo $_bp; ?>api/branding?logo=1" alt="" class="nav-brand-logo"><?php else: ?><span class="nav-brand-icon"><svg viewBox="0 0 64 64" width="22" height="22" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="4" fill="#fff"/><rect x="24" y="4" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="44" y="4" width="16" height="16" rx="4" fill="#fff"/><rect x="4" y="24" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="24" y="24" width="16" height="16" rx="4" fill="#fff"/><rect x="44" y="24" width="16" height="16" rx="4" fill="#FF7A1A"/><rect x="4" y="44" width="16" height="16" rx="4" fill="#fff"/><rect x="24" y="44" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="44" y="44" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/></svg></span><?php endif; ?></a>
   <div class="nav-links" id="navLinks">
     <?php if (opsNavVisible('dashboard')): ?><a style="order:<?php echo opsNavOrder('dashboard'); ?>" href="<?php echo $_bp; ?>dashboard" class="nav-link mob-ok<?php echo $_pg==='dashboard'?' active':''; ?>"<?php if($_pg==='dashboard') echo ' aria-current="page"'; ?> title="Dashboard" aria-label="Dashboard">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
@@ -236,9 +238,9 @@ $_bp = bp();
           <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
           Datenschutz
         </a>
-        <button type="button" class="nav-drop-item op-theme-toggle" onclick="opCycleTheme()" aria-live="polite">
+        <button type="button" class="nav-drop-item pq-theme-toggle" onclick="pqCycleTheme()" aria-live="polite">
           <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
-          <span>Darstellung: <b id="opThemeLabel">System</b></span>
+          <span>Darstellung: <b id="pqThemeLabel">System</b></span>
         </button>
         <a href="<?php echo $_bp; ?>logout" class="nav-drop-item nav-drop-logout">
           <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
@@ -275,9 +277,9 @@ $_bp = bp();
 <b>Diese Seite ist für Desktop optimiert</b>
 <span style="font-size:.78rem;color:var(--mu)">Bitte verwende einen Computer für diese Funktion.</span>
 <a href="<?php echo $_bp;?>dashboard" class="btn btn-primary btn-sm" style="margin-top:.5rem">Zum Dashboard</a>
-<button type="button" class="btn btn-outline btn-sm" style="margin-top:.35rem" onclick="document.documentElement.classList.add('mob-force-desktop');try{sessionStorage.setItem('op-force-desktop','1')}catch(e){}">Trotzdem anzeigen</button>
+<button type="button" class="btn btn-outline btn-sm" style="margin-top:.35rem" onclick="document.documentElement.classList.add('mob-force-desktop');try{sessionStorage.setItem('pq-force-desktop','1')}catch(e){}">Trotzdem anzeigen</button>
 </div>
-<script>try{if(sessionStorage.getItem('op-force-desktop')==='1')document.documentElement.classList.add('mob-force-desktop');}catch(e){}</script>
+<script>try{if(sessionStorage.getItem('pq-force-desktop')==='1')document.documentElement.classList.add('mob-force-desktop');}catch(e){}</script>
 <?php endif;?>
 
 <!-- Mobile Bottom Nav -->

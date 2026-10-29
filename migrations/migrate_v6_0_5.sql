@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `custom_roles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT IGNORE INTO custom_roles (role_key, role_label, color, is_system, sort_order) VALUES
-('admin', 'Administrator', '#e2001a', 1, 1),
+('admin', 'Administrator', '#be123c', 1, 1),
 ('manager', 'Manager', '#2563eb', 1, 2),
 ('teamleiter', 'Teamleiter', '#7c3aed', 1, 3),
 ('verwaltung', 'Verwaltung', '#0891b2', 1, 4),

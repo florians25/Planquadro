@@ -1,3 +1,5 @@
+<p><img src="public/assets/brand/planquadro-logo.svg" alt="Planquadro" height="56"></p>
+
 # Planquadro
 
 **Einsatz- und Teamplanung für Service-Organisationen**
@@ -45,6 +47,7 @@ sie, ohne bestehende Abläufe, Daten oder Rechte zu verändern.
 | [docs/PERMISSIONS.md](docs/PERMISSIONS.md) | Berechtigungsmodell |
 | [docs/MIGRATION_PLAN.md](docs/MIGRATION_PLAN.md) | Update bestehender Installationen |
 | [docs/API.md](docs/API.md) | REST-API v1 für Apps |
+| [docs/BRAND.md](docs/BRAND.md) | Markenhandbuch: Name, Logo, Farben, Schrift, Ton |
 | [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Designsystem, Dark Mode, Barrierefreiheit |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Entwicklung, Tests, CI, Branches |
 | [mobile/README.md](mobile/README.md) | Mobile-Apps bauen und veröffentlichen |

@@ -13,7 +13,7 @@ describe('lesbare Vordergrundfarbe', () => {
     ['#a3e635', '#111827'],
     ['#000080', '#ffffff'],
     ['#dc2626', '#ffffff'],
-    ['#e2001a', '#ffffff'],
+    ['#2557d6', '#ffffff'],
     ['#0f172a', '#ffffff'],
     ['#fff', '#111827'],
   ])('%s → %s', (bg, fg) => {
@@ -49,7 +49,7 @@ describe('Markenfarben in Hell und Dunkel', () => {
     expect(ensureContrast('#111827', '#ffffff')).toBe('#111827');
   });
 
-  it.each(['#e2001a', '#2563eb', '#facc15', '#000000', '#ffffff', '#0f172a', '#22c55e'])('Marke %s erfüllt die Kontrastziele', (brand) => {
+  it.each(['#2557d6', '#2563eb', '#ff7a1a', '#facc15', '#000000', '#ffffff', '#0f172a', '#22c55e'])('Marke %s erfüllt die Kontrastziele', (brand) => {
     for (const theme of ['light', 'dark'] as const) {
       const t = brandTokens(brand, '#2563eb', theme);
       const surface = THEME_SURFACES[theme].card;
@@ -60,7 +60,7 @@ describe('Markenfarben in Hell und Dunkel', () => {
   });
 
   it('ungültige Markenfarbe → Standardfarbe', () => {
-    expect(brandTokens('nix', 'auch nix', 'light').primary).toBe('#e2001a');
+    expect(brandTokens('nix', 'auch nix', 'light').primary).toBe('#2557d6');
   });
 });
 

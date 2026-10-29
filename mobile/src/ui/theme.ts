@@ -3,7 +3,7 @@ import { applyNativeTheme } from '../platform/native';
 import type { ThemeMode } from '../store/prefs';
 
 let currentMode: ThemeMode = 'system';
-let brand = { primary: '#e2001a', accent: '#2563eb' };
+let brand = { primary: '#2557d6', accent: '#ff7a1a' };
 const media = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
 export function effectiveTheme(): 'light' | 'dark' {
@@ -35,7 +35,7 @@ export function setThemeMode(mode: ThemeMode): void {
 
 /** Markenfarben des Mandanten (aus GET config / GET me) übernehmen. */
 export function setBrand(primary: string | null | undefined, accent: string | null | undefined): void {
-  brand = { primary: primary || '#e2001a', accent: accent || '#2563eb' };
+  brand = { primary: primary || '#2557d6', accent: accent || '#ff7a1a' };
   apply();
 }
 

@@ -103,8 +103,8 @@ export interface BrandTokens {
 /** Berechnet Marken-Tokens für ein Theme, sodass Kontraste in Hell und Dunkel passen. */
 export function brandTokens(primary: string, accent: string, theme: 'light' | 'dark'): BrandTokens {
   const surface = THEME_SURFACES[theme].card;
-  const p = parseHex(primary) ? toHex(parseHex(primary)!) : '#e2001a';
-  const a = parseHex(accent) ? toHex(parseHex(accent)!) : '#2563eb';
+  const p = parseHex(primary) ? toHex(parseHex(primary)!) : '#2557d6';
+  const a = parseHex(accent) ? toHex(parseHex(accent)!) : '#ff7a1a';
   // Füllflächen müssen sich zumindest von der Fläche abheben (3:1, WCAG 1.4.11)
   const pFill = ensureContrast(p, surface, 3);
   const aFill = ensureContrast(a, surface, 3);

@@ -118,6 +118,7 @@ $token = opsCsrfToken();
 ?><!DOCTYPE html>
 <html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Planquadro – Plattform</title>
+<link rel="icon" href="../assets/brand/favicon.svg" type="image/svg+xml"><link rel="icon" href="../assets/brand/favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="../assets/brand/apple-touch-icon.png"><meta name="theme-color" content="#14213D">
 <link rel="stylesheet" href="../assets/css/style.css">
 <style>
 body{background:var(--bg)}.pf{max-width:1200px;margin:0 auto;padding:1.25rem}

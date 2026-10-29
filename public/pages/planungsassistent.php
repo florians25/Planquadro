@@ -1489,7 +1489,7 @@ require_once __DIR__ . '/../includes/header.php';
 .epa-rc.warn { border-left: 3px solid var(--wn); }
 .epa-recap-note { margin-top: .6rem; font-size: .8rem; }
 .epa-flash { animation: epaFlash 1.4s ease-out; }
-@keyframes epaFlash { 0%, 40% { box-shadow: 0 0 0 3px rgba(226,0,26,.35); background: var(--pbg); } 100% { box-shadow: none; } }
+@keyframes epaFlash { 0%, 40% { box-shadow: 0 0 0 3px rgba(37,87,214,.35); background: var(--pbg); } 100% { box-shadow: none; } }
 .epa-cnt { display: inline-block; min-width: 15px; padding: 0 .2rem; margin-left: .25rem; border-radius: 7px;
            background: rgba(0,0,0,.12); font-size: .62rem; font-weight: 800; line-height: 15px; text-align: center; }
 .epa-bond { font-size: .62rem; font-weight: 700; padding: .05rem .3rem; border-radius: 4px;
@@ -1533,7 +1533,7 @@ require_once __DIR__ . '/../includes/header.php';
 .epa-day-n { display: flex; gap: .3rem; flex-wrap: wrap; margin-top: .35rem; }
 .epa-chip { font-size: .72rem; font-weight: 600; padding: .12rem .4rem; border-radius: 4px; background: var(--s); border: 1px solid var(--bd); }
 .epa-chip.az { background: #fce7f3; border-color: #fbcfe8; color: #be185d; }
-.epa-chip.hm { background: var(--pbg); border-color: rgba(226,0,26,.25); color: var(--p); }
+.epa-chip.hm { background: var(--pbg); border-color: rgba(37,87,214,.25); color: var(--p); }
 .epa-lrow { display: grid; grid-template-columns: 190px 1fr 46px; gap: .5rem; align-items: center; padding: .3rem 0; border-bottom: 1px solid var(--bd); font-size: .8rem; }
 .epa-lrow:last-child { border-bottom: none; }
 .epa-lbar { height: 8px; border-radius: 4px; background: var(--bd); overflow: hidden; }
@@ -2839,9 +2839,9 @@ var EPA = (function () {
       return '<span><i style="background:' + bg + ';color:' + (fg || '#fff') +
              ';font-size:.58rem;line-height:12px;text-align:center;font-weight:800">' + (txt || '') + '</i> ' + label + '</span>';
     }
-    if (seen.pick) parts.push(sw(esc(a.color || '#e2001a'), esc(a.fg_color || '#fff'), '', 'geplant: ' + esc(a.short_code || 'Einsatz')));
+    if (seen.pick) parts.push(sw(esc(a.color || '#2557d6'), esc(a.fg_color || '#fff'), '', 'geplant: ' + esc(a.short_code || 'Einsatz')));
     function corner(oldC, label) {
-      return '<span><i style="background:' + esc(a.color || '#e2001a') +
+      return '<span><i style="background:' + esc(a.color || '#2557d6') +
              ';background-image:linear-gradient(135deg,' + esc(oldC) + ' 0 6px,transparent 6px)"></i> ' + label + '</span>';
     }
     if (seen.fromFree) parts.push(corner(seen.fromFreeC,
@@ -3034,7 +3034,7 @@ var EPA = (function () {
 
     if (picked) {
       var a = avail(p, d);
-      var bg = (R.area && R.area.color) || '#e2001a', fg = (R.area && R.area.fg_color) || '#ffffff';
+      var bg = (R.area && R.area.color) || '#2557d6', fg = (R.area && R.area.fg_color) || '#ffffff';
       cls += ' pick' + (a.ok ? '' : ' bad');
       label = esc((R.area && R.area.short_code) || '✓');
       title = p.name + ' – ' + d.label + ' (' + (a.ok ? a.why : 'Konflikt: ' + a.why) + ')';

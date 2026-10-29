@@ -277,7 +277,7 @@ Speichern
 .rl-sidebar{display:flex;flex-direction:column;gap:.35rem}
 .rl-role-card{display:flex;align-items:center;gap:.65rem;padding:.65rem .8rem;background:var(--card);border:1.5px solid var(--bd);border-radius:var(--r2);cursor:pointer;text-align:left;width:100%}
 .rl-role-card:hover{border-color:var(--bd2);box-shadow:var(--sh)}
-.rl-role-card.active{border-color:var(--p);box-shadow:0 0 0 3px rgba(226,0,26,.08)}
+.rl-role-card.active{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,87,214,.08)}
 .rl-role-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .rl-role-info{flex:1;min-width:0}
 .rl-role-name{display:block;font-size:.82rem;font-weight:700;color:var(--tx);line-height:1.3}
@@ -391,7 +391,7 @@ Speichern
 .rl-ov-mode input{margin:0;flex-shrink:0}
 .rl-ov-mode-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .rl-new-role-btn{display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.5rem .8rem;background:none;border:1.5px dashed var(--bd);border-radius:var(--r2);cursor:pointer;color:var(--mu);font-size:.78rem;font-weight:600;width:100%}
-.rl-new-role-btn:hover{border-color:var(--p);color:var(--p);background:rgba(226,0,26,.03)}
+.rl-new-role-btn:hover{border-color:var(--p);color:var(--p);background:rgba(37,87,214,.03)}
 </style>
 
 <script>

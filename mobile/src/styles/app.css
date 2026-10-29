@@ -7,11 +7,11 @@
   --bd: #e5e7eb; --bd2: #d1d5db; --s: #f8fafc;
   --ok: #15803d; --okbg: #dcfce7; --wn: #b45309; --wnbg: #fef3c7;
   --err: #b91c1c; --errbg: #fef2f2; --inf: #0369a1; --ibg: #e0f2fe;
-  --nv: #0f172a; --nvh: #1e293b; --nv-tx: #ffffff; --nv-mu: rgba(255,255,255,.62);
-  --grid: #d3d8df; --grid-strong: #bcc2cc; --we: #f1f5f9; --hol: #fff7ed; --today: #fde8e8;
+  --nv: #14213d; --nvh: #1d2d52; --nv-tx: #ffffff; --nv-mu: rgba(255,255,255,.62);
+  --grid: #d3d8df; --grid-strong: #bcc2cc; --we: #f1f5f9; --hol: #fff7ed; --today: #e8eefc;
   --focus: #2563eb;
   /* Markenfarben – zur Laufzeit von ui/theme.ts kontrastgeprüft überschrieben */
-  --p: #e2001a; --p-fg: #ffffff; --p-text: #c00016; --a: #2563eb; --a-fg: #ffffff; --a-text: #2563eb;
+  --p: #2557d6; --p-fg: #ffffff; --p-text: #2557d6; --a: #ff7a1a; --a-fg: #111827; --a-text: #c2410c;
   --r: 6px; --r2: 10px;
   --sh: 0 1px 3px rgba(0,0,0,.08);
   --tap: 44px;
@@ -171,7 +171,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .auth {
   min-height: 100vh; display: flex; align-items: center; justify-content: center; outline: none;
   padding: calc(1rem + var(--safe-t)) 1rem calc(1rem + var(--safe-b));
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  background: linear-gradient(135deg, #14213d 0%, #1b3a8a 100%);
 }
 .auth-card { width: 100%; max-width: 420px; background: var(--card); border-radius: var(--r2); padding: 2rem 1.5rem; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
 .auth-card.center { text-align: center; }

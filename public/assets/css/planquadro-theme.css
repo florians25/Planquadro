@@ -9,7 +9,7 @@
 :root {
   /* Lesbarkeit: gedämpfte Schrift erreicht 4.5:1 auch auf --bg (vorher 4.4:1) */
   --mu: #5b6472;
-  --focus: var(--p-text, #b30016);
+  --focus: var(--p-text, #1b44ae);
   --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-6: 1.5rem;
   --font-xs: .72rem; --font-sm: .82rem; --font-md: .9rem; --font-lg: 1.1rem;
   --touch: 44px;
@@ -70,7 +70,7 @@ html.mob-force-desktop .mob-desk-only-warn { display: none !important; }
 .nav-links:hover { scrollbar-width: thin; }
 .nav-brand-logo { height: 26px; width: auto; display: block; }
 #draftsOnlyBtn.active { background: var(--p); border-color: var(--p); color: var(--p-on, #fff); }
-.op-theme-toggle { width: 100%; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.pq-theme-toggle { width: 100%; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
 
 /* Branding: Primärschaltflächen mit garantiertem Kontrast */
 .btn-primary { color: var(--p-on, #fff); }

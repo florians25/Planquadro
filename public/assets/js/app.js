@@ -25,20 +25,20 @@ function ajaxPost(url, formData, onSuccess) {
 }
 
 /* -- Farbschema: System → Hell → Dunkel (pro Browser gespeichert) -- */
-function opApplyTheme(pref) {
+function pqApplyTheme(pref) {
     var dark = pref === 'dark' || (pref === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
     document.documentElement.setAttribute('data-theme-pref', pref);
-    var l = document.getElementById('opThemeLabel'); if (l) l.textContent = { system: 'System', light: 'Hell', dark: 'Dunkel' }[pref];
+    var l = document.getElementById('pqThemeLabel'); if (l) l.textContent = { system: 'System', light: 'Hell', dark: 'Dunkel' }[pref];
 }
-function opCycleTheme() {
+function pqCycleTheme() {
     var cur = document.documentElement.getAttribute('data-theme-pref') || 'system';
     var next = { system: 'light', light: 'dark', dark: 'system' }[cur] || 'system';
-    try { localStorage.setItem('op-theme', next); } catch (e) {}
-    opApplyTheme(next);
+    try { localStorage.setItem('pq-theme', next); } catch (e) {}
+    pqApplyTheme(next);
 }
-document.addEventListener('DOMContentLoaded', function() { opApplyTheme(document.documentElement.getAttribute('data-theme-pref') || 'system'); });
-if (window.matchMedia) try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() { opApplyTheme(document.documentElement.getAttribute('data-theme-pref') || 'system'); }); } catch (e) {}
+document.addEventListener('DOMContentLoaded', function() { pqApplyTheme(document.documentElement.getAttribute('data-theme-pref') || 'system'); });
+if (window.matchMedia) try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() { pqApplyTheme(document.documentElement.getAttribute('data-theme-pref') || 'system'); }); } catch (e) {}
 
 /* -- Toast -- */
 function toast(msg, type) {

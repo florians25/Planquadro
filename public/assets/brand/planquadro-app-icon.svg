@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Planquadro">
+  <title>Planquadro</title>
+  <rect width="1024" height="1024" rx="229.1" fill="#14213D"/>
+  <rect x="216.32" y="216.32" width="168.96" height="168.96" rx="42.24" fill="#FFFFFF"/>
+  <rect x="427.52" y="216.32" width="168.96" height="168.96" rx="42.24" fill="rgba(255,255,255,.28)"/>
+  <rect x="638.72" y="216.32" width="168.96" height="168.96" rx="42.24" fill="#FFFFFF"/>
+  <rect x="216.32" y="427.52" width="168.96" height="168.96" rx="42.24" fill="rgba(255,255,255,.28)"/>
+  <rect x="427.52" y="427.52" width="168.96" height="168.96" rx="42.24" fill="#FFFFFF"/>
+  <rect x="638.72" y="427.52" width="168.96" height="168.96" rx="42.24" fill="#FF7A1A"/>
+  <rect x="216.32" y="638.72" width="168.96" height="168.96" rx="42.24" fill="#FFFFFF"/>
+  <rect x="427.52" y="638.72" width="168.96" height="168.96" rx="42.24" fill="rgba(255,255,255,.28)"/>
+  <rect x="638.72" y="638.72" width="168.96" height="168.96" rx="42.24" fill="rgba(255,255,255,.28)"/>
+</svg>

@@ -8,6 +8,14 @@ Alle bisherigen Funktionen, Daten, Rechte und Abläufe bleiben erhalten. Neue Fu
 sind optional oder standardmäßig so eingestellt, dass sich für bestehende Installationen
 nichts ändert.
 
+### Marke
+- Neuer Produktname **Planquadro** (Kurzname PQ) mit eigenem Corporate Design
+  (`docs/BRAND.md`): Bildmarke „Planquadrat“, Wortmarke, Farben Tinte, Quadro-Blau und
+  Signal-Orange, Favicons, PWA- und App-Icons, Splash-Screens.
+- Die bisherige Standardfarbe (Rot) ist durch Quadro-Blau ersetzt. Mandanten mit eigenem
+  Branding behalten ihre Farben; wer das frühere Rot weiter möchte, trägt es unter
+  *Organisation → Branding* ein.
+
 ### Plattform (Phase 3)
 - **Mandantenfähigkeit** (`PQ_MODE=saas`): eine Datenbank je Mandant, Auflösung per
   Domain, mandantengebundene Sitzungen. Self-Hosting (Standard) bleibt eine Einzel-Installation.

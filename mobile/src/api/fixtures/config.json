@@ -3,7 +3,7 @@
   "tenant": {
     "name": "Planquadro Demo GmbH",
     "slug": "demo",
-    "branding": { "primary": "#e2001a", "accent": "#2563eb", "logo_url": null }
+    "branding": { "primary": "#2557d6", "accent": "#ff7a1a", "logo_url": null }
   },
   "auth": {
     "password": true,

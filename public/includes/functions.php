@@ -466,7 +466,7 @@ function allRoles(){
 function roleColor($r){
     static $colors=null;
     if($colors===null){
-        $colors=['admin'=>'#e2001a','manager'=>'#2563eb','teamleiter'=>'#7c3aed','verwaltung'=>'#0891b2','lager'=>'#d97706','mitarbeiter'=>'#059669','azubi_1'=>'#ec4899','azubi_2'=>'#f472b6','azubi_3'=>'#f9a8d4'];
+        $colors=['admin'=>'#be123c','manager'=>'#2563eb','teamleiter'=>'#7c3aed','verwaltung'=>'#0891b2','lager'=>'#d97706','mitarbeiter'=>'#059669','azubi_1'=>'#ec4899','azubi_2'=>'#f472b6','azubi_3'=>'#f9a8d4'];
         try{$s=getDB()->query('SELECT role_key,color FROM custom_roles');foreach($s->fetchAll() as $cr)$colors[$cr['role_key']]=$cr['color'];}catch(Exception $e){}
     }
     return $colors[$r]??'#6b7280';

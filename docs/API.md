@@ -50,7 +50,7 @@ Authorization: Bearer <access_token>
 Branding für den Login-Bildschirm.
 ```json
 { "api_version": 1, "tenant": { "name": "Planquadro", "slug": "default",
-  "branding": { "primary": "#e2001a", "accent": "#2563eb", "logo_url": "https://…/api/v1/branding/logo" } },
+  "branding": { "primary": "#2557d6", "accent": "#ff7a1a", "logo_url": "https://…/api/v1/branding/logo" } },
   "auth": { "password": true, "oidc": { "enabled": false, "label": "Mit Firmenkonto anmelden", "authorize_url": null } },
   "modules": { "absences": true, "approvals": false, "ical": true } }
 ```

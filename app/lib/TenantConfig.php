@@ -19,8 +19,8 @@
 const TENANT_CONFIG_DEFAULTS = [
     'branding' => [
         'name'    => 'Planquadro',
-        'primary' => '#e2001a',
-        'accent'  => '#2563eb',
+        'primary' => '#2557d6',
+        'accent'  => '#ff7a1a',
         'logo'    => null,          /* Dateiname im Mandanten-Speicher */
     ],
     'modules' => [
@@ -249,8 +249,8 @@ function opsReadableOn(string $bg): string
  */
 function opsBrandCss(): string
 {
-    $p = opsValidColor((string)tcfg('branding.primary')) ?? '#e2001a';
-    $a = opsValidColor((string)tcfg('branding.accent')) ?? '#2563eb';
+    $p = opsValidColor((string)tcfg('branding.primary')) ?? '#2557d6';
+    $a = opsValidColor((string)tcfg('branding.accent')) ?? '#ff7a1a';
     if (strlen($p) === 4) $p = '#' . $p[1] . $p[1] . $p[2] . $p[2] . $p[3] . $p[3];
     if (strlen($a) === 4) $a = '#' . $a[1] . $a[1] . $a[2] . $a[2] . $a[3] . $a[3];
     $p = substr($p, 0, 7); $a = substr($a, 0, 7);

@@ -106,7 +106,7 @@ $dbVer=$db->query('SELECT VERSION() as v')->fetch()['v']; $phpVer=phpversion();
 .st-tog input:checked+.sl{background:var(--p)}
 .st-tog input:checked+.sl:before{transform:translateX(18px)}
 .st-inp{padding:.35rem .55rem;border:1px solid var(--bd);border-radius:var(--r);font-size:.82rem;width:80px;text-align:center}
-.st-inp:focus{outline:none;border-color:var(--pl);box-shadow:0 0 0 2px rgba(226,0,26,.06)}
+.st-inp:focus{outline:none;border-color:var(--pl);box-shadow:0 0 0 2px rgba(37,87,214,.06)}
 /* Stats grid */
 .st-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:.55rem;margin-bottom:1rem}
 .st-stat{text-align:center;padding:.55rem .4rem;background:var(--card);border:1px solid var(--bd);border-radius:var(--r)}
