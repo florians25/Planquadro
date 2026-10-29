@@ -9,6 +9,8 @@ enum Route: Hashable {
     case day(ISODay, userID: Int?)
     case widgetGallery
     case about
+    /// Suche als Seite (iPhone: unter „Mehr“, damit die Tab-Leiste bei fünf Einträgen bleibt)
+    case search
 }
 
 enum PlanMode: String, CaseIterable, Identifiable {

@@ -131,6 +131,8 @@ extension View {
                 WidgetGalleryView()
             case .about:
                 AboutView()
+            case .search:
+                SearchView()
             }
         }
     }
@@ -168,11 +170,17 @@ struct ModernTabRootView: View {
                 }
                 .badge(section == .notifications ? model.session.unreadCount : 0)
             }
-            Tab(value: Selection.search, role: .search) {
-                SearchStack()
-            }
         }
         .pqTabBarMinimizeOnScroll()
+        // Höchstens fünf Tabs: ein sechster Tab ließe iOS einen eigenen „Mehr“-Überlauf
+        // anlegen (doppelte Zurück-Pfeile). Die Suche liegt auf dem iPhone daher unter „Mehr“.
+        .onChange(of: router.searchSelected, initial: true) { _, on in
+            guard on else { return }
+            router.searchSelected = false
+            router.section = .more
+            router.morePath = NavigationPath()
+            router.morePath.append(Route.search)
+        }
     }
 }
 

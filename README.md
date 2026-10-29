@@ -62,14 +62,16 @@ Tagen – jedes Feld ein Einsatz. Kurzname: **PQ**.
 <img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/android-abwesenheiten-dark.png" alt="Android: Urlaubskonto und Antrag, dunkel" width="19%">
 </p>
 
-**iPhone & iPad** – native SwiftUI-App mit Liquid Glass ([apple/](apple/README.md))
+**iPhone & iPad** – native SwiftUI-App mit Liquid Glass (iOS 26), Screenshots aus dem iOS-Simulator ([apple/](apple/README.md))
 
 <p>
-<img src="docs/screenshots/ios-plan.png" alt="iPhone: Mein Plan" width="24%">
-<img src="docs/screenshots/ios-team.png" alt="iPhone: Team" width="24%">
-<img src="docs/screenshots/ios-abwesenheiten.png" alt="iPhone: Abwesenheiten und Urlaubsantrag" width="24%">
-<img src="docs/screenshots/ios-team-dark.png" alt="iPhone: Team im Dunkelmodus" width="24%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/ios/iphone-week-hell.png" alt="iPhone: Mein Plan, Woche mit Heute-Karte" width="19%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/ios/iphone-team-hell.png" alt="iPhone: Team-Raster" width="19%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/ios/iphone-detail-hell.png" alt="iPhone: Einsatzdetails" width="19%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/ios/iphone-widgets-hell.png" alt="iPhone: Widgets Heute, Sperrbildschirm, Diese Woche" width="19%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/ios/iphone-plan-dunkel.png" alt="iPhone: Monatsplan im Dunkelmodus" width="19%">
 </p>
+<p><img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/ios/ipad-week-hell.png" alt="iPad: Seitenleiste und Wochenplan" width="49%"> <img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/ios/ipad-team-dunkel.png" alt="iPad: Team-Raster, dunkel" width="49%"></p>
 
 <sub>Alle Namen, Firmen und Daten sind frei erfunden (Demodaten aus <code>php bin/demo.php</code>).</sub>
 

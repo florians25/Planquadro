@@ -128,6 +128,9 @@ struct MoreView: View {
                         }
                     }))
                 }
+                NavigationLink(value: Route.search) {
+                    Label("Suchen", systemImage: "magnifyingglass")
+                }
                 NavigationLink(value: Route.widgetGallery) {
                     Label("Widgets", systemImage: "square.grid.2x2")
                 }

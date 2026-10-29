@@ -331,10 +331,10 @@ Verlassen mit ungespeichertem Vorschlag fragt der Browser nach.
 ## 12. Die App für iOS und Android
 
 <p>
-<img src="screenshots/ios-plan.png" alt="App: Mein Plan" width="24%">
-<img src="screenshots/ios-team.png" alt="App: Team" width="24%">
-<img src="screenshots/ios-abwesenheiten.png" alt="App: Abwesenheiten" width="24%">
-<img src="screenshots/ios-mehr.png" alt="App: Mehr" width="24%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/ios/iphone-week-hell.png" alt="iPhone: Mein Plan" width="24%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/ios/iphone-team-hell.png" alt="iPhone: Team" width="24%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/ios/iphone-absences-hell.png" alt="iPhone: Abwesenheiten" width="24%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/ios/iphone-widgets-hell.png" alt="iPhone: Widgets" width="24%">
 </p>
 
 1. App installieren, **Server-Adresse** Ihrer Firma eingeben (erhalten Sie von der Planung).
