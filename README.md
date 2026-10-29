@@ -18,6 +18,33 @@ sie, ohne bestehende Abläufe, Daten oder Rechte zu verändern.
 
 > Status: Entwicklungsstand, **noch nicht für den Produktivbetrieb freigegeben**.
 
+## Screenshots
+
+<table>
+<tr>
+<td colspan="2"><img src="docs/screenshots/web-monatsplanung.png" alt="Monatsplanung: Planungsmatrix aus Mitarbeitenden und Tagen"><br><sub>Monatsplanung – Planungsmatrix mit Einsatzcodes, Abwesenheiten und Feiertagen</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/web-dashboard.png" alt="Dashboard"><br><sub>Dashboard</sub></td>
+<td width="50%"><img src="docs/screenshots/web-monatsplanung-dark.png" alt="Monatsplanung im Dunkelmodus"><br><sub>Dunkelmodus</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/web-gesamtplan.png" alt="Gesamtplan"><br><sub>Gesamtplan</sub></td>
+<td><img src="docs/screenshots/web-organisation.png" alt="Organisation: Branding, Module, Navigation"><br><sub>Organisation – Branding, Module, SSO</sub></td>
+</tr>
+</table>
+
+**Apps für iOS und Android**
+
+<p>
+<img src="docs/screenshots/app-plan.png" alt="App: Mein Plan" width="23%">
+<img src="docs/screenshots/app-team.png" alt="App: Team" width="23%">
+<img src="docs/screenshots/app-abwesenheiten.png" alt="App: Abwesenheiten" width="23%">
+<img src="docs/screenshots/app-plan-dark.png" alt="App: Mein Plan im Dunkelmodus" width="23%">
+</p>
+
+<sub>Alle Namen, Firmen und Daten sind frei erfunden (Demodaten aus <code>php bin/demo.php</code>).</sub>
+
 ## Funktionen
 
 - **Planung:** Dashboard, Mein Plan, Gesamtplan, Monats- und Jahresplanung, Einsatzcodes,
@@ -65,6 +92,7 @@ composer install
 export PQ_DB_HOST=127.0.0.1 PQ_DB_NAME=planquadro PQ_DB_USER=planquadro PQ_DB_PASS=…
 php bin/migrate.php up
 php public/install.php
+php bin/demo.php          # optional: Demodaten für eine Vorführinstanz
 php -S 127.0.0.1:8080 -t public tests/router.php
 ```
 
