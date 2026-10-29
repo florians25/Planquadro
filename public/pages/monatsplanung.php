@@ -14,6 +14,7 @@ $pm=$m-1;$py=$y;if($pm<1){$pm=12;$py--;}
 $nm=$m+1;$ny=$y;if($nm>12){$nm=1;$ny++;}
 $cu = currentUser();
 $canErl = hasPerm('view_erl_column');
+$showWots = opsModule('wots'); /* Modul WOTs, Stunden, Erl.-Spalte */
 $canInternal = hasPerm('plan_view_internal');
 $canPublishAll = hasPerm('plan_publish_all');
 
@@ -68,6 +69,7 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h8a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h4a1 1 0 110 2H4a1 1 0 01-1-1z"/></svg>
 <span id="sortToggleLabel">Standard</span>
 </button>
+<button type="button" class="btn btn-xs btn-outline" id="draftsOnlyBtn" aria-pressed="false" onclick="toggleDraftsOnly(this)" title="Nur Mitarbeiter mit unveröffentlichten Änderungen anzeigen">Nur Änderungen</button>
 <button class="btn-reset" id="filterResetBtn" onclick="resetFilters()" style="display:none" title="Filter zurücksetzen">✕</button>
 </div>
 <div class="plan-bar-nav">
@@ -189,9 +191,11 @@ $showKw=($kwn!==$lk);if($showKw)$lk=$kwn;
 <?php if($hl):?><div class="hol-lbl <?php echo $isFt?'hol-ft':'hol-fe';?>" title="<?php echo e($hols[$d]['name']);?>"><?php echo mb_substr($hols[$d]['name'],0,4);?></div><?php endif;?>
 </th><?php endforeach;?>
 <?php if($see):?><th class="cr-end">RU Ende</th><?php endif;?>
+<?php if($showWots):?>
 <th class="cw no-print">WOTs</th>
 <th class="ch-col no-print">Std</th>
 <?php if($canErl):?><th class="cs-col no-print">Erl.</th><?php endif;?>
+<?php endif;?>
 </tr></thead>
 <tbody>
 <?php
@@ -254,14 +258,14 @@ data-d="<?php echo $d;?>" data-u="<?php echo $u['id'];?>" data-r="<?php echo $ce
 <?php if($bg):?> style="background:<?php echo e($bg);?><?php if($we) echo ' !important';?>;color:<?php echo e($fg);?>"<?php endif;?>><?php echo e($cd);?></td>
 <?php endforeach;?>
 <?php if($see):?><td class="cr-end <?php echo ($absSee&&vacLeftAtEnd($u['id'],$y,$m)<0)?'txt-d':'';?>"><?php echo $absSee?number_format(vacLeftAtEnd($u['id'],$y,$m),1,',',''):'·';?></td><?php endif;?>
-<td class="cw no-print">
+<?php if($showWots):?><td class="cw no-print">
 <?php if($wotCnt>0):?><span class="wot-cnt"><?php echo $wotCnt;?></span>
 <span class="wot-eye" onclick="openWotDetail(<?php echo $u['id'];?>,'<?php echo e($u['last_name'].', '.$u['first_name']);?>')"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg></span>
 <?php if(canEdit()):?><span class="wot-edit" onclick="openWotManager(<?php echo $u['id'];?>,'<?php echo e($u['last_name'].', '.$u['first_name']);?>')"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg></span><?php endif;?>
 <?php else:?><?php if(canEdit()):?><span class="wot-edit" onclick="openWotManager(<?php echo $u['id'];?>,'<?php echo e($u['last_name'].', '.$u['first_name']);?>')"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg></span><?php endif;?><?php endif;?>
 </td>
 <td class="ch-col no-print"><input type="text" inputmode="decimal" class="inp-hours" value="<?php echo e($md['hours']??'');?>" data-uid="<?php echo $u['id'];?>" placeholder="–"></td>
-<?php if($canErl):?><td class="cs-col no-print"><input type="checkbox" class="inp-snow" data-uid="<?php echo $u['id'];?>" <?php if($md['snow_checked']??0) echo 'checked';?>></td><?php endif;?>
+<?php if($canErl):?><td class="cs-col no-print"><input type="checkbox" class="inp-snow" data-uid="<?php echo $u['id'];?>" <?php if($md['snow_checked']??0) echo 'checked';?>></td><?php endif;?><?php endif;?>
 </tr><?php endforeach; endforeach;?>
 </tbody></table></div>
 

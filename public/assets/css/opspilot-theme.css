@@ -1,0 +1,236 @@
+/* =========================================================================
+   OpsPilot Designsystem – Tokens, Dark Mode, Barrierefreiheit
+   Ergänzt style.css (bleibt unverändert). Reihenfolge: style.css → dieses
+   Stylesheet → Mandanten-Branding (Inline-Variablen aus der TenantConfig).
+   Dokumentation: docs/DESIGN_SYSTEM.md
+   ========================================================================= */
+
+/* ---------- Tokens (hell) ---------- */
+:root {
+  /* Lesbarkeit: gedämpfte Schrift erreicht 4.5:1 auch auf --bg (vorher 4.4:1) */
+  --mu: #5b6472;
+  --focus: var(--p-text, #b30016);
+  --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-6: 1.5rem;
+  --font-xs: .72rem; --font-sm: .82rem; --font-md: .9rem; --font-lg: 1.1rem;
+  --touch: 44px;
+  color-scheme: light;
+}
+.content a:not(.btn) { color: var(--p-text, var(--p)); }
+
+/* ---------- Tokens (dunkel) ---------- */
+html[data-theme="dark"] {
+  --bg: #0b1120; --card: #111827; --s: #0f172a; --tx: #e5e7eb; --tx2: #cbd5e1; --mu: #9ca3af;
+  --bd: #263042; --bd2: #334155; --grid: #263042; --grid-strong: #3b475a;
+  --pbg: color-mix(in srgb, var(--p) 22%, #111827);
+  --okbg: #052e16; --wnbg: #3b2a06; --errbg: #3b0d0d; --ibg: #082f49;
+  --nv: #020617; --nvh: #0f172a;
+  --sh: 0 1px 3px rgba(0,0,0,.55); --sh2: 0 4px 14px rgba(0,0,0,.6);
+  --focus: #93c5fd;
+  color-scheme: dark;
+}
+html[data-theme="dark"] .content a:not(.btn) { color: color-mix(in srgb, var(--p) 55%, #ffffff); }
+html[data-theme="dark"] body { background: var(--bg); color: var(--tx); }
+html[data-theme="dark"] input, html[data-theme="dark"] select, html[data-theme="dark"] textarea {
+  background: var(--s); color: var(--tx); border-color: var(--bd2);
+}
+html[data-theme="dark"] ::placeholder { color: #6b7280; }
+html[data-theme="dark"] img.nav-brand-logo { background: #fff; border-radius: 4px; padding: 1px; }
+/* Inline-Stile der Seiten mit festen hellen Hintergründen */
+html[data-theme="dark"] [style*="background:#fff;"], html[data-theme="dark"] [style*="background: #fff;"],
+html[data-theme="dark"] [style*="background:#ffffff"], html[data-theme="dark"] [style*="background:#fafbff"],
+html[data-theme="dark"] [style*="background:#f8fafc"], html[data-theme="dark"] [style*="background:#f9fafb"] { background: var(--s) !important; }
+html[data-theme="dark"] [style*="color:#111827"], html[data-theme="dark"] [style*="color:#0f172a"],
+html[data-theme="dark"] [style*="color:#374151"] { color: var(--tx) !important; }
+/* Leere Planzellen und Wochenenden */
+html[data-theme="dark"] .pe-c:not([style*="background"]) { background: var(--card); }
+html[data-theme="dark"] td.we:not([style*="background"]), html[data-theme="dark"] th.we { background: #0d1626; }
+
+/* ---------- Barrierefreiheit ---------- */
+.skip-link { position: absolute; left: -9999px; top: 0; z-index: 10000; background: var(--p); color: var(--p-on, #fff); padding: .5rem 1rem; border-radius: 0 0 var(--r) 0; font-weight: 700; }
+.skip-link:focus { left: 0; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.pe-c:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; position: relative; z-index: 2; }
+button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
+main:focus { outline: none; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+@media (pointer: coarse) {
+  .btn, .nav-link, .mob-nav-item, select, input[type="checkbox"] + label { min-height: var(--touch); }
+  input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; }
+}
+/* Mobil: Desktop-Seiten bei Bedarf trotzdem anzeigen (horizontal scrollbar) */
+html.mob-force-desktop .mob-hide-content { display: block !important; }
+html.mob-force-desktop .mob-desk-only-warn { display: none !important; }
+
+/* ---------- Komponenten-Ergänzungen ---------- */
+/* Navigation: bei Überlänge horizontal scrollbar – rechter Rand blendet aus,
+   damit erkennbar ist, dass weitere Einträge folgen */
+.nav-links { mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); padding-right: 24px; }
+.nav-links:hover { scrollbar-width: thin; }
+.nav-brand-logo { height: 26px; width: auto; display: block; }
+#draftsOnlyBtn.active { background: var(--p); border-color: var(--p); color: var(--p-on, #fff); }
+.op-theme-toggle { width: 100%; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+
+/* Branding: Primärschaltflächen mit garantiertem Kontrast */
+.btn-primary { color: var(--p-on, #fff); }
+
+@media print {
+  html[data-theme="dark"] { --bg: #fff; --card: #fff; --tx: #000; --tx2: #111; --mu: #444; --bd: #ccc; }
+  .skip-link { display: none; }
+}
+
+/* >>> generated dark mode (tools/gen-dark-css.py) >>> */
+html[data-theme="dark"] .inp-search{background:var(--card)}
+html[data-theme="dark"] .fg input, html[data-theme="dark"] .fg select, html[data-theme="dark"] .fg textarea{background:var(--card)}
+html[data-theme="dark"] .btn-danger-text:hover{color:color-mix(in srgb, #991b1b 45%, #ffffff) !important}
+html[data-theme="dark"] .inp-disabled{background:var(--s) !important}
+html[data-theme="dark"] .bm{background:var(--s)}
+html[data-theme="dark"] .r-manager{background:color-mix(in srgb, #dbeafe 16%, var(--card));color:color-mix(in srgb, #1e40af 45%, #ffffff)}
+html[data-theme="dark"] .r-teamleiter{background:color-mix(in srgb, #e0e7ff 16%, var(--card));color:color-mix(in srgb, #3730a3 45%, #ffffff)}
+html[data-theme="dark"] .r-mitarbeiter{background:var(--s);color:var(--tx2)}
+html[data-theme="dark"] .r-verwaltung{background:color-mix(in srgb, #fef3c7 16%, var(--card));color:color-mix(in srgb, #92400e 45%, #ffffff)}
+html[data-theme="dark"] .r-azubi_1, html[data-theme="dark"] .r-azubi_2, html[data-theme="dark"] .r-azubi_3{background:color-mix(in srgb, #dcfce7 16%, var(--card));color:color-mix(in srgb, #166534 45%, #ffffff)}
+html[data-theme="dark"] .tbl thead th{background:var(--s)}
+html[data-theme="dark"] .ps{background:var(--card)}
+html[data-theme="dark"] .ps::-webkit-scrollbar-thumb{border:2px solid var(--bd)}
+html[data-theme="dark"] .ps::-webkit-scrollbar-track{background:var(--card)}
+html[data-theme="dark"] .pt thead th{background:var(--s)}
+html[data-theme="dark"] .sc{background:var(--card)}
+html[data-theme="dark"] .pt thead .sc{background:var(--s)}
+html[data-theme="dark"] .cr-start{background:var(--s) !important}
+html[data-theme="dark"] .cr-end{background:var(--s) !important}
+html[data-theme="dark"] .pt thead th.cr-start{background:color-mix(in srgb, #fef3c7 16%, var(--card)) !important;color:color-mix(in srgb, #92400e 45%, #ffffff)}
+html[data-theme="dark"] .pt thead th.cr-end{background:color-mix(in srgb, #fef3c7 16%, var(--card)) !important;color:color-mix(in srgb, #92400e 45%, #ffffff)}
+html[data-theme="dark"] .hol-lbl.hol-ft{color:color-mix(in srgb, #991b1b 45%, #ffffff)}
+html[data-theme="dark"] .hol-lbl.hol-fe{background:color-mix(in srgb, #dbeafe 16%, var(--card));color:color-mix(in srgb, #1d4ed8 45%, #ffffff)}
+html[data-theme="dark"] .pt thead th.hl-fe{background:var(--s) !important}
+html[data-theme="dark"] .pt tbody td.td:not([style]){background:var(--s)}
+html[data-theme="dark"] .we{background:var(--s) !important}
+html[data-theme="dark"] .pt thead th.we{background:var(--s) !important}
+html[data-theme="dark"] .we-open{background:var(--s) !important}
+html[data-theme="dark"] .pt thead th.we-open{background:color-mix(in srgb, #dcfce7 16%, var(--card)) !important}
+html[data-theme="dark"] .we-badge{background:color-mix(in srgb, #dcfce7 16%, var(--card))}
+html[data-theme="dark"] .hl-ft{background:var(--s) !important}
+html[data-theme="dark"] .pt thead th.hl-ft .dn{color:color-mix(in srgb, #be123c 45%, #ffffff)}
+html[data-theme="dark"] .pt thead th.hl-fe{background:color-mix(in srgb, #dbeafe 16%, var(--card)) !important}
+html[data-theme="dark"] .pt thead th.hl-fe .dn{color:color-mix(in srgb, #1d4ed8 45%, #ffffff)}
+html[data-theme="dark"] .pt thead th.hl-fe .hol-lbl{color:color-mix(in srgb, #075985 45%, #ffffff)}
+html[data-theme="dark"] .gr td{background:var(--s) !important}
+html[data-theme="dark"] .inp-hours{background:var(--s)}
+html[data-theme="dark"] .inp-hours:focus{background:var(--card)}
+html[data-theme="dark"] .tb{background:var(--card)}
+html[data-theme="dark"] .inp-sm{background:var(--card)}
+html[data-theme="dark"] .filter-bar select{background:var(--card)}
+html[data-theme="dark"] .area-sort-no{background:var(--muted-bg, var(--s))}
+html[data-theme="dark"] .tb-nv-thumb{background:var(--card)}
+html[data-theme="dark"] .wot-edit{background:var(--s)}
+html[data-theme="dark"] .cell-locked{background:var(--s) !important}
+html[data-theme="dark"] .fer-c{background:color-mix(in srgb, #e0f2fe 16%, var(--card));color:color-mix(in srgb, #075985 45%, #ffffff)}
+html[data-theme="dark"] .we-c{background:var(--s)}
+html[data-theme="dark"] .offline-card{background:var(--card)}
+html[data-theme="dark"] .offline-card h2{color:var(--tx, var(--tx))}
+html[data-theme="dark"] .offline-card p{color:var(--mu, var(--mu))}
+html[data-theme="dark"] .offline-card .off-spinner{border:2px solid var(--bd)}
+html[data-theme="dark"] .mh{background:var(--s)}
+html[data-theme="dark"] .mh-icon-info{background:color-mix(in srgb, #dbeafe 16%, var(--card))}
+html[data-theme="dark"] .mh-icon-warn{background:color-mix(in srgb, #fef3c7 16%, var(--card))}
+html[data-theme="dark"] .mh-icon-danger{background:color-mix(in srgb, #fee2e2 16%, var(--card))}
+html[data-theme="dark"] .mh-icon-success{background:color-mix(in srgb, #dcfce7 16%, var(--card))}
+html[data-theme="dark"] .mf{background:var(--s)}
+html[data-theme="dark"] .confirm-icon-warn{background:color-mix(in srgb, #fef3c7 16%, var(--card))}
+html[data-theme="dark"] .confirm-icon-danger{background:color-mix(in srgb, #fee2e2 16%, var(--card))}
+html[data-theme="dark"] .confirm-icon-info{background:color-mix(in srgb, #dbeafe 16%, var(--card))}
+html[data-theme="dark"] .confirm-icon-success{background:color-mix(in srgb, #dcfce7 16%, var(--card))}
+html[data-theme="dark"] .yr-ml{background:var(--s) !important}
+html[data-theme="dark"] .yr-corner{background:var(--s) !important}
+html[data-theme="dark"] .sort-toggle-btn{background:var(--card)}
+html[data-theme="dark"] .inp-filter{background:var(--card)}
+html[data-theme="dark"] .lock-banner{background:var(--s);color:color-mix(in srgb, #991b1b 45%, #ffffff)}
+html[data-theme="dark"] .other-drafts-banner{background:color-mix(in srgb, #e0f2fe 16%, var(--card));color:color-mix(in srgb, #0c4a6e 45%, #ffffff)}
+html[data-theme="dark"] .tp-badge{background:color-mix(in srgb, #ede9fe 16%, var(--card));color:color-mix(in srgb, #5b21b6 45%, #ffffff)}
+html[data-theme="dark"] .os-badge{background:color-mix(in srgb, #e0f2fe 16%, var(--card));color:color-mix(in srgb, #075985 45%, #ffffff)}
+html[data-theme="dark"] .r-admin{background:color-mix(in srgb, #fef3c7 16%, var(--card));color:color-mix(in srgb, #92400e 45%, #ffffff)}
+html[data-theme="dark"] .r-lager{background:color-mix(in srgb, #fce7f3 16%, var(--card));color:color-mix(in srgb, #9d174d 45%, #ffffff)}
+html[data-theme="dark"] .maint-banner-title{color:color-mix(in srgb, #92400e 45%, #ffffff)}
+html[data-theme="dark"] .maint-banner-desc{color:color-mix(in srgb, #78350f 45%, #ffffff)}
+html[data-theme="dark"] .my-plan-we{background:var(--s)}
+html[data-theme="dark"] .my-plan-today{background:color-mix(in srgb, #dbeafe 16%, var(--card)) !important}
+html[data-theme="dark"] .my-plan-hol{background:var(--s)}
+html[data-theme="dark"] #appLoader{background:var(--card)}
+html[data-theme="dark"] .user-pick{background:var(--card)}
+html[data-theme="dark"] .role-tag-tl{background:color-mix(in srgb, #e0e7ff 16%, var(--card));color:color-mix(in srgb, #3730a3 45%, #ffffff)}
+html[data-theme="dark"] .role-tag-ma{background:color-mix(in srgb, #dbeafe 16%, var(--card));color:color-mix(in srgb, #1e40af 45%, #ffffff)}
+html[data-theme="dark"] .cdrop-btn{background:var(--card)}
+@media screen and (max-width: 768px){html[data-theme="dark"] .mob-nav{background:var(--card)}}
+html[data-theme="dark"] .cr-week-target th, html[data-theme="dark"] th.cr-week-target{color:var(--tx) !important}
+html[data-theme="dark"] .sup-pick{background:var(--card)}
+html[data-theme="dark"] .sup-edit-btn{background:var(--card)}
+html[data-theme="dark"] .vis-week-header span{background:var(--s)}
+html[data-theme="dark"] .vis-day:hover{background:var(--s)}
+html[data-theme="dark"] .vis-day-today{background:var(--s) !important}
+html[data-theme="dark"] .vis-day-hol{background:var(--s) !important}
+html[data-theme="dark"] .vis-day-ferien:not(.vis-day-filled){background:var(--s)}
+html[data-theme="dark"] .vis-tag-holiday{color:color-mix(in srgb, #991b1b 45%, #ffffff) !important}
+html[data-theme="dark"] .vis-tag-ferien{background:color-mix(in srgb, #dbeafe 16%, var(--card)) !important;color:color-mix(in srgb, #1d4ed8 45%, #ffffff) !important}
+html[data-theme="dark"] .my-plan-tbl-v2 thead tr{background:var(--s)}
+html[data-theme="dark"] .my-plan-tbl-v2 tbody td{border-bottom:1px solid var(--bd)}
+html[data-theme="dark"] .my-plan-tbl-v2 tbody tr:hover{background:var(--s)}
+html[data-theme="dark"] .my-plan-tbl-v2 .my-plan-kw-sep td{border-top:2px solid var(--bd)}
+html[data-theme="dark"] .my-plan-ferien{background:var(--s) !important}
+html[data-theme="dark"] .mr-rejection-row{background:var(--s)}
+html[data-theme="dark"] .dash-week-day:hover{background:var(--s)}
+html[data-theme="dark"] .dash-week-today{background:var(--s) !important}
+html[data-theme="dark"] .dash-week-hol{background:var(--s) !important}
+html[data-theme="dark"] .dash-week-ferien{background:var(--s) !important}
+html[data-theme="dark"] .dash-tag-holiday{color:color-mix(in srgb, #991b1b 45%, #ffffff) !important}
+html[data-theme="dark"] .dash-tag-ferien{background:color-mix(in srgb, #dbeafe 16%, var(--card)) !important;color:color-mix(in srgb, #1d4ed8 45%, #ffffff) !important}
+html[data-theme="dark"] .notif-unread{background:var(--s)}
+html[data-theme="dark"] .cr-summary-strip{background:var(--s)}
+html[data-theme="dark"] .cr-stat-active{background:var(--s)}
+html[data-theme="dark"] .team-stat{background:var(--card)}
+html[data-theme="dark"] .team-manage-btn{background:var(--card)}
+html[data-theme="dark"] .team-act-dropdown{background:var(--card)}
+html[data-theme="dark"] .wz-step .wz-num{background:var(--s);border:2px solid var(--bd)}
+html[data-theme="dark"] .wz-step::after{background:var(--s)}
+html[data-theme="dark"] .wz-step.done .wz-num{background:var(--card)}
+html[data-theme="dark"] .tbl-wrap::-webkit-scrollbar-thumb{border:2px solid var(--bd)}
+html[data-theme="dark"] .tbl-team tbody tr:nth-child(even){background:var(--s)}
+html[data-theme="dark"] .tbl-team tbody tr.team-row:hover{background:var(--s)}
+html[data-theme="dark"] .tbl-team th:first-child, html[data-theme="dark"] .tbl-team td:first-child{background:var(--card)}
+html[data-theme="dark"] .tbl-team thead th:first-child{background:var(--s)}
+html[data-theme="dark"] .tbl-team tbody tr:nth-child(even) td:first-child{background:var(--s)}
+html[data-theme="dark"] .tbl-team tbody tr.team-row:hover td:first-child{background:var(--s)}
+html[data-theme="dark"] .cfx-group-head{background:var(--s)}
+html[data-theme="dark"] .cfx-row:hover{background:var(--s)}
+html[data-theme="dark"] .cfx-tag-vac{background:color-mix(in srgb, #fee2e2 16%, var(--card));color:color-mix(in srgb, #b91c1c 45%, #ffffff)}
+html[data-theme="dark"] .cfx-tag-sick{background:color-mix(in srgb, #fde68a 16%, var(--card));color:color-mix(in srgb, #92400e 45%, #ffffff)}
+@media screen and (max-width: 768px){html[data-theme="dark"] .mp-ag-navbtn{background:var(--card)}}
+@media screen and (max-width: 768px){html[data-theme="dark"] .mp-ag-navbtn:active{background:var(--s)}}
+@media screen and (max-width: 768px){html[data-theme="dark"] .mp-ag-sum-item{background:var(--card)}}
+@media screen and (max-width: 768px){html[data-theme="dark"] .mp-ag-day{background:var(--card)}}
+@media screen and (max-width: 768px){html[data-theme="dark"] .mp-ag-day.is-ft{background:var(--s)}}
+@media screen and (max-width: 768px){html[data-theme="dark"] .mp-ag-pill-ft{background:color-mix(in srgb, #fee2e2 16%, var(--card));color:color-mix(in srgb, #b91c1c 45%, #ffffff)}}
+@media screen and (max-width: 768px){html[data-theme="dark"] .mp-ag-ferien{color:color-mix(in srgb, #1d4ed8 45%, #ffffff);background:color-mix(in srgb, #dbeafe 16%, var(--card))}}
+html[data-theme="dark"] .user-flat .uf-head{background:var(--card)}
+html[data-theme="dark"] .user-flat .wz-panel{background:var(--card)}
+html[data-theme="dark"] .sup-chips{background:var(--s)}
+html[data-theme="dark"] .sup-chip{background:var(--card)}
+html[data-theme="dark"] .team-act-promote:hover{background:var(--s)}
+html[data-theme="dark"] .sub-head{background:var(--card)}
+html[data-theme="dark"] .sub-head-count{background:var(--s)}
+html[data-theme="dark"] .sub-list{background:var(--s)}
+html[data-theme="dark"] .sub-card{background:var(--card)}
+html[data-theme="dark"] .sub-card.in-team .sub-card-act{background:color-mix(in srgb, #fee2e2 16%, var(--card))}
+html[data-theme="dark"] .deputy-banner{background:var(--s);color:color-mix(in srgb, #9a3412 45%, #ffffff)}
+html[data-theme="dark"] .ca .ts.os-badge{background:var(--s);color:color-mix(in srgb, #4338ca 45%, #ffffff)}
+html[data-theme="dark"] .ca .ts.tp-badge{background:var(--s);color:var(--tx2)}
+html[data-theme="dark"] #entryUserPick .sup-pick-item:hover{background:var(--s)}
+html[data-theme="dark"] .epi-tag{background:var(--s);color:var(--tx2)}
+html[data-theme="dark"] .epi-os{background:var(--s);color:color-mix(in srgb, #4338ca 45%, #ffffff)}
+html[data-theme="dark"] .epi-tp{background:var(--s)}
+html[data-theme="dark"] .epi-role{background:var(--s);color:var(--mu)}
+html[data-theme="dark"] .maint-page-eta{color:color-mix(in srgb, #92400e 45%, #ffffff)}
+html[data-theme="dark"] .maint-active{color:color-mix(in srgb, #92400e 45%, #ffffff)}
+html[data-theme="dark"] .maint-active a{color:color-mix(in srgb, #92400e 45%, #ffffff)}
+/* <<< generated dark mode <<< */

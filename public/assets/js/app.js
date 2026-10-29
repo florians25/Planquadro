@@ -24,16 +24,57 @@ function ajaxPost(url, formData, onSuccess) {
     .catch(function(e) { toast(e.message || 'Verbindungsfehler', 'error'); });
 }
 
+/* -- Farbschema: System → Hell → Dunkel (pro Browser gespeichert) -- */
+function opApplyTheme(pref) {
+    var dark = pref === 'dark' || (pref === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme-pref', pref);
+    var l = document.getElementById('opThemeLabel'); if (l) l.textContent = { system: 'System', light: 'Hell', dark: 'Dunkel' }[pref];
+}
+function opCycleTheme() {
+    var cur = document.documentElement.getAttribute('data-theme-pref') || 'system';
+    var next = { system: 'light', light: 'dark', dark: 'system' }[cur] || 'system';
+    try { localStorage.setItem('op-theme', next); } catch (e) {}
+    opApplyTheme(next);
+}
+document.addEventListener('DOMContentLoaded', function() { opApplyTheme(document.documentElement.getAttribute('data-theme-pref') || 'system'); });
+if (window.matchMedia) try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() { opApplyTheme(document.documentElement.getAttribute('data-theme-pref') || 'system'); }); } catch (e) {}
+
 /* -- Toast -- */
 function toast(msg, type) {
     type = type || 'info'; var wrap = document.getElementById('toasts'); if (!wrap) return;
+    if (!wrap.getAttribute('role')) { wrap.setAttribute('role', 'status'); wrap.setAttribute('aria-live', 'polite'); }
     var el = document.createElement('div'); el.className = 'toast toast-' + type; el.textContent = msg; wrap.appendChild(el);
     setTimeout(function() { el.remove(); }, 3500);
 }
 
 /* -- Modals -- */
-function oMod(id) { var m = document.getElementById(id); if (m) m.classList.add('open'); }
-function cMod(id) { var m = document.getElementById(id); if (m) m.classList.remove('open'); }
+/* Dialoge: ARIA-Rolle, Fokus in den Dialog, Fokusfalle, Rückgabe beim Schließen */
+var _modalReturn = [];
+function _focusables(el) { return Array.prototype.filter.call(el.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'), function(x) { return x.offsetParent !== null; }); }
+function oMod(id) {
+    var m = document.getElementById(id); if (!m) return;
+    var box = m.querySelector('.modal') || m;
+    box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
+    var t = m.querySelector('.mh-title, h2, h3'); if (t) { if (!t.id) t.id = id + 'Title'; box.setAttribute('aria-labelledby', t.id); }
+    _modalReturn.push(document.activeElement);
+    m.classList.add('open');
+    setTimeout(function() { var f = _focusables(box); if (f.length) f[0].focus(); }, 30);
+}
+function cMod(id) {
+    var m = document.getElementById(id); if (!m) return;
+    var wasOpen = m.classList.contains('open');
+    m.classList.remove('open');
+    if (wasOpen) { var r = _modalReturn.pop(); if (r && r.focus) try { r.focus(); } catch (e) {} }
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Tab') return;
+    var open = document.querySelectorAll('.modal-bg.open'); if (!open.length) return;
+    var box = open[open.length - 1].querySelector('.modal') || open[open.length - 1];
+    var f = _focusables(box); if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+});
 document.addEventListener('click', function(e) { if (e.target.classList.contains('modal-bg') && !e.target.classList.contains('modal-lock')) e.target.classList.remove('open'); });
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') { document.querySelectorAll('.modal-bg.open:not(.modal-lock)').forEach(function(m) { m.classList.remove('open'); }); hideCtxMenu(); }
@@ -217,6 +258,7 @@ function applyFilters() {
         }
         if (areaQ && areas.indexOf(',' + areaQ + ',') === -1) show = false;
         if (window.gpMineOnly && r.getAttribute('data-mine') !== '1') show = false;
+        if (window.planDraftsOnly && !r.querySelector('.draft-mine, .draft-other')) show = false;
         r.style.display = show ? '' : 'none';
     });
     /* Hide group headers with no visible rows */
@@ -225,6 +267,12 @@ function applyFilters() {
         var hasVisible = tbl.querySelector('.plan-row[data-group="' + gn + '"]:not([style*="display: none"])');
         gr.style.display = hasVisible ? '' : 'none';
     });
+}
+/* Filter: nur Mitarbeiter mit unveröffentlichten Änderungen */
+function toggleDraftsOnly(btn) {
+    window.planDraftsOnly = !window.planDraftsOnly;
+    if (btn) { btn.classList.toggle('active', window.planDraftsOnly); btn.setAttribute('aria-pressed', window.planDraftsOnly ? 'true' : 'false'); }
+    applyFilters();
 }
 function toggleMine() {
     window.gpMineOnly = !window.gpMineOnly;
@@ -413,6 +461,64 @@ document.addEventListener('DOMContentLoaded', function() {
         if (c.classList.contains('cell-unavailable')) return;
         selectedCells.push(c); c.classList.add('cell-sel');
     }
+
+    /* ------------------------------------------------------------
+       TASTATURBEDIENUNG der Planungsmatrix (Barrierefreiheit)
+       Pfeiltasten bewegen den Fokus, Pos1/Ende springen zum Zeilenanfang/
+       -ende, Eingabe/Leertaste wenden das gewählte Werkzeug an, Entf leert
+       die Zelle. Gleiche Prüfungen wie bei der Mausbedienung.
+       ------------------------------------------------------------ */
+    (function initGridKeyboard() {
+        var tbl = document.getElementById('planTbl');
+        if (!tbl) return;
+        var cells = tbl.querySelectorAll('.pe-c');
+        if (!cells.length) return;
+        cells.forEach(function(c) { c.tabIndex = -1; });
+        cells[0].tabIndex = 0;
+        function label(c) {
+            var row = c.closest('.plan-row'); var name = row ? (row.querySelector('.cn') || {}).textContent || '' : '';
+            var d = c.dataset.d ? c.dataset.d.split('-').reverse().join('.') : '';
+            var txt = (c.textContent || '').trim();
+            var extra = c.classList.contains('draft-other') ? ', Entwurf von ' + (c.dataset.draftBy || 'anderen') : (c.classList.contains('draft-mine') ? ', eigener Entwurf' : '');
+            return name.trim() + ', ' + d + ': ' + (txt || 'leer') + extra;
+        }
+        function focusCell(c) {
+            if (!c) return;
+            tbl.querySelectorAll('.pe-c[tabindex="0"]').forEach(function(x) { x.tabIndex = -1; });
+            c.tabIndex = 0; c.setAttribute('aria-label', label(c)); c.focus();
+        }
+        function visibleRows() { return Array.prototype.filter.call(tbl.querySelectorAll('.plan-row'), function(r) { return r.style.display !== 'none'; }); }
+        tbl.addEventListener('focusin', function(e) { var c = e.target.closest('.pe-c'); if (c) c.setAttribute('aria-label', label(c)); });
+        tbl.addEventListener('keydown', function(e) {
+            var c = e.target.closest('.pe-c'); if (!c) return;
+            var row = c.closest('.plan-row'), rc = Array.prototype.slice.call(row.querySelectorAll('.pe-c')), i = rc.indexOf(c);
+            var rows = visibleRows(), ri = rows.indexOf(row), t = null;
+            switch (e.key) {
+                case 'ArrowRight': t = rc[i + 1]; break;
+                case 'ArrowLeft': t = rc[i - 1]; break;
+                case 'ArrowDown': if (rows[ri + 1]) t = rows[ri + 1].querySelectorAll('.pe-c')[i]; break;
+                case 'ArrowUp': if (rows[ri - 1]) t = rows[ri - 1].querySelectorAll('.pe-c')[i]; break;
+                case 'Home': t = rc[0]; break;
+                case 'End': t = rc[rc.length - 1]; break;
+                case 'Enter': case ' ': case 'Delete': case 'Backspace': {
+                    e.preventDefault();
+                    if (window.isOffline) return;
+                    var saved = currentTool;
+                    if (e.key === 'Delete' || e.key === 'Backspace') currentTool = { type: 'clear' };
+                    if (!currentTool) { toast('Bitte zuerst ein Werkzeug wählen', 'info'); return; }
+                    if (c.dataset.bl === '1' || c.classList.contains('cell-unavailable')) { toast('Person nicht verfügbar bzw. Feiertag', 'warning'); currentTool = saved; return; }
+                    if (c.dataset.webl === '1') { toast('Wochenendarbeit nicht freigeschaltet', 'warning'); currentTool = saved; return; }
+                    if (row.classList.contains('row-locked-by-other')) { toast('Diese Person wird gerade von einem anderen Benutzer bearbeitet', 'warning'); currentTool = saved; return; }
+                    applyTool([c]);
+                    currentTool = saved;
+                    setTimeout(function() { c.setAttribute('aria-label', label(c)); }, 50);
+                    return;
+                }
+                default: return;
+            }
+            if (t) { e.preventDefault(); focusCell(t); }
+        });
+    })();
 
     function applyTool(cells) {
         if (!currentTool) return;

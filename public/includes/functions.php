@@ -277,12 +277,19 @@ function usersByGroup($y=0, $m=0, $scoped=true) {
 
 function userWots($uid, $y=0, $m=0) {
     if ($y && $m) {
-        $s = getDB()->prepare('SELECT * FROM user_wots WHERE user_id=? AND year=? AND month=? ORDER BY id');
-        $s->execute([$uid,$y,$m]);
-    } else {
-        $s = getDB()->prepare('SELECT * FROM user_wots WHERE user_id=? ORDER BY year DESC,month DESC,id');
-        $s->execute([$uid]);
+        /* je Monat einmal für alle Mitarbeiter laden (Monatsplanung: eine Abfrage statt einer pro Zeile) */
+        static $byMonth = [];
+        $k = $y . '-' . $m;
+        if (!isset($byMonth[$k])) {
+            $byMonth[$k] = [];
+            $s = getDB()->prepare('SELECT * FROM user_wots WHERE year=? AND month=? ORDER BY id');
+            $s->execute([$y,$m]);
+            foreach ($s->fetchAll() as $r) $byMonth[$k][(int)$r['user_id']][] = $r;
+        }
+        return $byMonth[$k][(int)$uid] ?? [];
     }
+    $s = getDB()->prepare('SELECT * FROM user_wots WHERE user_id=? ORDER BY year DESC,month DESC,id');
+    $s->execute([$uid]);
     return $s->fetchAll();
 }
 
@@ -405,10 +412,31 @@ function vacUsed($uid,$y) {
     foreach($s->fetchAll() as $r){if($r['absence_type']==='urlaub_halb')$t+=(int)$r['c']*0.5;else $t+=(int)$r['c'];}return $t;
 }
 function vacLeft($uid,$y){$s=getDB()->prepare('SELECT vacation_days FROM users WHERE id=?');$s->execute([$uid]);$u=$s->fetch();return($u?(float)$u['vacation_days']:0)-vacUsed($uid,$y);}
-function vacUsedUntil($uid,$date){$y=(int)date('Y',strtotime($date));$s=getDB()->prepare("SELECT absence_type,COUNT(*) c FROM absences WHERE user_id=? AND YEAR(absence_date)=? AND absence_date<? AND absence_type IN('urlaub_halb','urlaub_ganz','urlaub_genehmigt') AND is_published=1 GROUP BY absence_type");$s->execute([$uid,$y,$date]);$t=0.0;foreach($s->fetchAll() as $r){if($r['absence_type']==='urlaub_halb')$t+=(int)$r['c']*0.5;else $t+=(int)$r['c'];}return $t;}
-function vacUsedThrough($uid,$date){$y=(int)date('Y',strtotime($date));$s=getDB()->prepare("SELECT absence_type,COUNT(*) c FROM absences WHERE user_id=? AND YEAR(absence_date)=? AND absence_date<=? AND absence_type IN('urlaub_halb','urlaub_ganz','urlaub_genehmigt') AND is_published=1 GROUP BY absence_type");$s->execute([$uid,$y,$date]);$t=0.0;foreach($s->fetchAll() as $r){if($r['absence_type']==='urlaub_halb')$t+=(int)$r['c']*0.5;else $t+=(int)$r['c'];}return $t;}
-function vacLeftAtStart($uid,$y,$m){$d=sprintf('%04d-%02d-01',$y,$m);$s=getDB()->prepare('SELECT vacation_days FROM users WHERE id=?');$s->execute([$uid]);$u=$s->fetch();return($u?(float)$u['vacation_days']:0)-vacUsedUntil($uid,$d);}
-function vacLeftAtEnd($uid,$y,$m){$d=date('Y-m-t',strtotime(sprintf('%04d-%02d-01',$y,$m)));$s=getDB()->prepare('SELECT vacation_days FROM users WHERE id=?');$s->execute([$uid]);$u=$s->fetch();return($u?(float)$u['vacation_days']:0)-vacUsedThrough($uid,$d);}
+/* Urlaubskonto: Werte werden je Stichtag EINMAL für alle Mitarbeiter geladen
+   (vorher eine Abfrage je Zeile und Aufruf – bei 60 Mitarbeitern ~240 Abfragen
+   pro Monatsplanung). Ergebnis und Semantik sind unverändert. */
+function _vacUsedMap($y, $date, $inclusive) {
+    static $cache = [];
+    $key = $y . '|' . $date . '|' . ($inclusive ? 1 : 0);
+    if (!isset($cache[$key])) {
+        $op = $inclusive ? '<=' : '<';
+        $s = getDB()->prepare("SELECT user_id, absence_type, COUNT(*) c FROM absences WHERE YEAR(absence_date)=? AND absence_date $op ? AND absence_type IN('urlaub_halb','urlaub_ganz','urlaub_genehmigt') AND is_published=1 GROUP BY user_id, absence_type");
+        $s->execute([$y, $date]);
+        $m = [];
+        foreach ($s->fetchAll() as $r) $m[(int)$r['user_id']] = ($m[(int)$r['user_id']] ?? 0.0) + ($r['absence_type'] === 'urlaub_halb' ? (int)$r['c'] * 0.5 : (int)$r['c']);
+        $cache[$key] = $m;
+    }
+    return $cache[$key];
+}
+function _vacationDays($uid) {
+    static $all = null;
+    if ($all === null) { $all = []; foreach (getDB()->query('SELECT id, vacation_days FROM users')->fetchAll() as $r) $all[(int)$r['id']] = (float)$r['vacation_days']; }
+    return $all[(int)$uid] ?? 0.0;
+}
+function vacUsedUntil($uid,$date){return _vacUsedMap((int)date('Y',strtotime($date)),$date,false)[(int)$uid] ?? 0.0;}
+function vacUsedThrough($uid,$date){return _vacUsedMap((int)date('Y',strtotime($date)),$date,true)[(int)$uid] ?? 0.0;}
+function vacLeftAtStart($uid,$y,$m){$d=sprintf('%04d-%02d-01',$y,$m);return _vacationDays($uid)-vacUsedUntil($uid,$d);}
+function vacLeftAtEnd($uid,$y,$m){$d=date('Y-m-t',strtotime(sprintf('%04d-%02d-01',$y,$m)));return _vacationDays($uid)-vacUsedThrough($uid,$d);}
 function sickDays($uid,$y){$s=getDB()->prepare("SELECT absence_type,COUNT(*) c FROM absences WHERE user_id=? AND YEAR(absence_date)=? AND absence_type IN('krank_halb','krank_ganz','krank_attest') AND is_published=1 GROUP BY absence_type");$s->execute([$uid,$y]);$t=0.0;foreach($s->fetchAll() as $r){if($r['absence_type']==='krank_halb')$t+=(int)$r['c']*0.5;else $t+=(int)$r['c'];}return $t;}
 
 function teamStats($y,$m) {

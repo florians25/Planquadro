@@ -128,7 +128,9 @@ if ($path === 'config' && $method === 'GET') {
     if (oidcEnabled()) {
         $c = oidcConfig();
         try { $d = oidcDiscovery($c['issuer']); $ae = $d['authorization_endpoint']; } catch (Throwable $e) { $ae = null; }
-        $oidc = ['enabled' => $ae !== null, 'label' => $c['label'], 'authorize_url' => $ae, 'client_id' => $c['client_id'], 'scopes' => $c['scopes'] ?? 'openid profile email'];
+        /* authorize_url enthält client_id bereits (die App ergänzt PKCE, state, redirect_uri) */
+        $au = $ae ? $ae . (strpos($ae, '?') === false ? '?' : '&') . http_build_query(['client_id' => $c['client_id']]) : null;
+        $oidc = ['enabled' => $ae !== null, 'label' => $c['label'], 'authorize_url' => $au, 'client_id' => $c['client_id'], 'scopes' => $c['scopes'] ?? 'openid profile email'];
     }
     apiOut(200, ['api_version' => 1, 'tenant' => apiTenantInfo(),
         'auth' => ['password' => oidcPasswordLoginAllowed(), 'oidc' => $oidc ?? ['enabled' => false, 'label' => null, 'authorize_url' => null]],
