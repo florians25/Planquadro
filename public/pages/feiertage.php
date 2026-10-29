@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
             }
             echo json_encode(['success'=>true,'msg'=>$added.' Ferientage neu importiert, '.$skipped.' übersprungen (bereits vorhanden).']);exit;
         }
-    } catch(Exception $e){echo json_encode(['success'=>false,'error'=>$e->getMessage()]);}exit;
+    } catch(Exception $e){opsApiFail($e, 'feiertage', ['success'=>false,'error'=>opsPublicMessage($e)]);}exit;
 }
 
 /* ── Page ── */

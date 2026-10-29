@@ -557,7 +557,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                     $notify = [];
                     foreach ($dates as $d) { $ds = array_key_exists($d, $subMap) ? (int)$subMap[$d] : $sub; if ($ds && isset($subsUsed[$ds])) $notify[$ds][] = $d; }
                     planNotifyChanges($db, $notify, $ME);
-                } catch (Throwable $e) { error_log('notify: ' . $e->getMessage()); }
+                } catch (Throwable $e) { opsLogThrowable('notify', $e); }
             }
 
             try {
@@ -623,10 +623,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         echo json_encode(['success' => false, 'error' => 'Unbekannte Aktion.']);
     } catch (Throwable $e) {
         if ($db->inTransaction()) $db->rollBack();
-        /* Fachliche Meldungen (Exception) anzeigen, technische Fehler nur loggen */
-        if ($e instanceof PDOException || !($e instanceof Exception)) {
-            error_log('abwesenheiten: ' . $e->getMessage());
-            echo json_encode(['success' => false, 'error' => 'Technischer Fehler beim Speichern.']);
+        /* Fachliche Meldungen (hier als einfache Exception geworfen) anzeigen,
+           technische Fehler (PDO, RuntimeException aus Bibliotheken …) nur loggen */
+        if (get_class($e) !== Exception::class && !opsIsUserFacing($e)) {
+            opsApiFail($e, 'abwesenheiten', ['success' => false, 'error' => 'Technischer Fehler beim Speichern.']);
         } else {
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }

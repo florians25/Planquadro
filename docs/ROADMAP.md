@@ -65,7 +65,7 @@ Status: ✅ behoben · ⏳ geplant (Phase) · ❓ Entscheidung nötig.
 | S-17 | M | Planungsassistent: Manager planen immer teamübergreifend, auch ohne `view_all_employees` | `pages/planungsassistent.php` | ✅ entschieden (E-1): bleibt wie bisher |
 | S-18 | M | `view_all_employees` (Planungs-Scope) öffnet zugleich Gesundheitsdaten aller | `canSeeAbsenceDetails()` | ✅ (E-2): nur Vorgesetzten-Beziehung, neues Recht `view_absence_details_all` |
 | S-19 | M | Meldungen (`announcements active`) ohne Login abrufbar | `api/announcements` | ✅ Login erforderlich |
-| S-20 | M | Fehlermeldungen geben Datenbankdetails an den Client (`$e->getMessage()`) | diverse APIs | ✅ für geänderte Endpunkte, ⏳ Rest in Phase 3 (Kernel) |
+| S-20 | M | Fehlermeldungen geben Datenbankdetails an den Client (`$e->getMessage()`) | diverse APIs | ✅ Request-Kernel (`app/lib/Kernel.php`): generische Meldung + Request-ID, Details nur im Log |
 | S-21 | N | `onclick='…<?php echo e(...)?>…'` – `&#039;` wird im Handler zu `'` | `monatsplanung`, `rollen` | ⏳ Phase 5 (Inline-Handler ersetzen) |
 | S-22 | N | CSP mit `unsafe-inline` | `.htaccess` | ⏳ Phase 5 |
 | S-23 | N | Passwortrichtlinie Standard 6 Zeichen, 30-Tage-Zwangswechsel (entspricht nicht NIST/BSI) | Einstellungen | ✅ entschieden (E-4): bleibt (6 Zeichen, 30 Tage), weiter einstellbar |
@@ -134,7 +134,7 @@ sichtbare Änderung etablierter Abläufe.
 - [x] Test-Infrastruktur: PHPUnit, Integrationstests über den eingebauten PHP-Server gegen
       echte MariaDB, Rewrite-Router, Testdaten für alle Rollen
 - [x] CI (GitHub Actions): Syntax-Lint, Tests gegen MariaDB 10.11 und MySQL 8.0 (PHP 8.1/8.3), Secret-Scan
-- [x] Sicherheitsbefunde S-02 … S-16, S-19, S-20 (teilweise)
+- [x] Sicherheitsbefunde S-02 … S-16, S-19, S-20
 - [x] Optimistic Concurrency (D-01/D-02), Änderungsprotokoll (D-06)
 - [x] Integritätsbefunde D-03 … D-05, D-08, D-10
 - [x] Alt-Migrationen auch auf MySQL 8 lauffähig (MariaDB-Syntax wird übersetzt)
@@ -142,7 +142,7 @@ sichtbare Änderung etablierter Abläufe.
 - [x] Planungsassistent (`apply`/Rückgängig) sperrt, protokolliert, überschreibt keine fremden Entwürfe
 - [x] Bemerkungen (`api/save_remark`) mit Revisionsprüfung
 - [x] Session-Timeout wird durchgesetzt (Einstellung war bis v6.9.0 wirkungslos)
-- [ ] Verbleibende Endpunkte ohne Fehlertext-Weitergabe (S-20) – mit dem Request-Kernel
+- [x] Verbleibende Endpunkte ohne Fehlertext-Weitergabe (S-20) – mit dem Request-Kernel
 
 ## Phase 3 – Plattform ✅ (Kern) · ⏳ Rest
 
@@ -156,10 +156,18 @@ Umgesetzt:
 - [x] Stammdaten Kunden, Standorte, Qualifikationen (optional an Einsatzcodes)
 - [x] API v1 (Token-Auth, Refresh-Rotation) und Push (FCM/APNs/ntfy) – `docs/API.md`
 - [x] OIDC/SSO optional (PKCE, JWKS, keine Auto-Anlage)
+- [x] Request-Kernel (`app/lib/Kernel.php`, geladen von `includes/auth.php`): Request-ID
+      (Header `X-Request-ID`, in jeder Log-Zeile), einheitliches JSON-Fehlerformat
+      (`request_id` ergänzt, bestehende Felder/HTTP-Codes unverändert), globaler
+      Exception-/Fatal-Handler ohne Fehlertexte an den Client (S-20), `opsAudit()`.
+      Login- und CSRF-Prüfung laufen bereits zentral über `includes/auth.php`.
 
 Offen (bewusst verschoben, kein Funktionsverlust):
 
-- Request-Kernel (`app/Kernel`): einheitlich Login, CSRF, Fehlerformat, Audit, Request-ID.
+- Request-Kernel: Request-ID, Fehlerformat, Exception-Handler ✅. Rest: Login-/Rechteprüfung
+  der Endpunkte über eine gemeinsame Funktion (HTTP-Codes 401/403 sind heute je Endpunkt
+  verschieden und bleiben bis zur Abstimmung mit dem Frontend), bestehende
+  `audit_log`-Schreiber schrittweise auf `opsAudit()` umstellen.
 - Mandanten: `tenants`, `tenant_domains`, `tenant_id` in allen Fachtabellen, Mandant 1 für
   Bestand, mandantenbezogene Unique-Keys, TenantResolver, Isolationstests.
 - `TenantConfig` (Branding, Module, Navigation, Dashboard-Widgets, Planungsregeln,

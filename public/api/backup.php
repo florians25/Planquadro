@@ -83,7 +83,13 @@ case 'create':
     @set_time_limit(0);
     try { $r = $b->withLock(fn() => $b->runScope($scope, 'manual')); }
     catch (BackupException $e) { backupJson(['success' => false, 'error' => $e->getMessage()], 409); }
-    if ($r['status'] === 'failed') backupJson(['success' => false, 'error' => 'Backup fehlgeschlagen: ' . $r['error']]);
+    if ($r['status'] === 'failed') {
+        /* Meldungen der BackupException (Schlüssel, Dumper, Ziel) sind Betriebshinweise für
+           Administratoren. Andere Fehler (PDO …) kommen als „Klasse: Text“ und gehen nur ins Log (S-20). */
+        $err = (string)$r['error'];
+        if (preg_match('/^[A-Za-z_\\\\]*(?:Exception|Error): /', $err)) { opsLog('backup create: ' . $err); $err = opsGenericErrorMessage(); }
+        backupJson(['success' => false, 'error' => 'Backup fehlgeschlagen: ' . $err, 'request_id' => opsRequestId()]);
+    }
     backupJson(['success' => true, 'status' => $r['status'], 'msg' => 'Backup erstellt: ' . basename($r['archive']),
         'size' => Backup::fmtBytes($r['size']), 'targets' => $r['targets'], 'warnings' => $r['warnings']]);
 

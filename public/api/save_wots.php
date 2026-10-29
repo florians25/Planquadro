@@ -71,6 +71,5 @@ try {
         http_response_code(400);echo json_encode(['error'=>'Unbekannte Aktion: '.$action]);
     }
 } catch(Exception $e) {
-    error_log('save_wots: '.$e->getMessage());
-    http_response_code(500);echo json_encode(['error'=>'Datenbankfehler']);
+    opsApiFail($e, 'save_wots', ['error'=>'Datenbankfehler'], 500);
 }

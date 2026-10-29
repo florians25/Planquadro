@@ -27,7 +27,7 @@ case 'list':
         $s = $db->prepare("SELECT * FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT ?");
         $s->execute([$uid, $limit]);
         echo json_encode(['success'=>true, 'items'=>$s->fetchAll(PDO::FETCH_ASSOC)]);
-    } catch(Exception $e) { echo json_encode(['success'=>false, 'error'=>$e->getMessage()]); }
+    } catch(Exception $e) { opsApiFail($e, 'notifications', ['success'=>false, 'error'=>opsGenericErrorMessage()]); }
     exit;
 
 case 'mark_read':

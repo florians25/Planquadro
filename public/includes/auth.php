@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/../../app/lib/Security.php';
+require_once __DIR__ . '/../../app/lib/Kernel.php';
 require_once __DIR__ . '/../../app/config/database.php';
+/* Request-Kernel: Request-ID (Header X-Request-ID, Log-Zeilen) und globaler
+   Fehlerrahmen – technische Fehlertexte gehen nur ins Log (Befund S-20).
+   API v1 hat einen eigenen Fehlerrahmen und bekommt nur die Request-ID. */
+opsKernelBoot(!(defined('PQ_STATELESS') && PQ_STATELESS));
 /* API v1 (Bearer-Token) arbeitet ohne Cookie-Session: kein Session-Start,
    kein CSRF (es gibt kein Cookie, das ein Angreifer ausnutzen könnte). Der
    Benutzer wird nach der Token-Prüfung in $_SESSION['user_id'] gesetzt,

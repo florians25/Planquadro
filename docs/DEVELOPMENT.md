@@ -67,6 +67,7 @@ Testdatenbank muss „test“ enthalten (Schutz vor versehentlichem Löschen).
 |---|---|
 | `SmokeTest` | Login je Rolle, Zugang zu Seiten je Rolle |
 | `SecurityTest` | Regressionstests zu den Sicherheitsbefunden (S-xx) |
+| `KernelTest` (Integration + Unit) | Request-ID, Fehlerformat, provozierte DB-Fehler ohne SQL-Text an den Client (S-20), Fachmeldungen |
 | `DataIntegrityTest` | Urlaubs-/Krankheitssperre, Bereichslöschung, Rollen-Seite |
 | `ConcurrencyTest` | Revisionen, Konflikte, parallele Schreibzugriffe, Veröffentlichung, Protokoll |
 | `BackupTest` | Backup → Restore-Round-Trip (PHP- und nativer Dumper), Manifest, Schutz nicht leerer Ziele, `--replace`, Restore-Test, Status, Alarme, Web-API, Dashboard-Hinweis, SaaS |

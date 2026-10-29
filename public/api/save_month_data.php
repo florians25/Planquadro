@@ -17,4 +17,4 @@ try{
     $db->prepare('INSERT INTO user_month_data(user_id,year,month,hours,snow_checked)VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE hours=VALUES(hours),snow_checked=VALUES(snow_checked)')
        ->execute([$uid,$year,$month,$hours!=''?$hours:null,$snow]);
     echo json_encode(['success'=>true]);
-}catch(Exception $e){error_log('save_month_data: '.$e->getMessage());http_response_code(500);echo json_encode(['error'=>'Datenbankfehler']);}
+}catch(Exception $e){opsApiFail($e, 'save_month_data', ['error'=>'Datenbankfehler'], 500);}

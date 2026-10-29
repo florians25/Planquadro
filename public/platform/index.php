@@ -9,6 +9,8 @@
  */
 require_once __DIR__ . '/../../app/config/database.php';
 require_once __DIR__ . '/../../app/lib/Security.php';
+require_once __DIR__ . '/../../app/lib/Kernel.php';
+opsKernelBoot();
 
 $host = strtolower(preg_replace('/:\d+$/', '', (string)($_SERVER['HTTP_HOST'] ?? '')));
 /* Nur im SaaS-Modus und nur auf dem ausdrücklich konfigurierten Plattform-Host */
@@ -74,7 +76,12 @@ if ($admin && $post) {
             $p = proc_open(array_merge([PHP_BINARY, __DIR__ . '/../../bin/tenant.php', 'create', $slug, $name], $domain !== '' ? ['--domain=' . $domain] : []),
                 [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, null);
             $out = stream_get_contents($pipes[1]) . stream_get_contents($pipes[2]);
-            if (proc_close($p) !== 0) throw new RuntimeException(trim(strrchr(trim($out), "\n") ?: $out));
+            if (proc_close($p) !== 0) {
+                /* Letzte Zeile der CLI ist deren Fachmeldung (die2); PHP-Fehler/SQL-Texte nur ins Log (S-20) */
+                $last = trim(strrchr("\n" . trim($out), "\n"));
+                if ($last !== '' && !preg_match('/SQLSTATE|Uncaught|Stack trace|thrown in|Fatal error|Warning:|\.php/i', $last)) throw new OpsUserException($last);
+                throw new RuntimeException('tenant create fehlgeschlagen: ' . mb_substr($last, 0, 500));
+            }
             preg_match('/Administrator: (\S+) · Einmalpasswort: (\S+)/', $out, $m);
             pfAudit('tenant_create', "$slug ($name)");
             $msg = "Mandant „{$name}“ angelegt." . ($m ? " Erster Administrator: {$m[1]} · Einmalpasswort: {$m[2]} (nur jetzt sichtbar)" : '');
@@ -91,8 +98,8 @@ if ($admin && $post) {
             pfAudit('domain_add', $d);
             $msg = 'Domain hinzugefügt.';
         }
-    } catch (InvalidArgumentException $e) { $err = $e->getMessage(); }
-    catch (Throwable $e) { error_log('platform: ' . $e->getMessage()); $err = 'Aktion fehlgeschlagen: ' . mb_substr($e->getMessage(), 0, 200); }
+    } catch (InvalidArgumentException | OpsUserException $e) { $err = $e->getMessage(); }
+    catch (Throwable $e) { opsLogThrowable('platform', $e); $err = 'Aktion fehlgeschlagen. ' . opsGenericErrorMessage(); }
 }
 
 $tenants = [];

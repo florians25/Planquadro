@@ -46,7 +46,7 @@ if ($action === 'create') {
         $db->prepare('INSERT INTO announcements(title,content,priority,visible_from,visible_until,created_by) VALUES(?,?,?,?,?,?)')
            ->execute([$title, $content, $priority, $from, $until, $_SESSION['user_id']]);
         echo json_encode(['success'=>true,'msg'=>'Meldung erstellt']);
-    } catch(Exception $e) { echo json_encode(['success'=>false,'error'=>'Datenbankfehler']); }
+    } catch(Exception $e) { opsApiFail($e, 'announcements', ['success'=>false,'error'=>'Datenbankfehler']); }
     exit;
 }
 
@@ -63,7 +63,7 @@ if ($action === 'update') {
         $db->prepare('UPDATE announcements SET title=?,content=?,priority=?,visible_from=?,visible_until=?,active=? WHERE id=?')
            ->execute([$title, $content, $priority, $from, $until, $active, $id]);
         echo json_encode(['success'=>true,'msg'=>'Meldung aktualisiert']);
-    } catch(Exception $e) { echo json_encode(['success'=>false,'error'=>'Datenbankfehler']); }
+    } catch(Exception $e) { opsApiFail($e, 'announcements', ['success'=>false,'error'=>'Datenbankfehler']); }
     exit;
 }
 

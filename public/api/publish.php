@@ -83,9 +83,9 @@ if (!empty($input['publish_year'])) {
             }
             return $n;
         });
-        try { planNotifyChanges($db, $changed, $by); } catch (Throwable $e) { error_log('notify: '.$e->getMessage()); }
+        try { planNotifyChanges($db, $changed, $by); } catch (Throwable $e) { opsLogThrowable('notify', $e); }
         echo json_encode(['success'=>true,'msg'=>'Gesamtes Jahr '.$pubYear.' veröffentlicht. '.$totalApplied.' Änderungen.']);
-    } catch(Throwable $e) { error_log('publish year: '.$e->getMessage()); http_response_code(500); echo json_encode(['error'=>'Datenbankfehler beim Veröffentlichen']); }
+    } catch(Throwable $e) { opsApiFail($e, 'publish year', ['error'=>'Datenbankfehler beim Veröffentlichen'], 500); }
     exit;
 }
 
@@ -107,7 +107,7 @@ try{
         return $n;
     });
     /* Betroffene Mitarbeiter benachrichtigen (In-App + Push-Warteschlange) */
-    try { planNotifyChanges($db, $changed, $by); } catch (Throwable $e) { error_log('notify: '.$e->getMessage()); }
+    try { planNotifyChanges($db, $changed, $by); } catch (Throwable $e) { opsLogThrowable('notify', $e); }
     /* Aufräumen außerhalb der Veröffentlichungstransaktion (keine unnötigen Sperren) */
     try { $db->exec("DELETE FROM plan_drafts WHERE is_internal=1 AND created_at < DATE_SUB(NOW(), INTERVAL 3 MONTH)"); } catch(Exception $e) {}
     try { $db->exec("DELETE FROM editing_status WHERE last_ping < DATE_SUB(NOW(), INTERVAL 5 MINUTE)"); } catch(Exception $e) {}
@@ -116,4 +116,4 @@ try{
     $otherDrafts = 0;
     try { $s=$db->prepare('SELECT COUNT(*) c FROM plan_drafts WHERE year=? AND month=? AND is_internal=0 AND created_by!=?');$s->execute([$year,$month,$by]);$otherDrafts=(int)$s->fetch()['c']; } catch(Exception $e) {}
     echo json_encode(['success'=>true,'published_at'=>date('d.m.Y H:i'),'applied'=>$applied,'mode'=>$mode,'other_drafts'=>$otherDrafts]);
-}catch(Throwable $e){error_log('publish: '.$e->getMessage());http_response_code(500);echo json_encode(['error'=>'Datenbankfehler beim Veröffentlichen']);}
+}catch(Throwable $e){opsApiFail($e, 'publish', ['error'=>'Datenbankfehler beim Veröffentlichen'], 500);}

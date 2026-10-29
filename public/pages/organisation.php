@@ -120,8 +120,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
     } catch (InvalidArgumentException $e) {
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     } catch (Throwable $e) {
-        error_log('organisation: ' . $e->getMessage());
-        echo json_encode(['success' => false, 'error' => $e instanceof OidcException ? $e->getMessage() : 'Speichern fehlgeschlagen.']);
+        /* OidcException: geprüfte Meldungen zur SSO-Verbindung für Administratoren */
+        opsApiFail($e, 'organisation', ['success' => false, 'error' => $e instanceof OidcException ? $e->getMessage() : 'Speichern fehlgeschlagen.']);
     }
     exit;
 }

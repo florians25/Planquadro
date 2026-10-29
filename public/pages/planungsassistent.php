@@ -1291,7 +1291,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         echo json_encode(['success' => false, 'error' => 'Unbekannte Aktion.']);
     } catch (Throwable $e) {
         if ($db->inTransaction()) $db->rollBack();
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        opsApiFail($e, 'planungsassistent', ['success' => false, 'error' => opsPublicMessage($e)]);
     }
     exit;
 }

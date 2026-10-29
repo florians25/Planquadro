@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
         }
         echo json_encode(['success'=>false,'error'=>'Unbekannte Aktion']); exit;
     } catch (Exception $e) {
-        echo json_encode(['success'=>false,'error'=>$e->getMessage()]); exit;
+        opsApiFail($e, 'vertretung', ['success'=>false,'error'=>opsPublicMessage($e)]); exit;
     }
 }
 

@@ -61,8 +61,14 @@ function getDB(): PDO
         } catch (PDOException $e) {
             /* Fehlermeldung nur ins Server-Log – sie kann Hostnamen und
                Benutzernamen enthalten. */
-            error_log('Planquadro DB connection failed: ' . $e->getMessage());
+            if (function_exists('opsLog')) opsLog('Planquadro DB connection failed: ' . $e->getMessage());
+            else error_log('Planquadro DB connection failed: ' . $e->getMessage());
             if (PHP_SAPI === 'cli') throw $e;
+            /* JSON-Endpunkte (außer API v1 mit eigenem Format): einheitliches Fehlerformat */
+            if (function_exists('opsExpectsJson') && opsExpectsJson() && !(defined('PQ_STATELESS') && PQ_STATELESS)) {
+                opsJsonError(['success' => false, 'error' => 'Datenbankverbindung fehlgeschlagen.'], 503);
+                exit;
+            }
             http_response_code(503);
             die('<div style="font-family:sans-serif;padding:2rem;text-align:center">
                  <h2>Datenbankverbindung fehlgeschlagen</h2>

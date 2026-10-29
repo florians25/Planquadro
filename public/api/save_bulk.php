@@ -172,7 +172,5 @@ try {
     if($result['overwritten']>0) $resp['overwritten']=$result['overwritten'];
     echo json_encode($resp);
 } catch (Throwable $e) {
-    error_log('save_bulk: '.$e->getMessage());
-    http_response_code(500);
-    echo json_encode(['error'=>'Datenbankfehler beim Speichern']);
+    opsApiFail($e, 'save_bulk', ['error'=>'Datenbankfehler beim Speichern'], 500);
 }

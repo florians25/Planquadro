@@ -88,7 +88,7 @@ case 'submit_batch':
     $msg = $saved.' Änderungsantrag/-anträge eingereicht';
     if ($skipped) $msg .= ' ('.$skipped.' übersprungen – bereits offen)';
     echo json_encode(['success'=>true, 'msg'=>$msg, 'count'=>$saved]);
-    } catch(Exception $e) { $db->rollBack(); error_log('change_requests: '.$e->getMessage()); echo json_encode(['success'=>false,'error'=>'Datenbankfehler']); }
+    } catch(Exception $e) { if ($db->inTransaction()) $db->rollBack(); opsApiFail($e, 'change_requests', ['success'=>false,'error'=>'Datenbankfehler']); }
     exit;
 
 /* == Anträge auflisten (gruppiert, gefiltert) == */
@@ -111,7 +111,7 @@ case 'list':
         array_unshift($params, $status);
         $s = $db->prepare($sql); $s->execute($params);
         echo json_encode(['success'=>true, 'requests'=>$s->fetchAll(PDO::FETCH_ASSOC)]);
-    } catch(Exception $e) { error_log('change_requests: '.$e->getMessage()); echo json_encode(['success'=>false, 'error'=>'Datenbankfehler']); }
+    } catch(Exception $e) { opsApiFail($e, 'change_requests', ['success'=>false, 'error'=>'Datenbankfehler']); }
     exit;
 
 /* == Sammelgenehmigung == */
@@ -151,9 +151,9 @@ case 'approve_batch':
     try {
         $q = $db->prepare("INSERT INTO push_queue(user_id,title,body,data) SELECT ?, 'Antrag genehmigt', ?, ? FROM DUAL WHERE EXISTS (SELECT 1 FROM push_devices WHERE user_id=?)");
         foreach ($changedCells as $pu => $pd) $q->execute([$pu, count($pd).' Antrag/Anträge genehmigt.', json_encode(['type'=>'plan_changed','dates'=>implode(',',$pd)]), $pu]);
-    } catch (Throwable $e) { error_log('push: '.$e->getMessage()); }
+    } catch (Throwable $e) { opsLogThrowable('push', $e); }
     echo json_encode(['success'=>true, 'msg'=>$done.' Antrag/Anträge genehmigt']);
-    } catch(Exception $e) { $db->rollBack(); error_log('change_requests: '.$e->getMessage()); echo json_encode(['success'=>false,'error'=>'Datenbankfehler']); }
+    } catch(Exception $e) { if ($db->inTransaction()) $db->rollBack(); opsApiFail($e, 'change_requests', ['success'=>false,'error'=>'Datenbankfehler']); }
     exit;
 
 /* == Sammelablehnung == */
@@ -176,7 +176,7 @@ case 'reject_batch':
         $done++;
     }
     echo json_encode(['success'=>true, 'msg'=>$done.' Antrag/Anträge abgelehnt']);
-    } catch(Exception $e) { error_log('change_requests: '.$e->getMessage()); echo json_encode(['success'=>false,'error'=>'Datenbankfehler']); }
+    } catch(Exception $e) { opsApiFail($e, 'change_requests', ['success'=>false,'error'=>'Datenbankfehler']); }
     exit;
 
 /* == Wochenkontext == */
@@ -221,7 +221,7 @@ case 'my_requests':
     $sql="SELECT cr.*,pa.short_code AS area_code,pa.name AS area_name,pa.color AS area_color,pa.fg_color AS area_fg,ab.first_name AS app_first,ab.last_name AS app_last FROM change_requests cr LEFT JOIN plan_areas pa ON pa.id=cr.plan_area_id LEFT JOIN users ab ON ab.id=cr.approved_by WHERE cr.user_id=?";
     $params=[$uid]; if($status){$sql.=" AND cr.status=?";$params[]=$status;} $sql.=" ORDER BY cr.created_at DESC LIMIT 50";
     try{$s=$db->prepare($sql);$s->execute($params);echo json_encode(['success'=>true,'requests'=>$s->fetchAll(PDO::FETCH_ASSOC)]);}
-    catch(Exception $e){error_log('change_requests: '.$e->getMessage());echo json_encode(['success'=>false,'error'=>'Datenbankfehler']);}
+    catch(Exception $e){opsApiFail($e, 'change_requests', ['success'=>false,'error'=>'Datenbankfehler']);}
     exit;
 
 /* == Pending-Map (für gestrichelte Umrandung) == */

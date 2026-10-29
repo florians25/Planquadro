@@ -30,6 +30,16 @@ nichts ändert.
 - Neues Recht „Abwesenheitsdetails aller sehen“ (Personalabteilung); Vorgesetzte sehen
   Details nur noch für ihr Team (Entscheidung E-2).
 
+### Request-Kernel (Befund S-20)
+- Jede Antwort trägt eine Request-ID (Header `X-Request-ID`); sie steht auch in jeder
+  Zeile des Server-Logs und in Fehlermeldungen („Referenz: …“) – Supportanfragen lassen
+  sich so dem Log zuordnen.
+- Technische Fehler (Datenbank, PHP) geben keine internen Texte mehr an den Browser,
+  auch nicht bei nicht abgefangenen Fehlern: generische Meldung mit Referenz, Details
+  nur im Log. Betroffen waren u. a. Benachrichtigungen, Bereinigung, Feiertage,
+  Einstellungen, Bereiche, Vertretung, Planungsassistent und die Plattform-Administration.
+- Fachliche Meldungen (Validierung) und bestehende Antwortfelder/HTTP-Codes bleiben unverändert.
+
 ### API und Push
 - REST-API v1 für die Apps (`docs/API.md`): Token-Anmeldung mit rotierenden
   Refresh-Tokens, persönlicher Plan, Team, Abwesenheiten, Anträge, Einsatzdetails,

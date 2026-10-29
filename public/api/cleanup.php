@@ -62,5 +62,5 @@ try{
     }
 }catch(Exception $e){
     if($db->inTransaction())$db->rollBack();
-    echo json_encode(['success'=>false,'error'=>$e->getMessage()]);
+    opsApiFail($e, 'cleanup', ['success'=>false,'error'=>opsGenericErrorMessage()]);
 }

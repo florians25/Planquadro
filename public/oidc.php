@@ -4,6 +4,8 @@
  * ist die Rückkehr-URL (Redirect-URI).
  */
 require_once __DIR__ . '/../app/lib/Security.php';
+require_once __DIR__ . '/../app/lib/Kernel.php';
+opsKernelBoot();
 require_once __DIR__ . '/../app/config/database.php';
 opsStartSession();
 require_once __DIR__ . '/../app/lib/TenantConfig.php';
@@ -64,9 +66,10 @@ try {
     oidcAudit((int)$user['id'], 'login_success', 'OIDC-Login');
     oidcGo('dashboard');
 } catch (OidcException $e) {
-    error_log('OIDC: ' . $e->getMessage());
+    /* OidcException-Texte sind geprüfte Meldungen ohne Datenbankdetails */
+    opsLogThrowable('OIDC', $e);
     oidcFail('Anmeldung über den Identity-Provider fehlgeschlagen: ' . $e->getMessage());
 } catch (Throwable $e) {
-    error_log('OIDC: ' . $e->getMessage());
+    opsLogThrowable('OIDC', $e);
     oidcFail('Anmeldung über den Identity-Provider fehlgeschlagen.');
 }

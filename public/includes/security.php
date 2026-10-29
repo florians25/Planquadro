@@ -88,11 +88,6 @@ function validateUserId(int $uid): bool {
 
 /* Log suspicious activity */
 function logSuspicious(string $reason): void {
-    try {
-        $uid = $_SESSION['user_id'] ?? 0;
-        $ip = opsClientIp();
-        $uri = $_SERVER['REQUEST_URI'] ?? '';
-        getDB()->prepare('INSERT INTO audit_log(user_id,action,details,ip_address) VALUES(?,?,?,?)')
-               ->execute([$uid ?: null, 'suspicious', mb_substr("$reason | URI: $uri", 0, 500), $ip]);
-    } catch (Exception $e) { /* silent */ }
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    opsAudit('suspicious', "$reason | URI: $uri");
 }

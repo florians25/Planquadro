@@ -173,6 +173,20 @@ Funktionen aus `app/` auf, statt SQL selbst zu formulieren. Phase 2 beginnt dami
 den Kernpfad *Zelle speichern / veröffentlichen* (`app/lib/PlanCells.php`,
 `app/lib/ChangeLog.php`).
 
+**Request-Kernel (umgesetzt, `app/lib/Kernel.php`).** `includes/auth.php` ruft
+`opsKernelBoot()` auf; damit gilt für alle Seiten und `api/*.php`:
+
+- Request-ID je Request (`opsRequestId()`): Antwort-Header `X-Request-ID`, Präfix
+  `[req <id>]` in jeder Log-Zeile (`opsLog()`, `opsLogThrowable()`). Eine vom Proxy gesetzte
+  `X-Request-ID` wird übernommen, wenn sie nur `[A-Za-z0-9._:-]` (8–64 Zeichen) enthält.
+- Fehlerformat `{"success":false,"error":"…","request_id":"…"}` (`opsJsonError()`,
+  `opsApiFail()`); bestehende Felder (`success`, `error`, `msg`) und HTTP-Codes bleiben.
+- Globaler Exception-/Fatal-Handler: technische Fehler → HTTP 500 mit generischer Meldung
+  und Referenz, Details nur im Log; `display_errors` ist für Requests aus. Fachmeldungen
+  (`InvalidArgumentException`, `OpsUserException`) → HTTP 400 mit Text.
+- API v1 behält ihren eigenen Fehlerrahmen (`{"error":{"code","message"}}`) und bekommt
+  nur die Request-ID.
+
 ### B.3 Multi-Tenancy (umgesetzt)
 
 **Modell: eine Datenbank je Mandant** mit identischem Schema, dazu eine zentrale

@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
             $db->exec("DELETE FROM login_attempts WHERE success=0");
             echo json_encode(['success'=>true,'msg'=>'Alle Lockouts aufgehoben.']);
         }
-    } catch(Exception $e) { echo json_encode(['success'=>false,'error'=>$e->getMessage()]); }
+    } catch(Exception $e) { opsApiFail($e, 'einstellungen', ['success'=>false,'error'=>opsPublicMessage($e)]); }
     exit;
 }
 

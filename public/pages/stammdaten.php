@@ -81,8 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     } catch (Throwable $e) {
         if ($db->inTransaction()) $db->rollBack();
-        error_log('stammdaten: ' . $e->getMessage());
-        echo json_encode(['success' => false, 'error' => 'Speichern fehlgeschlagen.']);
+        opsApiFail($e, 'stammdaten', ['success' => false, 'error' => 'Speichern fehlgeschlagen.']);
     }
     exit;
 }
