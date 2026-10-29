@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/version.php';
 /**
  * Planquadro – Datenbank-Konfiguration
  * --------------------------------------------------------------------------

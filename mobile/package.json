@@ -1,7 +1,7 @@
 {
   "name": "planquadro-mobile",
   "private": true,
-  "version": "1.0.0",
+  "version": "7.0.0",
   "description": "Planquadro App für iOS, Android und als PWA (Capacitor + Vite + TypeScript)",
   "type": "module",
   "license": "UNLICENSED",
