@@ -24,6 +24,7 @@ final class RouterTests: XCTestCase {
     }
 }
 
+@MainActor
 final class AppHelperTests: XCTestCase {
     func testPushTokenHex() {
         XCTAssertEqual(PushManager.hex(Data([0x00, 0x0f, 0xab, 0xff])), "000fabff")
