@@ -151,6 +151,24 @@ nichts ändert.
 - CI: Tests auf MariaDB und MySQL, Mobile-Tests, Secret-Scan, Abhängigkeits-Audit,
   OWASP-ZAP-Baseline.
 
+### Sicherheit: strikte Content-Security-Policy (S-21, S-22)
+- **Kein `unsafe-inline` mehr für Skripte.** Die CSP setzt jetzt PHP je Request:
+  `script-src 'self' 'nonce-…'`, dazu `object-src 'none'`, `base-uri 'self'`,
+  `form-action 'self'`, `frame-ancestors 'self'` (Plattform-Administration `'none'`).
+  `style-src` erlaubt weiter Inline-Stile (Farben im Planungsraster). `.htaccess` setzt
+  keine CSP mehr für PHP-Seiten (sie würde den PHP-Header überschreiben).
+- Alle 272 Inline-Handler (`onclick`, `onchange`, `oninput`) in Seiten und in per JS
+  erzeugtem Markup sind durch Ereignis-Delegation ersetzt (`data-action`,
+  `public/assets/js/actions.js`); Verhalten und Oberfläche unverändert.
+- Werte für Aktionen werden als JSON in `data-args` übergeben und korrekt escaped
+  (`opsActionAttr()`); Namen mit Apostroph oder Anführungszeichen brechen keine Knöpfe
+  mehr (S-21). Inline-Skriptblöcke tragen eine Nonce.
+- Übergang: Der Planungsassistent wird neu gebaut und behält bis dahin eine gelockerte
+  `script-src` (nur diese Seite).
+- Tests: Prüfung aller Templates/Skripte auf Inline-Handler und Skripte ohne Nonce,
+  CSP-Header aller Seiten je Rolle, Dispatcher-Tests (`tests/js/actions.test.mjs`),
+  Browser-Rundgang `tests/browser/csp-tour.cjs`.
+
 ### Hinweis zum Update
 `php bin/migrate.php up` spielt die Migrationen 0004 (Stammdaten), 0005 (API/Push) und
 0009 (Soll-Besetzung) ein.

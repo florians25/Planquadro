@@ -109,7 +109,7 @@ $accountDays=$createdAt?floor((time()-strtotime($createdAt))/86400):0;
 <span class="muted" style="font-size:.75rem">Kein Ablauf konfiguriert</span>
 <?php endif;?>
 </div>
-<button class="btn btn-sm btn-outline" onclick="oMod('pwMod')">Ändern</button>
+<button class="btn btn-sm btn-outline" data-action="oMod" data-args='["pwMod"]'>Ändern</button>
 </div>
 <div style="padding:.5rem 0">
 <div style="font-size:.85rem;font-weight:600">Sitzung</div>
@@ -137,21 +137,22 @@ $calUrl=$calToken?((isset($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off'?'https:/
 <div style="margin-bottom:.75rem">
 <label style="font-size:.72rem;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.03em">Abo-URL</label>
 <div style="display:flex;gap:.4rem;margin-top:.25rem">
-<input type="text" class="inp-sm" id="calUrl" value="<?php echo e($calUrl);?>" readonly style="flex:1;font-size:.72rem;font-family:monospace;background:#f8fafc" onclick="this.select()">
-<button class="btn btn-sm btn-outline" onclick="navigator.clipboard.writeText(document.getElementById('calUrl').value);toast('URL kopiert','success')">Kopieren</button>
+<input type="text" class="inp-sm" id="calUrl" value="<?php echo e($calUrl);?>" readonly style="flex:1;font-size:.72rem;font-family:monospace;background:#f8fafc" data-action="select">
+<button class="btn btn-sm btn-outline" data-action="copyCalUrl">Kopieren</button>
 </div>
 <p class="muted" style="font-size:.68rem;margin-top:.35rem">Diese URL ist privat. Teile sie nicht mit anderen – sie gibt Zugriff auf deinen Einsatzplan.</p>
 </div>
 <div style="display:flex;gap:.5rem">
-<button class="btn btn-sm btn-outline" onclick="generateCalToken()" style="color:var(--wn);border-color:var(--wn)">Neues Token generieren</button>
-<button class="btn btn-sm btn-outline" onclick="revokeCalToken()" style="color:var(--err);border-color:var(--err)">Token widerrufen</button>
+<button class="btn btn-sm btn-outline" data-action="generateCalToken" style="color:var(--wn);border-color:var(--wn)">Neues Token generieren</button>
+<button class="btn btn-sm btn-outline" data-action="revokeCalToken" style="color:var(--err);border-color:var(--err)">Token widerrufen</button>
 </div>
 <?php else:?>
-<button class="btn btn-primary" onclick="generateCalToken()">Kalender-Abo aktivieren</button>
+<button class="btn btn-primary" data-action="generateCalToken">Kalender-Abo aktivieren</button>
 <?php endif;?>
 </div>
 </div></div>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
+pqAction('copyCalUrl',function(){navigator.clipboard.writeText(document.getElementById('calUrl').value);toast('URL kopiert','success');});
 function generateCalToken(){
     fetch(getApiBase()+'profil',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({action:'generate_cal_token'})})
     .then(function(r){return r.json();}).then(function(d){

@@ -216,3 +216,87 @@ function opsDummyHash(): string
     static $h = null;
     return $h ??= password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
 }
+
+/* --------------------------------------------------------------------------
+   Content-Security-Policy (Befunde S-21, S-22)
+   script-src ohne 'unsafe-inline'/'unsafe-eval': Inline-Skriptblöcke tragen
+   die Nonce dieses Requests, Inline-Handler (onclick=…) gibt es nicht mehr –
+   Elemente verwenden data-action (public/assets/js/actions.js, opsActionAttr()).
+   style-src behält 'unsafe-inline' (dynamische Farben im Planungsraster).
+   -------------------------------------------------------------------------- */
+
+/** Nonce für Inline-Skripte, je Request einmal erzeugt (base64, 128 Bit). */
+function opsCspNonce(): string
+{
+    static $nonce = null;
+    return $nonce ??= base64_encode(random_bytes(16));
+}
+
+/**
+ * Seiten, die noch Inline-Handler enthalten und gerade neu gebaut werden.
+ * Nur für sie gilt übergangsweise script-src 'self' 'unsafe-inline' (ohne Nonce,
+ * sonst ignorierten Browser 'unsafe-inline'). Eintrag entfernen, sobald die Seite
+ * CSP-konform ist (tests/Unit/NoInlineHandlersTest prüft die Liste mit).
+ */
+const OPS_CSP_LEGACY_PAGES = ['planungsassistent'];
+
+/** Policy-Text; $frameAncestors z. B. "'none'" für die Plattform-Administration. */
+function opsContentSecurityPolicy(string $frameAncestors = "'self'", bool $legacyInline = false): string
+{
+    return "default-src 'self'; "
+         . ($legacyInline ? "script-src 'self' 'unsafe-inline'; " : "script-src 'self' 'nonce-" . opsCspNonce() . "'; ")
+         . "style-src 'self' 'unsafe-inline'; "
+         . "img-src 'self' data:; "
+         . "font-src 'self'; "
+         . "connect-src 'self'; "
+         . "object-src 'none'; "
+         . "base-uri 'self'; "
+         . "form-action 'self'; "
+         . "frame-ancestors " . $frameAncestors;
+}
+
+/**
+ * Setzt den CSP-Header (ersetzt einen zuvor gesetzten). Aufgerufen von
+ * opsKernelBoot() und der Login-Seite. Strengere Policies einzelner Endpunkte
+ * (z. B. api/branding: sandbox) werden danach gesetzt und ersetzen diese.
+ */
+function opsSendCsp(string $frameAncestors = "'self'", bool $legacyInline = false): void
+{
+    if (PHP_SAPI === 'cli' || headers_sent()) return;
+    header('Content-Security-Policy: ' . opsContentSecurityPolicy($frameAncestors, $legacyInline));
+}
+
+/**
+ * Attribute für die Ereignis-Delegation (Ersatz für Inline-Handler), korrekt
+ * HTML-escaped (Befund S-21). Beispiel:
+ *   <button<?php echo opsActionAttr('openWotDetail', [$id, $name]); ?>>
+ * ergibt  data-action="openWotDetail" data-args="[12,&quot;Muster, Max&quot;]".
+ * $event: 'click' (Standard), 'change' oder 'input'.
+ * Zeichenketten, die mit "$" beginnen, werden als "$$…" kodiert, damit sie nicht
+ * als Platzhalter gelesen werden; Platzhalter selbst mit opsActionToken('this').
+ */
+function opsActionAttr(string $action, array $args = [], string $event = 'click'): string
+{
+    $attr = $event === 'click' ? 'data-action' : 'data-action-' . preg_replace('/[^a-z]/', '', $event);
+    $out = ' ' . $attr . '="' . htmlspecialchars($action, ENT_QUOTES, 'UTF-8') . '"';
+    if ($args) {
+        $args = array_map(static fn($v) => $v instanceof OpsActionToken ? $v->placeholder()
+            : (is_string($v) && $v !== '' && $v[0] === '$' ? '$' . $v : $v), array_values($args));
+        $json = json_encode($args, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+        $out .= ' data-args="' . htmlspecialchars((string)$json, ENT_QUOTES, 'UTF-8') . '"';
+    }
+    return $out;
+}
+
+/** Platzhalter-Argument für opsActionAttr(): this (Element), event, value, checked. */
+final class OpsActionToken
+{
+    private function __construct(private string $name) {}
+    public static function of(string $name): self
+    {
+        if (!in_array($name, ['this', 'event', 'value', 'checked'], true)) throw new InvalidArgumentException('Unbekannter Platzhalter: ' . $name);
+        return new self($name);
+    }
+    public function placeholder(): string { return '$' . $this->name; }
+}
+function opsActionToken(string $name): OpsActionToken { return OpsActionToken::of($name); }

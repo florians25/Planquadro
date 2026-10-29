@@ -178,22 +178,22 @@ foreach($users as $cu2){
 /* Rollen, die Mitarbeiter führen können */
 $supervisorRoles=['admin','manager','teamleiter'];
 ?>
-<div class="ph"><div class="phl"><h1>Mitarbeiter</h1><span class="muted" style="font-size:.82rem"><?php echo $cntActive;?> aktiv · <?php echo $cntByRole['teamleiter']??0;?> Teamleiter · <?php echo $cntByRole['manager']??0;?> Manager</span></div><button class="btn btn-sm btn-primary" onclick="oUserMod()">Neuer Mitarbeiter</button></div>
+<div class="ph"><div class="phl"><h1>Mitarbeiter</h1><span class="muted" style="font-size:.82rem"><?php echo $cntActive;?> aktiv · <?php echo $cntByRole['teamleiter']??0;?> Teamleiter · <?php echo $cntByRole['manager']??0;?> Manager</span></div><button class="btn btn-sm btn-primary" data-action="oUserMod">Neuer Mitarbeiter</button></div>
 
 <div class="team-stats">
-  <button type="button" class="team-stat" onclick="quickFilterStatus('active')"><span class="team-stat-n"><?php echo $cntActive;?></span><span class="team-stat-l">Aktiv</span></button>
-  <button type="button" class="team-stat" onclick="quickFilterStatus('inactive')"><span class="team-stat-n"><?php echo $cntInactive;?></span><span class="team-stat-l">Inaktiv</span></button>
-  <button type="button" class="team-stat" onclick="quickFilterStatus('exited')"><span class="team-stat-n"><?php echo $cntExited;?></span><span class="team-stat-l">Ausgetreten</span></button>
-  <button type="button" class="team-stat" onclick="quickFilterRole('')"><span class="team-stat-n"><?php echo count($users);?></span><span class="team-stat-l">Gesamt</span></button>
+  <button type="button" class="team-stat" data-action="quickFilterStatus" data-args='["active"]'><span class="team-stat-n"><?php echo $cntActive;?></span><span class="team-stat-l">Aktiv</span></button>
+  <button type="button" class="team-stat" data-action="quickFilterStatus" data-args='["inactive"]'><span class="team-stat-n"><?php echo $cntInactive;?></span><span class="team-stat-l">Inaktiv</span></button>
+  <button type="button" class="team-stat" data-action="quickFilterStatus" data-args='["exited"]'><span class="team-stat-n"><?php echo $cntExited;?></span><span class="team-stat-l">Ausgetreten</span></button>
+  <button type="button" class="team-stat" data-action="quickFilterRole" data-args='[""]'><span class="team-stat-n"><?php echo count($users);?></span><span class="team-stat-l">Gesamt</span></button>
 </div>
 
 <div class="team-search" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
-<input type="text" class="inp-filter" id="teamSearch" placeholder="Mitarbeiter suchen..." oninput="filterTeam()">
-<select class="sel sel-sm" id="teamRoleFilter" onchange="filterTeam()" style="width:auto">
+<input type="text" class="inp-filter" id="teamSearch" placeholder="Mitarbeiter suchen..." data-action-input="filterTeam">
+<select class="sel sel-sm" id="teamRoleFilter" data-action-change="filterTeam" style="width:auto">
 <option value="">Alle Rollen</option>
 <?php foreach($roles as $rk=>$rl): if(($cntByRole[$rk]??0)===0 && $rk!=='admin') continue; ?><option value="<?php echo e($rk);?>"><?php echo e($rl);?></option><?php endforeach;?>
 </select>
-<select class="sel sel-sm" id="teamStatusFilter" onchange="filterTeam()" style="width:auto">
+<select class="sel sel-sm" id="teamStatusFilter" data-action-change="filterTeam" style="width:auto">
 <option value="">Alle Status</option>
 <option value="active">Aktiv</option>
 <option value="inactive">Inaktiv</option>
@@ -220,8 +220,8 @@ elseif(!empty($u['exit_date'])&&$u['exit_date']<$today)$uStatus='exited';
 <tr class="team-row <?php echo $u['active']?'':'row-off';?>" data-search="<?php echo e(mb_strtolower($u['last_name'].' '.$u['first_name'].' '.$u['username']));?>" data-status="<?php echo $uStatus;?>" data-role="<?php echo e($u['role']);?>">
 <td><b><?php echo e($u['last_name'].', '.$u['first_name']);?></b><div class="team-sub"><?php echo e($u['username']);?><?php if(!empty($u['training_profession'])):?> · <span class="ts tp-badge"><?php echo e($u['training_profession']);?></span><?php endif;?><?php if($u['os_level']??''):?> · <span class="ts os-badge"><?php echo e($u['os_level']);?></span><?php endif;?></div></td>
 <td><span class="rb r-<?php echo e($u['role']);?>"><?php echo e(roleName($u['role']));?></span></td>
-<td><span class="sup-names" data-uid="<?php echo $u['id'];?>"><?php if(!empty($uSups)){$sNames=[];foreach($uSups as $sid){if(isset($allUsersMap[$sid]))$sNames[]=e($allUsersMap[$sid]['last_name'].', '.$allUsersMap[$sid]['first_name']);}echo implode('; ',$sNames)?:'-';}else echo "\xe2\x80\x93";?></span> <button type="button" class="sup-edit-btn" title="Vorgesetzte ändern" onclick='quickSup(<?php echo $u['id'];?>,<?php echo json_encode($u['last_name'].", ".$u['first_name'],JSON_HEX_APOS|JSON_HEX_QUOT);?>,<?php echo json_encode(array_values($uSups));?>)'><svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg></button></td>
-<td><?php $myReports=$reportsMap[$u['id']]??[]; if(in_array($u['role'],$supervisorRoles,true)): ?><button type="button" class="team-manage-btn" onclick='quickSub(<?php echo $u['id'];?>,<?php echo json_encode($u['last_name'].", ".$u['first_name'],JSON_HEX_APOS|JSON_HEX_QUOT);?>,<?php echo json_encode(array_values($myReports));?>)'><svg viewBox="0 0 20 20" fill="currentColor" width="12" height="12"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg> <?php echo count($myReports);?></button><?php else: echo '<span class="muted">'."\xe2\x80\x93".'</span>'; endif; ?></td>
+<td><span class="sup-names" data-uid="<?php echo $u['id'];?>"><?php if(!empty($uSups)){$sNames=[];foreach($uSups as $sid){if(isset($allUsersMap[$sid]))$sNames[]=e($allUsersMap[$sid]['last_name'].', '.$allUsersMap[$sid]['first_name']);}echo implode('; ',$sNames)?:'-';}else echo "\xe2\x80\x93";?></span> <button type="button" class="sup-edit-btn" title="Vorgesetzte ändern" <?php echo opsActionAttr('quickSup',[(int)$u['id'],$u['last_name'].", ".$u['first_name'],array_values($uSups)]);?>><svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg></button></td>
+<td><?php $myReports=$reportsMap[$u['id']]??[]; if(in_array($u['role'],$supervisorRoles,true)): ?><button type="button" class="team-manage-btn" <?php echo opsActionAttr('quickSub',[(int)$u['id'],$u['last_name'].", ".$u['first_name'],array_values($myReports)]);?>><svg viewBox="0 0 20 20" fill="currentColor" width="12" height="12"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg> <?php echo count($myReports);?></button><?php else: echo '<span class="muted">'."\xe2\x80\x93".'</span>'; endif; ?></td>
 <td><?php if(!empty($u['primary_area_id'])&&isset($allAreas[$u['primary_area_id']])):$pa=$allAreas[$u['primary_area_id']];?><span class="ts" style="background:<?php echo e($pa['color']);?>;color:<?php echo e($pa['fg_color']);?>"><?php echo e($pa['short_code']);?></span> <?php echo e($pa['name']);?><?php else:?><?php echo "\xe2\x80\x93";?><?php endif;?></td>
 <td class="team-dates"><?php echo !empty($u['entry_date']??null)?date('d.m.Y',strtotime($u['entry_date'])):"\xe2\x80\x93";?><br><span class="muted"><?php echo !empty($u['exit_date'])?date('d.m.Y',strtotime($u['exit_date'])):"\xe2\x80\x93";?></span></td>
 <td><?php
@@ -231,13 +231,13 @@ elseif(!empty($u['exit_date'])&&$u['exit_date']<$today)$uStatus='exited';
   else echo '<span class="badge bs">Aktiv</span>';
 ?></td>
 <td class="tbl-acts">
-<button class="btn btn-xs btn-outline" onclick='oUserMod(<?php echo json_encode($u,JSON_HEX_APOS|JSON_HEX_QUOT);?>,<?php echo json_encode($uSups);?>,<?php echo isset($planAllSet[$u['id']])?'true':'false';?>)'>Bearbeiten</button>
-<div class="team-act-menu"><button type="button" class="btn btn-xs btn-outline team-act-toggle" onclick="toggleActMenu(this)">⋯</button>
+<button class="btn btn-xs btn-outline" <?php echo opsActionAttr('oUserMod',[$u,$uSups,isset($planAllSet[$u['id']])]);?>>Bearbeiten</button>
+<div class="team-act-menu"><button type="button" class="btn btn-xs btn-outline team-act-toggle" data-action="toggleActMenu" data-args='["$this"]'>⋯</button>
 <div class="team-act-dropdown">
-<?php if(strpos($u['role'],'azubi')===0):?><button class="team-act-item team-act-promote" onclick="promoteUser(<?php echo $u['id'];?>,'<?php echo e(addslashes($u['first_name'].' '.$u['last_name']));?>')">★ Zum Techniker befördern</button><?php endif;?>
-<button class="team-act-item" onclick="toggleUser(<?php echo $u['id'];?>)"><?php echo $u['active']?'Deaktivieren':'Aktivieren';?></button>
-<button class="team-act-item" onclick="resetPw(<?php echo $u['id'];?>)">Passwort zurücksetzen</button>
-<?php if($canDelete):?><button class="team-act-item team-act-danger" onclick="deleteUser(<?php echo $u['id'];?>,'<?php echo e(addslashes($u['last_name'].', '.$u['first_name']));?>')">Entfernen</button><?php endif;?>
+<?php if(strpos($u['role'],'azubi')===0):?><button class="team-act-item team-act-promote" <?php echo opsActionAttr('promoteUser',[(int)$u['id'],$u['first_name'].' '.$u['last_name']]);?>>★ Zum Techniker befördern</button><?php endif;?>
+<button class="team-act-item" <?php echo opsActionAttr('toggleUser',[(int)$u['id']]);?>><?php echo $u['active']?'Deaktivieren':'Aktivieren';?></button>
+<button class="team-act-item" <?php echo opsActionAttr('resetPw',[(int)$u['id']]);?>>Passwort zurücksetzen</button>
+<?php if($canDelete):?><button class="team-act-item team-act-danger" <?php echo opsActionAttr('deleteUser',[(int)$u['id'],$u['last_name'].', '.$u['first_name']]);?>>Entfernen</button><?php endif;?>
 </div></div>
 </td>
 </tr><?php endforeach;?>
@@ -246,7 +246,7 @@ elseif(!empty($u['exit_date'])&&$u['exit_date']<$today)$uStatus='exited';
 
 <!-- User Modal (Assistent) -->
 <div class="modal-bg" id="userMod"><div class="modal modal-lg">
-<div class="mh"><h3 id="umT">Neuer Mitarbeiter</h3><button class="mx" onclick="cMod('userMod')">&times;</button></div>
+<div class="mh"><h3 id="umT">Neuer Mitarbeiter</h3><button class="mx" data-action="cMod" data-args='["userMod"]'>&times;</button></div>
 <input type="hidden" id="uId" value="0">
 <div class="uf-head" id="userFlatHead">
   <div class="uf-av" id="ufAv">–</div>
@@ -256,10 +256,10 @@ elseif(!empty($u['exit_date'])&&$u['exit_date']<$today)$uStatus='exited';
   </div>
 </div>
 <div class="wz-steps" id="wzSteps">
-  <button type="button" class="wz-step" data-step="1" onclick="wzGoTo(1)"><span class="wz-num">1</span><span class="wz-label">Zugang</span></button>
-  <button type="button" class="wz-step" data-step="2" onclick="wzGoTo(2)"><span class="wz-num">2</span><span class="wz-label">Person</span></button>
-  <button type="button" class="wz-step" data-step="3" onclick="wzGoTo(3)"><span class="wz-num">3</span><span class="wz-label">Einsatz</span></button>
-  <button type="button" class="wz-step" data-step="4" onclick="wzGoTo(4)"><span class="wz-num">4</span><span class="wz-label">Team &amp; Abschluss</span></button>
+  <button type="button" class="wz-step" data-step="1" data-action="wzGoTo" data-args="[1]"><span class="wz-num">1</span><span class="wz-label">Zugang</span></button>
+  <button type="button" class="wz-step" data-step="2" data-action="wzGoTo" data-args="[2]"><span class="wz-num">2</span><span class="wz-label">Person</span></button>
+  <button type="button" class="wz-step" data-step="3" data-action="wzGoTo" data-args="[3]"><span class="wz-num">3</span><span class="wz-label">Einsatz</span></button>
+  <button type="button" class="wz-step" data-step="4" data-action="wzGoTo" data-args="[4]"><span class="wz-num">4</span><span class="wz-label">Team &amp; Abschluss</span></button>
 </div>
 <div class="mb">
 
@@ -309,8 +309,8 @@ elseif(!empty($u['exit_date'])&&$u['exit_date']<$today)$uStatus='exited';
   <div class="fg">
     <label>Vorgesetzte / Genehmigende <span class="muted">(max. 4)</span></label>
     <div class="sup-chips" id="supChips"></div>
-    <input type="text" class="inp-filter sup-search" placeholder="Vorgesetzte suchen &amp; hinzufügen..." oninput="filterSupPick(this,'supPick')" style="margin:.55rem 0 .4rem">
-    <div class="sup-pick" id="supPick"><?php foreach($users as $su): if(!in_array($su['role'],['manager','teamleiter','admin'])) continue; ?><label class="sup-pick-item" data-name="<?php echo e(mb_strtolower($su['last_name'].' '.$su['first_name']));?>"><input type="checkbox" value="<?php echo $su['id'];?>" class="supCb" data-label="<?php echo e($su['last_name'].', '.$su['first_name']);?>" data-role="<?php echo e(roleName($su['role']));?>" onchange="onSupChange(this)"> <span class="spi-name"><?php echo e($su['last_name'].', '.$su['first_name']);?></span> <span class="spi-role"><?php echo e(roleName($su['role']));?></span></label><?php endforeach;?></div>
+    <input type="text" class="inp-filter sup-search" placeholder="Vorgesetzte suchen &amp; hinzufügen..." data-action-input="filterSupPick" data-args='["$this","supPick"]' style="margin:.55rem 0 .4rem">
+    <div class="sup-pick" id="supPick"><?php foreach($users as $su): if(!in_array($su['role'],['manager','teamleiter','admin'])) continue; ?><label class="sup-pick-item" data-name="<?php echo e(mb_strtolower($su['last_name'].' '.$su['first_name']));?>"><input type="checkbox" value="<?php echo $su['id'];?>" class="supCb" data-label="<?php echo e($su['last_name'].', '.$su['first_name']);?>" data-role="<?php echo e(roleName($su['role']));?>" data-action-change="onSupChange" data-args='["$this"]'> <span class="spi-name"><?php echo e($su['last_name'].', '.$su['first_name']);?></span> <span class="spi-role"><?php echo e(roleName($su['role']));?></span></label><?php endforeach;?></div>
     <div class="sup-count" id="supCount"><b id="supCountN">0</b> / 4 ausgewählt</div>
   </div>
   <div class="wz-summary" id="wzSummary"></div>
@@ -319,17 +319,17 @@ elseif(!empty($u['exit_date'])&&$u['exit_date']<$today)$uStatus='exited';
 
 </div>
 <div class="mf wz-foot">
-  <button class="btn btn-outline" id="wzBack" onclick="wzPrev()" style="display:none">Zurück</button>
-  <button class="btn btn-outline" onclick="cMod('userMod')">Abbrechen</button>
+  <button class="btn btn-outline" id="wzBack" data-action="wzPrev" style="display:none">Zurück</button>
+  <button class="btn btn-outline" data-action="cMod" data-args='["userMod"]'>Abbrechen</button>
   <span class="wz-foot-spacer"></span>
-  <button class="btn btn-primary" id="wzNext" onclick="wzNext()">Weiter</button>
-  <button class="btn btn-primary" id="wzSave" onclick="saveUser()" style="display:none">Speichern</button>
+  <button class="btn btn-primary" id="wzNext" data-action="wzNext">Weiter</button>
+  <button class="btn btn-primary" id="wzSave" data-action="saveUser" style="display:none">Speichern</button>
 </div>
 </div></div>
 
 <!-- Team / Unterstellte zuordnen (grafischer Team-Builder) -->
 <div class="modal-bg" id="subMod"><div class="modal modal-lg sub-modal">
-<div class="mh"><h3>Team zusammenstellen</h3><button class="mx" onclick="cMod('subMod')">&times;</button></div>
+<div class="mh"><h3>Team zusammenstellen</h3><button class="mx" data-action="cMod" data-args='["subMod"]'>&times;</button></div>
 <input type="hidden" id="subSid" value="0">
 <div class="sub-head">
   <div class="sub-head-av" id="subAv">–</div>
@@ -342,7 +342,7 @@ elseif(!empty($u['exit_date'])&&$u['exit_date']<$today)$uStatus='exited';
 <div class="mb sub-body">
   <div class="sub-col">
     <div class="sub-col-h"><span>Verfügbare Mitarbeiter</span><span class="sub-col-n" id="subAvailN">0</span></div>
-    <input type="text" class="inp-filter" id="subSearch" placeholder="Suchen nach Name oder Rolle..." oninput="renderSubPanes()">
+    <input type="text" class="inp-filter" id="subSearch" placeholder="Suchen nach Name oder Rolle..." data-action-input="renderSubPanes">
     <div class="sub-list" id="subAvail"></div>
   </div>
   <div class="sub-arrow">⇄</div>
@@ -352,28 +352,28 @@ elseif(!empty($u['exit_date'])&&$u['exit_date']<$today)$uStatus='exited';
     <div class="sub-list sub-list-team" id="subTeam"></div>
   </div>
 </div>
-<div class="mf"><span class="sub-foot-hint">Tippen zum Hinzufügen oder Entfernen</span><button class="btn btn-outline" onclick="cMod('subMod')">Abbrechen</button><button class="btn btn-primary" onclick="saveQuickSub()">Team speichern</button></div>
+<div class="mf"><span class="sub-foot-hint">Tippen zum Hinzufügen oder Entfernen</span><button class="btn btn-outline" data-action="cMod" data-args='["subMod"]'>Abbrechen</button><button class="btn btn-primary" data-action="saveQuickSub">Team speichern</button></div>
 </div></div>
 
 <!-- Schnell-Vorgesetzte Modal -->
 <div class="modal-bg" id="supMod"><div class="modal">
-<div class="mh"><h3>Vorgesetzte ändern</h3><button class="mx" onclick="cMod('supMod')">&times;</button></div>
+<div class="mh"><h3>Vorgesetzte ändern</h3><button class="mx" data-action="cMod" data-args='["supMod"]'>&times;</button></div>
 <input type="hidden" id="supUid" value="0">
 <div class="mb">
 <p class="muted" style="font-size:.82rem;margin:0 0 .6rem">Vorgesetzte für <b id="supUserName"></b>. Diese Personen können den Plan dieses Mitarbeiters sehen, bearbeiten und Anträge genehmigen.</p>
-<input type="text" class="inp-filter sup-search" placeholder="Vorgesetzte suchen..." oninput="filterSupPick(this,'supPickQuick')" style="margin-bottom:.4rem">
+<input type="text" class="inp-filter sup-search" placeholder="Vorgesetzte suchen..." data-action-input="filterSupPick" data-args='["$this","supPickQuick"]' style="margin-bottom:.4rem">
 <div class="sup-pick" id="supPickQuick" style="max-height:300px">
 <?php foreach($users as $su): if(!in_array($su['role'],['manager','teamleiter','admin'])) continue; ?>
 <label class="sup-pick-item" data-name="<?php echo e(mb_strtolower($su['last_name'].' '.$su['first_name']));?>"><input type="checkbox" value="<?php echo $su['id'];?>" class="supCbQuick"> <?php echo e($su['last_name'].', '.$su['first_name'].' ('.roleName($su['role']).')');?></label>
 <?php endforeach;?>
 </div>
 </div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('supMod')">Abbrechen</button><button class="btn btn-primary" onclick="saveQuickSup()">Speichern</button></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["supMod"]'>Abbrechen</button><button class="btn btn-primary" data-action="saveQuickSup">Speichern</button></div>
 </div></div>
 
 <!-- Zugangskarte Modal -->
 <div class="modal-bg" id="cardMod"><div class="modal">
-<div class="mh"><h3>Zugangskarte</h3><button class="mx" onclick="cMod('cardMod')">&times;</button></div>
+<div class="mh"><h3>Zugangskarte</h3><button class="mx" data-action="cMod" data-args='["cardMod"]'>&times;</button></div>
 <div class="mb" id="cardContent">
 <div class="access-card" id="accessCard">
   <div class="ac-head">Planquadro Einsatzplanung</div>
@@ -383,10 +383,10 @@ elseif(!empty($u['exit_date'])&&$u['exit_date']<$today)$uStatus='exited';
   <div class="ac-row"><span class="ac-label">Einmalpasswort:</span><span class="ac-val ac-mono ac-otp" id="cardPw"></span></div>
   <div class="ac-note">Bitte ändern Sie Ihr Passwort bei der ersten Anmeldung.</div>
 </div></div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('cardMod')">Schließen</button><button class="btn btn-primary" onclick="printCard()">Drucken</button></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["cardMod"]'>Schließen</button><button class="btn btn-primary" data-action="printCard">Drucken</button></div>
 </div></div>
 
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 var isNew=true;
 function oUserMod(u,sups,planAll){
     isNew=!u; sups=sups||[];
@@ -447,7 +447,7 @@ function renderSupChips(){
     var box=document.getElementById('supChips'); if(!box)return;
     var chips='';
     document.querySelectorAll('#supPick .supCb:checked').forEach(function(cb){
-        chips+='<span class="sup-chip"><span class="sup-chip-av">'+esc((cb.dataset.label||'?').charAt(0))+'</span><span class="sup-chip-txt"><span class="sup-chip-name">'+esc(cb.dataset.label||'')+'</span><span class="sup-chip-role">'+esc(cb.dataset.role||'')+'</span></span><button type="button" class="sup-chip-x" onclick="removeSup(\''+cb.value+'\')" aria-label="Entfernen">&times;</button></span>';
+        chips+='<span class="sup-chip"><span class="sup-chip-av">'+esc((cb.dataset.label||'?').charAt(0))+'</span><span class="sup-chip-txt"><span class="sup-chip-name">'+esc(cb.dataset.label||'')+'</span><span class="sup-chip-role">'+esc(cb.dataset.role||'')+'</span></span><button type="button" class="sup-chip-x" '+pqActAttr('removeSup',[cb.value])+' aria-label="Entfernen">&times;</button></span>';
     });
     box.innerHTML = chips || '<span class="sup-chip-empty">Noch keine Vorgesetzten zugewiesen</span>';
 }
@@ -582,7 +582,7 @@ function quickSub(sid,name,members){
 }
 function _subCard(u,inTeam){
     var ini=esc((u.n.split(',')[1]||u.n).trim().charAt(0)+u.n.charAt(0)).toUpperCase();
-    return '<button type="button" class="sub-card'+(inTeam?' in-team':'')+'" onclick="'+(inTeam?'subRemove':'subAdd')+'('+u.id+')">'+
+    return '<button type="button" class="sub-card'+(inTeam?' in-team':'')+'" data-action="'+(inTeam?'subRemove':'subAdd')+'" data-args="['+u.id+']">'+
         '<span class="sub-card-av sub-av-'+esc(u.rk)+'">'+ini+'</span>'+
         '<span class="sub-card-txt"><span class="sub-card-name">'+esc(u.n)+'</span><span class="sub-card-role">'+esc(u.r)+'</span></span>'+
         '<span class="sub-card-act">'+(inTeam?'&times;':'+')+'</span></button>';

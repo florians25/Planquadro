@@ -93,47 +93,47 @@ $approvalEnabled = getSetting('approval_system_enabled','0') === '1';
 <div class="ap-hero">
 <div class="ap-hero-left"><h1>Änderungsanträge</h1><p>Übersicht und Verwaltung aller Mitarbeiter-Anträge</p></div>
 <div class="ap-stats">
-<div class="ap-stat ap-stat-pending active" onclick="setStatus('pending')"><div class="ap-stat-num" id="csP">–</div><div class="ap-stat-lbl">Offen</div></div>
-<div class="ap-stat ap-stat-approved" onclick="setStatus('approved')"><div class="ap-stat-num" id="csA">–</div><div class="ap-stat-lbl">Genehmigt</div></div>
-<div class="ap-stat ap-stat-rejected" onclick="setStatus('rejected')"><div class="ap-stat-num" id="csR">–</div><div class="ap-stat-lbl">Abgelehnt</div></div>
+<div class="ap-stat ap-stat-pending active" data-action="setStatus" data-args='["pending"]'><div class="ap-stat-num" id="csP">–</div><div class="ap-stat-lbl">Offen</div></div>
+<div class="ap-stat ap-stat-approved" data-action="setStatus" data-args='["approved"]'><div class="ap-stat-num" id="csA">–</div><div class="ap-stat-lbl">Genehmigt</div></div>
+<div class="ap-stat ap-stat-rejected" data-action="setStatus" data-args='["rejected"]'><div class="ap-stat-num" id="csR">–</div><div class="ap-stat-lbl">Abgelehnt</div></div>
 </div>
 </div>
 
 <!-- Toolbar -->
 <div class="ap-toolbar">
-<select id="statusFilter" class="sel" onchange="loadRequests()">
+<select id="statusFilter" class="sel" data-action-change="loadRequests">
 <option value="pending">Offene Anträge</option>
 <option value="approved">Genehmigte</option>
 <option value="rejected">Abgelehnte</option>
 </select>
-<input type="text" id="crSearch" class="inp-filter" placeholder="Suchen..." oninput="filterCards()" style="max-width:180px">
+<input type="text" id="crSearch" class="inp-filter" placeholder="Suchen..." data-action-input="filterCards" style="max-width:180px">
 <div class="ap-batch" id="batchBar">
-<label style="font-size:.75rem;cursor:pointer;display:flex;align-items:center;gap:.25rem"><input type="checkbox" id="batchAll" onchange="toggleAll()"> Alle</label>
+<label style="font-size:.75rem;cursor:pointer;display:flex;align-items:center;gap:.25rem"><input type="checkbox" id="batchAll" data-action-change="toggleAll"> Alle</label>
 <span class="muted" style="font-size:.7rem" id="batchCnt">0</span>
-<button class="btn btn-xs btn-approve" onclick="batchAct('approve')" id="btnBA" disabled>Genehmigen</button>
-<button class="btn btn-xs btn-outline btn-danger-text" onclick="batchAct('reject')" id="btnBR" disabled>Ablehnen</button>
+<button class="btn btn-xs btn-approve" data-action="batchAct" data-args='["approve"]' id="btnBA" disabled>Genehmigen</button>
+<button class="btn btn-xs btn-outline btn-danger-text" data-action="batchAct" data-args='["reject"]' id="btnBR" disabled>Ablehnen</button>
 </div>
 </div>
 
 <div id="reqList"><p class="muted" style="padding:2rem;text-align:center">Laden...</p></div>
 
 <!-- Detail Modal -->
-<div class="modal-bg" id="detMod"><div class="modal modal-lg"><div class="mh"><h3 id="detTitle">Antrag prüfen</h3><button class="mx" onclick="cMod('detMod')">&times;</button></div><div class="mb" style="max-height:65vh;overflow-y:auto">
+<div class="modal-bg" id="detMod"><div class="modal modal-lg"><div class="mh"><h3 id="detTitle">Antrag prüfen</h3><button class="mx" data-action="cMod" data-args='["detMod"]'>&times;</button></div><div class="mb" style="max-height:65vh;overflow-y:auto">
 <div id="detUser" style="margin-bottom:.65rem"></div>
 <div id="detWeek"></div>
 <div id="detItems"></div>
 </div><div class="mf" id="detFooter">
 <button class="btn btn-outline btn-danger-text" id="detRejectBtn">Alle ablehnen</button>
-<button class="btn btn-outline" onclick="cMod('detMod')">Schließen</button>
+<button class="btn btn-outline" data-action="cMod" data-args='["detMod"]'>Schließen</button>
 <button class="btn btn-approve" id="detApproveBtn">Alle genehmigen</button>
 </div></div></div>
 
 <!-- Reject Modal -->
-<div class="modal-bg" id="rejMod"><div class="modal modal-sm"><div class="mh"><h3>Ablehnen</h3><button class="mx" onclick="cMod('rejMod')">&times;</button></div><div class="mb"><p class="muted" id="rejInfo"></p>
+<div class="modal-bg" id="rejMod"><div class="modal modal-sm"><div class="mh"><h3>Ablehnen</h3><button class="mx" data-action="cMod" data-args='["rejMod"]'>&times;</button></div><div class="mb"><p class="muted" id="rejInfo"></p>
 <div class="fg"><label>Begründung (optional)</label><textarea id="rejReason" rows="3" placeholder="Warum?"></textarea></div></div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('rejMod')">Abbrechen</button><button class="btn btn-danger" onclick="doReject()">Ablehnen</button></div></div></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["rejMod"]'>Abbrechen</button><button class="btn btn-danger" data-action="doReject">Ablehnen</button></div></div></div>
 
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 var AREAS=<?php echo json_encode($pam);?>;
 var AN={krank_halb:'Krank \u00bd',krank_ganz:'Krank o.A.',krank_attest:'Krank m.A.',urlaub_halb:'Urlaub \u00bd',urlaub_ganz:'Urlaub (b.)',urlaub_genehmigt:'Urlaub (g.)',gleitzeit:'Gleitzeit',gesperrt:'Gesperrt'};
 var AC={krank_halb:'#ef4444',krank_ganz:'#dc2626',krank_attest:'#16a34a',urlaub_halb:'#fbbf24',urlaub_ganz:'#dc2626',urlaub_genehmigt:'#16a34a',gleitzeit:'#8b5cf6',gesperrt:'#94a3b8'};
@@ -182,7 +182,7 @@ function renderCards(reqs,st){
         html+='<div class="ap-user-head">';
         html+='<div class="ap-avatar" style="background:'+avatarBg(u.role)+'">'+initials(u.first_name,u.last_name)+'</div>';
         html+='<div class="ap-user-info"><div class="ap-user-name">'+esc(u.last_name+', '+u.first_name)+'</div><div class="ap-user-role">'+esc(rn(u.role))+' – '+g.items.length+' Tag(e)</div></div>';
-        html+='<div class="ap-user-meta"><button class="btn btn-xs btn-outline" onclick="openDetail('+uid+')">Details</button></div>';
+        html+='<div class="ap-user-meta"><button class="btn btn-xs btn-outline" data-action="openDetail" data-args="['+uid+']">Details</button></div>';
         html+='</div>';
         /* Body: timeline blocks */
         html+='<div class="ap-body">';
@@ -205,9 +205,9 @@ function renderCards(reqs,st){
         if(st==='pending'){
             var ids=g.items.map(function(r){return r.id;});
             html+='<div class="ap-foot">';
-            html+='<label class="ap-foot-sel"><input type="checkbox" class="cr-cb" value="'+ids.join(',')+'" onchange="updBatch()"></label>';
-            html+='<button class="btn btn-xs btn-approve" onclick="doApprove(['+ids.join(',')+'])">Genehmigen</button>';
-            html+='<button class="btn btn-xs btn-outline btn-danger-text" onclick="startReject(['+ids.join(',')+'])">Ablehnen</button>';
+            html+='<label class="ap-foot-sel"><input type="checkbox" class="cr-cb" value="'+ids.join(',')+'" data-action-change="updBatch"></label>';
+            html+='<button class="btn btn-xs btn-approve" data-action="doApprove" data-args="[['+ids.join(',')+']]">Genehmigen</button>';
+            html+='<button class="btn btn-xs btn-outline btn-danger-text" data-action="startReject" data-args="[['+ids.join(',')+']]">Ablehnen</button>';
             html+='</div>';
         }
         if(st!=='pending'&&u.app_first){html+='<div class="ap-foot"><span class="ap-foot-info">Bearbeitet von '+esc(u.app_first+' '+u.app_last)+'</span></div>';}
@@ -240,11 +240,11 @@ function openDetail(uid){
             dh+='<div class="apd-day"><span class="apd-day-wd">'+gwd(item.plan_date)+'</span><span class="apd-day-date">'+fd(item.plan_date)+'</span>';
             dh+='<span class="ap-block-label" style="background:'+rng.bg+';color:'+rng.fg+';font-size:.6rem;padding:.05rem .25rem">'+esc(rng.label)+'</span>';
             if(item.remarks)dh+='<span class="muted" style="font-size:.7rem;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(item.remarks)+'">'+esc(item.remarks)+'</span>';
-            if(isPending)dh+='<span class="apd-day-acts"><button class="btn btn-xs btn-approve" onclick="doApproveSingle('+item.id+')" title="Genehmigen">Ja</button><button class="btn btn-xs btn-outline btn-danger-text" onclick="doRejectSingle('+item.id+')" title="Ablehnen">Nein</button></span>';
+            if(isPending)dh+='<span class="apd-day-acts"><button class="btn btn-xs btn-approve" data-action="doApproveSingle" data-args="['+item.id+']" title="Genehmigen">Ja</button><button class="btn btn-xs btn-outline btn-danger-text" data-action="doRejectSingle" data-args="['+item.id+']" title="Ablehnen">Nein</button></span>';
             if(st==='rejected'&&item.rejection_reason)dh+='<span style="font-size:.68rem;color:var(--err);margin-left:auto">'+esc(item.rejection_reason)+'</span>';
             dh+='</div>';
         });
-        if(isPending&&rng.items.length>1){var bids=rng.items.map(function(i){return i.id;});dh+='<div class="apd-block-foot"><button class="btn btn-xs btn-approve" onclick="doApprove(['+bids.join(',')+'])">Block ('+rng.items.length+')</button><button class="btn btn-xs btn-outline btn-danger-text" onclick="startReject(['+bids.join(',')+'])">Ablehnen</button></div>';}
+        if(isPending&&rng.items.length>1){var bids=rng.items.map(function(i){return i.id;});dh+='<div class="apd-block-foot"><button class="btn btn-xs btn-approve" data-action="doApprove" data-args="[['+bids.join(',')+']]">Block ('+rng.items.length+')</button><button class="btn btn-xs btn-outline btn-danger-text" data-action="startReject" data-args="[['+bids.join(',')+']]">Ablehnen</button></div>';}
         dh+='</div>';
     });
     document.getElementById('detItems').innerHTML=dh;

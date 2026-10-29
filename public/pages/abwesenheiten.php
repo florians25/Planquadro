@@ -779,8 +779,8 @@ require_once __DIR__ . '/../includes/header.php';
     </div><!-- /cb -->
 
     <div class="mf">
-      <button class="btn btn-outline" onclick="ABW.reset()">Zurücksetzen</button>
-      <button class="btn btn-primary" onclick="ABW.save()">Weiter</button>
+      <button class="btn btn-outline" data-action="ABW.reset">Zurücksetzen</button>
+      <button class="btn btn-primary" data-action="ABW.save">Weiter</button>
     </div>
   </div>
 
@@ -790,7 +790,7 @@ require_once __DIR__ . '/../includes/header.php';
       <span style="display:flex;gap:.35rem;align-items:center">
         <input type="date" class="inp-sm" id="fFrom" value="<?php echo date('Y-m-01'); ?>">
         <input type="date" class="inp-sm" id="fTo" value="<?php echo date('Y-m-t', strtotime('+2 month')); ?>">
-        <button class="btn btn-xs btn-outline" onclick="ABW.load()">Anzeigen</button>
+        <button class="btn btn-xs btn-outline" data-action="ABW.load">Anzeigen</button>
       </span></div>
     <div class="cb" id="aList" style="max-height:calc(100vh - 260px);overflow:auto">
       <p class="muted">Wird geladen …</p>
@@ -800,12 +800,12 @@ require_once __DIR__ . '/../includes/header.php';
 
 <!-- ---------------- Vorschau vor dem Erfassen ---------------- -->
 <div class="modal-bg" id="ovImpact"><div class="modal modal-lg abw-modal">
-  <div class="mh"><h3 id="impTitle">Auswirkung prüfen</h3><button class="mx" onclick="cMod('ovImpact')">&times;</button></div>
+  <div class="mh"><h3 id="impTitle">Auswirkung prüfen</h3><button class="mx" data-action="cMod" data-args='["ovImpact"]'>&times;</button></div>
   <div class="mb" id="impBody"></div>
   <div class="mf" id="impFoot"></div>
 </div></div>
 
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 "use strict";
 var ABW_USERS = <?php echo json_encode(array_map(function ($u) {
     return ['id' => (int)$u['id'], 'name' => $u['last_name'] . ', ' . $u['first_name'],
@@ -1061,7 +1061,7 @@ var ABW = (function () {
   function foot(hasItems) {
     $('impFoot').innerHTML =
       (hasItems ? '<span id="impCover" class="muted" style="margin-right:auto;font-size:.8rem"></span>' : '') +
-      '<button class="btn btn-outline" onclick="cMod(\'ovImpact\')">Abbrechen</button>' +
+      '<button class="btn btn-outline" data-action="cMod" data-args=\'["ovImpact"]\'>Abbrechen</button>' +
       '<button class="btn btn-primary" id="impGo">Als abwesend eintragen</button>';
     $('impGo').onclick = function () {
       opt.remarks = $('mRemarks') ? $('mRemarks').value : '';

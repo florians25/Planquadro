@@ -125,7 +125,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="fg"><label>Bis</label><input type="date" class="inp" id="vEnd" value="<?php echo $today;?>"></div>
       </div>
       <div class="fg"><label>Notiz (optional)</label><input type="text" class="inp" id="vNote" maxlength="255" placeholder="z. B. Urlaub, Krankheit"></div>
-      <button class="btn btn-primary btn-full" onclick="vCreate()">Vertretung speichern</button>
+      <button class="btn btn-primary btn-full" data-action="vCreate">Vertretung speichern</button>
     </div>
 
     <div class="card">
@@ -141,7 +141,7 @@ require_once __DIR__ . '/../includes/header.php';
               <div class="vtr-item-name"><?php echo e($d['dl'].', '.$d['df']);?> <span class="vtr-badge <?php echo $scls;?>"><?php echo $slabel;?></span></div>
               <div class="vtr-item-sub"><?php echo date('d.m.Y',strtotime($d['start_date'])).' – '.date('d.m.Y',strtotime($d['end_date']));?><?php if($d['note']):?> · <?php echo e($d['note']);?><?php endif;?></div>
             </div>
-            <button class="btn btn-sm btn-outline" onclick="vDelete(<?php echo (int)$d['id'];?>)">Beenden</button>
+            <button class="btn btn-sm btn-outline" <?php echo opsActionAttr('vDelete',[(int)$d['id']]);?>>Beenden</button>
           </div>
         <?php endforeach; ?>
         </div>
@@ -174,7 +174,7 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="vtr-item-name"><?php echo e($d['gl'].', '.$d['gf']);?> → <?php echo e($d['dl'].', '.$d['df']);?> <span class="vtr-badge <?php echo $scls;?>"><?php echo $slabel;?></span></div>
           <div class="vtr-item-sub"><?php echo date('d.m.Y',strtotime($d['start_date'])).' – '.date('d.m.Y',strtotime($d['end_date']));?><?php if($d['note']):?> · <?php echo e($d['note']);?><?php endif;?></div>
         </div>
-        <button class="btn btn-sm btn-outline" onclick="vDelete(<?php echo (int)$d['id'];?>)">Löschen</button>
+        <button class="btn btn-sm btn-outline" <?php echo opsActionAttr('vDelete',[(int)$d['id']]);?>>Löschen</button>
       </div>
     <?php endforeach; ?>
     </div>
@@ -182,7 +182,7 @@ require_once __DIR__ . '/../includes/header.php';
   <?php endif; ?>
 </div>
 
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 function vCreate(){
   var dep=document.getElementById('vDeputy').value;
   var s=document.getElementById('vStart').value, e=document.getElementById('vEnd').value;

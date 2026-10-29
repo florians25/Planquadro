@@ -366,7 +366,8 @@ die Weboberfläche).
   Klartext-Einmalpasswörter in der Datenbank.
 - Secrets nur aus Umgebung/Secret-Dateien (`*_FILE`-Variablen für Docker Secrets).
 - Ausgabe-Escaping: `e()` serverseitig; im JS ein `esc()`, das auch Anführungszeichen
-  maskiert; CSP ohne `unsafe-inline` als Ziel (Phase 5, wenn Inline-Handler ersetzt sind).
+  maskiert. CSP aus PHP (`opsSendCsp()`): `script-src 'self' 'nonce-…'` ohne
+  `unsafe-inline`/`unsafe-eval`, keine Inline-Handler (`data-action`, siehe DEVELOPMENT.md).
 - Audit-Log für sicherheitsrelevante Aktionen; IP-Adressen gekürzt oder gehasht nach
   konfigurierbarer Frist; keine Gesundheitsdaten in Logs.
 - Optional OIDC/SSO (Authorization Code + PKCE), Zuordnung von Gruppen zu Rollen je Mandant.

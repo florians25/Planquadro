@@ -66,8 +66,8 @@ Status: ✅ behoben · ⏳ geplant (Phase) · ❓ Entscheidung nötig.
 | S-18 | M | `view_all_employees` (Planungs-Scope) öffnet zugleich Gesundheitsdaten aller | `canSeeAbsenceDetails()` | ✅ (E-2): nur Vorgesetzten-Beziehung, neues Recht `view_absence_details_all` |
 | S-19 | M | Meldungen (`announcements active`) ohne Login abrufbar | `api/announcements` | ✅ Login erforderlich |
 | S-20 | M | Fehlermeldungen geben Datenbankdetails an den Client (`$e->getMessage()`) | diverse APIs | ✅ Request-Kernel (`app/lib/Kernel.php`): generische Meldung + Request-ID, Details nur im Log |
-| S-21 | N | `onclick='…<?php echo e(...)?>…'` – `&#039;` wird im Handler zu `'` | `monatsplanung`, `rollen` | ⏳ Phase 5 (Inline-Handler ersetzen) |
-| S-22 | N | CSP mit `unsafe-inline` | `.htaccess` | ⏳ Phase 5 |
+| S-21 | N | `onclick='…<?php echo e(...)?>…'` – `&#039;` wird im Handler zu `'` | `monatsplanung`, `rollen` | ✅ Inline-Handler durch `data-action` ersetzt, Werte per `opsActionAttr()` als JSON escaped |
+| S-22 | N | CSP mit `unsafe-inline` | `.htaccess` | ✅ CSP aus PHP mit Nonce je Request, `script-src` ohne `unsafe-inline`/`unsafe-eval` (Übergang: `planungsassistent` bis zum Neubau) |
 | S-23 | N | Passwortrichtlinie Standard 6 Zeichen, 30-Tage-Zwangswechsel (entspricht nicht NIST/BSI) | Einstellungen | ✅ entschieden (E-4): bleibt (6 Zeichen, 30 Tage), weiter einstellbar |
 
 #### Datenintegrität und Mehrbenutzerbetrieb
@@ -216,7 +216,7 @@ Offen (bewusst verschoben, kein Funktionsverlust):
 - Disaster-Recovery-Handbuch (`docs/DISASTER_RECOVERY.md`) mit RPO/RTO.
 - Release-Workflow: Image-Build und -Signatur bei Tag (Push in Registry erst nach Freigabe).
 
-## Phase 5 – Oberfläche ✅ (ohne CSP-Umbau)
+## Phase 5 – Oberfläche ✅
 
 Umgesetzt: Designsystem mit Tokens und Dark Mode (`docs/DESIGN_SYSTEM.md`), Kontraste,
 Fokus, Skip-Link, Dialog-ARIA, Tastaturbedienung der Matrix, Filter „Nur Änderungen“,
@@ -236,8 +236,10 @@ Plan-/Filterleiste ohne Überlauf (768–1920 px), Dashboard nach Rolle mit „H
 Offen dazu: Rückgängig hinterlässt bei vorher veröffentlichten Zellen einen inhaltsgleichen
 Entwurf (fachlich ohne Wirkung, zählt aber als Änderung); Woche kopieren > 500 Einträge in
 Teilen; Mobile-App: Pull-to-Refresh, Wochenübersicht, Kollegen-Suche.
-Offen: Inline-Handler entfernen / CSP ohne `unsafe-inline` (S-21, S-22), Verschieben per
-Langdruck auf Touch-Geräten, Verschieben mehrerer Zellen auf einmal.
+Strikte CSP (S-21, S-22): alle Inline-Handler durch Ereignis-Delegation (`data-action`,
+`public/assets/js/actions.js`) ersetzt, Inline-Skripte mit Nonce, CSP-Header aus PHP;
+Ausnahme bis zu seinem Neubau ist der Planungsassistent (gelockerte `script-src` nur dort).
+Offen: Verschieben per Langdruck auf Touch-Geräten, Verschieben mehrerer Zellen auf einmal.
 
 
 - Planquadro-Designsystem (Design Tokens als CSS-Variablen, Light/Dark, Mandantenfarben).
@@ -247,7 +249,7 @@ Langdruck auf Touch-Geräten, Verschieben mehrerer Zellen auf einmal.
   ab n Zeilen, N+1-Abfragen entfernen (`vacLeftAtStart` je Zeile).
 - Filter/Suche vereinheitlichen; Drag-and-Drop als Ergänzung zum bestehenden
   Werkzeug-Klick (nicht als Ersatz).
-- Inline-Handler entfernen → CSP ohne `unsafe-inline`.
+- Inline-Handler entfernen → CSP ohne `unsafe-inline`. ✅
 
 ## Phase 6 – Mobile ✅ (Code, noch nicht in den Stores)
 

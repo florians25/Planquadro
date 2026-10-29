@@ -84,17 +84,17 @@ foreach($hs as $h){
 <div class="ph"><h1>Feiertage & Ferien <?php echo $y;?></h1><div class="phr">
 <a href="?year=<?php echo $y-1;?>" class="btn btn-sm btn-outline">&laquo; <?php echo $y-1;?></a>
 <a href="?year=<?php echo $y+1;?>" class="btn btn-sm btn-outline"><?php echo $y+1;?> &raquo;</a>
-<button class="btn btn-sm btn-primary" onclick="oMod('holMod')">Feiertag</button>
-<button class="btn btn-sm btn-primary" onclick="oMod('rangeMod')">Ferien-Zeitraum</button>
-<button class="btn btn-sm btn-outline" onclick="importHolidays()">Feiertage importieren</button>
-<button class="btn btn-sm btn-outline" onclick="importFerien()">Ferien importieren</button></div></div>
+<button class="btn btn-sm btn-primary" data-action="oMod" data-args='["holMod"]'>Feiertag</button>
+<button class="btn btn-sm btn-primary" data-action="oMod" data-args='["rangeMod"]'>Ferien-Zeitraum</button>
+<button class="btn btn-sm btn-outline" data-action="importHolidays">Feiertage importieren</button>
+<button class="btn btn-sm btn-outline" data-action="importFerien">Ferien importieren</button></div></div>
 
 <div class="card mb"><div class="ch">Feiertage</div><div class="cb p0"><table class="tbl"><thead><tr><th>Datum</th><th>Tag</th><th>Name</th><th>Aktionen</th></tr></thead><tbody>
 <?php foreach($feiertage as $h):?><tr>
 <td><?php echo date('d.m.Y',strtotime($h['holiday_date']));?></td><td><?php echo wdShort($h['holiday_date']);?></td>
 <td><?php echo e($h['name']);?></td>
-<td class="tbl-acts"><button class="btn btn-xs btn-outline" onclick='oHolMod(<?php echo json_encode($h,JSON_HEX_APOS|JSON_HEX_QUOT);?>)'>Bearbeiten</button>
-<button class="btn btn-xs btn-outline btn-danger-text" onclick="delHol(<?php echo $h['id'];?>)">Entfernen</button></td>
+<td class="tbl-acts"><button class="btn btn-xs btn-outline" <?php echo opsActionAttr('oHolMod',[$h]);?>>Bearbeiten</button>
+<button class="btn btn-xs btn-outline btn-danger-text" <?php echo opsActionAttr('delHol',[(int)$h['id']]);?>>Entfernen</button></td>
 </tr><?php endforeach;?><?php if(empty($feiertage)):?><tr><td colspan="4" class="muted tc">Keine Feiertage</td></tr><?php endif;?>
 </tbody></table></div></div>
 
@@ -103,25 +103,25 @@ foreach($hs as $h){
 <td><?php echo date('d.m.',strtotime($fr['start'])).' – '.date('d.m.Y',strtotime($fr['end']));?></td>
 <td><?php echo e($fr['name']);?></td>
 <td><span class="badge bi"><?php echo $fr['count'];?> Tage</span></td>
-<td class="tbl-acts"><button class="btn btn-xs btn-outline" onclick="oRangeMod('<?php echo e(addslashes($fr['name']));?>','<?php echo e($fr['type']);?>','<?php echo $fr['start'];?>','<?php echo $fr['end'];?>')">Bearbeiten</button>
-<button class="btn btn-xs btn-outline btn-danger-text" onclick="delRange('<?php echo e(addslashes($fr['name']));?>','<?php echo e($fr['type']);?>')">Entfernen</button></td>
+<td class="tbl-acts"><button class="btn btn-xs btn-outline" <?php echo opsActionAttr('oRangeMod',[$fr['name'],$fr['type'],$fr['start'],$fr['end']]);?>>Bearbeiten</button>
+<button class="btn btn-xs btn-outline btn-danger-text" <?php echo opsActionAttr('delRange',[$fr['name'],$fr['type']]);?>>Entfernen</button></td>
 </tr><?php endforeach;?><?php if(empty($ferienRanges)):?><tr><td colspan="4" class="muted tc">Keine Ferien</td></tr><?php endif;?>
 </tbody></table></div></div>
 
-<div class="modal-bg" id="holMod"><div class="modal"><div class="mh"><h3 id="hmT">Feiertag</h3><button class="mx" onclick="cMod('holMod')">&times;</button></div>
+<div class="modal-bg" id="holMod"><div class="modal"><div class="mh"><h3 id="hmT">Feiertag</h3><button class="mx" data-action="cMod" data-args='["holMod"]'>&times;</button></div>
 <input type="hidden" id="hId" value="0">
 <div class="mb"><div class="fg"><label>Datum</label><input type="date" id="hD" required></div>
 <div class="fg"><label>Name</label><input type="text" id="hN" required></div>
 <div class="fg"><label>Typ</label><select id="hT"><option value="feiertag">Feiertag</option><option value="ferien">Ferien</option></select></div></div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('holMod')">Abbrechen</button><button class="btn btn-primary" onclick="saveHol()">Speichern</button></div></div></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["holMod"]'>Abbrechen</button><button class="btn btn-primary" data-action="saveHol">Speichern</button></div></div></div>
 
-<div class="modal-bg" id="rangeMod"><div class="modal"><div class="mh"><h3>Ferien-Zeitraum</h3><button class="mx" onclick="cMod('rangeMod')">&times;</button></div>
+<div class="modal-bg" id="rangeMod"><div class="modal"><div class="mh"><h3>Ferien-Zeitraum</h3><button class="mx" data-action="cMod" data-args='["rangeMod"]'>&times;</button></div>
 <div class="mb"><div class="fg"><label>Name</label><input type="text" id="rN" required placeholder="z.B. Osterferien"></div>
 <div class="fg2"><div class="fg"><label>Von</label><input type="date" id="rF" required></div><div class="fg"><label>Bis</label><input type="date" id="rT" required></div></div>
 <div class="fg"><label>Typ</label><select id="rTp"><option value="ferien">Ferien</option><option value="feiertag">Feiertag</option></select></div></div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('rangeMod')">Abbrechen</button><button class="btn btn-primary" onclick="saveRange()">Eintragen</button></div></div></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["rangeMod"]'>Abbrechen</button><button class="btn btn-primary" data-action="saveRange">Eintragen</button></div></div></div>
 
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 function oHolMod(h){document.getElementById('hmT').textContent=h?'Bearbeiten':'Feiertag';document.getElementById('hId').value=h?h.id:0;document.getElementById('hD').value=h?h.holiday_date:'';document.getElementById('hN').value=h?h.name:'';document.getElementById('hT').value=h?h.holiday_type:'feiertag';oMod('holMod');}
 function oRangeMod(name,type,start,end){document.getElementById('rN').value=name;document.getElementById('rTp').value=type;document.getElementById('rF').value=start;document.getElementById('rT').value=end;oMod('rangeMod');}
 function saveHol(){var fd=new FormData();fd.append('action','save');fd.append('id',document.getElementById('hId').value);fd.append('holiday_date',document.getElementById('hD').value);fd.append('name',document.getElementById('hN').value);fd.append('holiday_type',document.getElementById('hT').value);ajaxPost('feiertage?year=<?php echo $y;?>',fd,function(){cMod('holMod');setTimeout(function(){location.reload();},600);});}

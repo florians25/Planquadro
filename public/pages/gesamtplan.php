@@ -24,24 +24,24 @@ $showPending = $approvalEnabled;
 <div class="plan-bar-top">
 <div class="plan-bar-filters" id="gpFilters">
 <input type="text" id="filterName" class="inp-filter" placeholder="Suchen..." aria-label="Mitarbeitende suchen (Taste /)" title="Mitarbeitende suchen – Taste „/“ springt hierher, Esc leert" autocomplete="off">
-<select id="filterRole" class="sel" onchange="applyFilters()" aria-label="Nach Rolle filtern">
+<select id="filterRole" class="sel" data-action-change="applyFilters" aria-label="Nach Rolle filtern">
 <option value="">Alle Rollen</option>
 <option value="techniker">Techniker</option><option value="teamleiter">Teamleiter</option>
 <option value="verwaltung_r">Verwaltung</option><option value="lager">Lager</option>
 <option value="azubis">Alle Azubis</option>
 <option value="azubi_1">Azubi 1. LJ</option><option value="azubi_2">Azubi 2. LJ</option><option value="azubi_3">Azubi 3. LJ</option>
 </select>
-<select id="filterArea" class="sel" onchange="applyFilters()" aria-label="Nach Einsatzbereich filtern">
+<select id="filterArea" class="sel" data-action-change="applyFilters" aria-label="Nach Einsatzbereich filtern">
 <option value="">Alle Bereiche</option>
 <optgroup label="Kunden"><?php foreach(planAreas('kunde') as $fp):?><option value="<?php echo $fp['id'];?>"><?php echo e($fp['short_code'].' - '.$fp['name']);?></option><?php endforeach;?></optgroup>
 <optgroup label="Allgemein"><?php foreach(planAreas('allgemein') as $fp):?><option value="<?php echo $fp['id'];?>"><?php echo e($fp['short_code'].' - '.$fp['name']);?></option><?php endforeach;?></optgroup>
 </select>
-<button type="button" id="sortToggle" class="sort-toggle-btn" data-mode="standard" onclick="toggleSort()" title="Sortierung umschalten (Standard / A–Z)">
+<button type="button" id="sortToggle" class="sort-toggle-btn" data-mode="standard" data-action="toggleSort" title="Sortierung umschalten (Standard / A–Z)">
 <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h8a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h4a1 1 0 110 2H4a1 1 0 01-1-1z"/></svg>
 <span id="sortToggleLabel">Standard</span>
 </button>
 <?php if($showMineToggle):?><button type="button" class="btn btn-sm btn-outline gp-mine-btn" id="mineToggleBtn" data-pq-filter="mine" aria-pressed="false" title="Nur meine Mitarbeiter anzeigen"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" style="vertical-align:-2px" aria-hidden="true"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg> Meine Mitarbeiter</button><?php endif;?>
-<button class="btn-reset" id="filterResetBtn" onclick="resetFilters()" style="display:none" title="Filter zurücksetzen" aria-label="Filter zurücksetzen">&times;</button>
+<button class="btn-reset" id="filterResetBtn" data-action="resetFilters" style="display:none" title="Filter zurücksetzen" aria-label="Filter zurücksetzen">&times;</button>
 <span class="filter-count" id="filterCount" aria-live="polite"></span>
 </div>
 <div class="plan-bar-nav">
@@ -51,9 +51,9 @@ $showPending = $approvalEnabled;
 </div>
 <div class="plan-bar-actions">
 <?php if($canPropose):?>
-<button class="btn btn-outline btn-propose-main" id="btnEnterProposal" onclick="enterProposalMode()">Änderung beantragen</button>
+<button class="btn btn-outline btn-propose-main" id="btnEnterProposal" data-action="enterProposalMode">Änderung beantragen</button>
 <?php endif;?>
-<button class="btn btn-outline" onclick="window.print()">Drucken</button>
+<button class="btn btn-outline" data-action="print">Drucken</button>
 </div>
 </div>
 <?php if($lp):?><div class="plan-bar-status"><span class="badge bs">Stand: <?php echo date('d.m.Y H:i:s',strtotime($lp));?></span></div><?php endif;?>
@@ -70,8 +70,8 @@ $showPending = $approvalEnabled;
 <span class="muted" id="proposalCount">0 Änderungen gesammelt</span>
 </div>
 <div class="proposal-banner-actions">
-<button class="btn btn-sm btn-primary" id="btnSubmitProposals" onclick="submitProposals()" disabled>Anträge absenden</button>
-<button class="btn btn-sm btn-outline" onclick="exitProposalMode()">Abbrechen</button>
+<button class="btn btn-sm btn-primary" id="btnSubmitProposals" data-action="submitProposals" disabled>Anträge absenden</button>
+<button class="btn btn-sm btn-outline" data-action="exitProposalMode">Abbrechen</button>
 </div>
 </div>
 <div id="proposalToolbar" class="tb no-print" style="display:none">
@@ -164,7 +164,7 @@ data-u="<?php echo $u['id'];?>" data-d="<?php echo $d;?>" data-t="<?php echo $ct
 <?php require_once __DIR__.'/../includes/legend.php'; ?>
 
 <?php if($showPending): ?>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 var GP_YEAR=<?php echo $y;?>, GP_MONTH=<?php echo $m;?>;
 var GP_MY_ID=<?php echo (int)$cu['id'];?>;
 var GP_CAN_PROPOSE=<?php echo $canPropose?'true':'false';?>;

@@ -109,7 +109,7 @@ $tab = in_array($_GET['tab'] ?? '', ['kunden', 'standorte', 'qualifikationen', '
 <div class="card"><div class="cb p0">
 <table class="tbl sd-tbl"><thead><tr><th>Name</th><th>Nr.</th><th>Adresse</th><th>Ansprechpartner</th><th>Telefon / E-Mail</th><th>Aktiv</th><th></th></tr></thead><tbody>
 <?php foreach (array_merge($customers, [['id' => 0, 'name' => '', 'customer_no' => '', 'address' => '', 'contact_name' => '', 'phone' => '', 'email' => '', 'notes' => '', 'active' => 1]]) as $c): ?>
-<tr><td colspan="7"><form class="sd-form" data-action="save_customer">
+<tr><td colspan="7"><form class="sd-form" data-sd-action="save_customer">
   <input type="hidden" name="id" value="<?php echo (int)$c['id']; ?>">
   <input name="name" aria-label="Name" placeholder="<?php echo $c['id'] ? '' : 'Neuer Kunde …'; ?>" value="<?php echo e($c['name']); ?>" required>
   <input name="customer_no" aria-label="Kundennummer" placeholder="Nr." value="<?php echo e($c['customer_no']); ?>" class="sd-s">
@@ -129,7 +129,7 @@ $tab = in_array($_GET['tab'] ?? '', ['kunden', 'standorte', 'qualifikationen', '
 <div class="card"><div class="cb p0">
 <table class="tbl sd-tbl"><tbody>
 <?php foreach (array_merge($locations, [['id' => 0, 'name' => '', 'customer_id' => null, 'address' => '', 'lat' => '', 'lng' => '', 'notes' => '', 'active' => 1]]) as $l): ?>
-<tr><td><form class="sd-form" data-action="save_location">
+<tr><td><form class="sd-form" data-sd-action="save_location">
   <input type="hidden" name="id" value="<?php echo (int)$l['id']; ?>">
   <input name="name" aria-label="Name" placeholder="<?php echo $l['id'] ? '' : 'Neuer Standort …'; ?>" value="<?php echo e($l['name']); ?>" required>
   <select name="customer_id" aria-label="Kunde"><option value="">– kein Kunde –</option><?php foreach ($customers as $c): ?><option value="<?php echo (int)$c['id']; ?>" <?php if ((int)$l['customer_id'] === (int)$c['id']) echo 'selected'; ?>><?php echo e($c['name']); ?></option><?php endforeach; ?></select>
@@ -148,7 +148,7 @@ $tab = in_array($_GET['tab'] ?? '', ['kunden', 'standorte', 'qualifikationen', '
 <div class="card"><div class="cb">
 <?php foreach (array_merge($quals, [['id' => 0, 'name' => '', 'description' => '', 'color' => '#64748b', 'holders' => 0]]) as $q): ?>
 <div class="sd-qual">
-  <form class="sd-form" data-action="save_qualification">
+  <form class="sd-form" data-sd-action="save_qualification">
     <input type="hidden" name="id" value="<?php echo (int)$q['id']; ?>">
     <input type="color" name="color" aria-label="Farbe" value="<?php echo e($q['color']); ?>">
     <input name="name" aria-label="Name" placeholder="<?php echo $q['id'] ? '' : 'Neue Qualifikation …'; ?>" value="<?php echo e($q['name']); ?>" required>
@@ -158,7 +158,7 @@ $tab = in_array($_GET['tab'] ?? '', ['kunden', 'standorte', 'qualifikationen', '
   </form>
   <?php if ($q['id']): ?>
   <details><summary><?php echo (int)$q['holders']; ?> Mitarbeiter mit dieser Qualifikation</summary>
-    <form class="sd-form sd-holders" data-action="save_holders">
+    <form class="sd-form sd-holders" data-sd-action="save_holders">
       <input type="hidden" name="id" value="<?php echo (int)$q['id']; ?>">
       <input type="search" class="sd-filter" placeholder="Filtern …" aria-label="Mitarbeiter filtern">
       <div class="sd-people">
@@ -177,7 +177,7 @@ $tab = in_array($_GET['tab'] ?? '', ['kunden', 'standorte', 'qualifikationen', '
 <?php else: ?>
 <div class="card"><div class="cb">
 <p class="muted" style="font-size:.8rem">Ordnet jedem Einsatzcode optional einen Kunden und Standort zu. Mitarbeiter sehen die Kundeninformationen dann in der App bei ihrem Einsatz.</p>
-<form class="sd-form sd-links" data-action="save_area_links">
+<form class="sd-form sd-links" data-sd-action="save_area_links">
 <table class="tbl"><thead><tr><th>Code</th><th>Bereich</th><th>Kunde</th><th>Standort</th></tr></thead><tbody>
 <?php foreach ($areas as $a): ?>
 <tr><td><span class="ts" style="background:<?php echo e($a['color']); ?>;color:<?php echo e($a['fg_color']); ?>"><?php echo e($a['short_code']); ?></span></td><td><?php echo e($a['name']); ?></td>
@@ -201,9 +201,9 @@ $tab = in_array($_GET['tab'] ?? '', ['kunden', 'standorte', 'qualifikationen', '
 .sd-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.15rem .75rem;width:100%;max-height:260px;overflow:auto}
 .sd-tbl td{padding:.4rem .6rem}
 </style>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 document.querySelectorAll('.sd-form').forEach(function(f){
-  f.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(f);fd.append('action',f.dataset.action);ajaxPost('stammdaten',fd,function(){setTimeout(function(){location.reload();},500);});});
+  f.addEventListener('submit',function(e){e.preventDefault();var fd=new FormData(f);fd.append('action',f.dataset.sdAction);ajaxPost('stammdaten',fd,function(){setTimeout(function(){location.reload();},500);});});
 });
 document.querySelectorAll('[data-del]').forEach(function(b){
   b.addEventListener('click',function(){epConfirm('Wirklich löschen? Zuordnungen zu Einsatzcodes werden entfernt.',function(){var fd=new FormData();fd.append('action','delete');fd.append('type',b.dataset.del);fd.append('id',b.dataset.id);ajaxPost('stammdaten',fd,function(){setTimeout(function(){location.reload();},400);});});});

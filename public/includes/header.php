@@ -75,6 +75,8 @@ if (isMaintenanceMode() && !canBypassMaintenance()) {
 
 $_cu = currentUser();
 $_pg = basename($_SERVER['SCRIPT_FILENAME'], '.php');
+/* Übergang: Seiten im Umbau behalten Inline-Skripte (OPS_CSP_LEGACY_PAGES) */
+if (in_array($_pg, OPS_CSP_LEGACY_PAGES, true)) opsSendCsp("'self'", true);
 $_fl = getFlash();
 $_bp = bp();
 ?><!DOCTYPE html>
@@ -82,7 +84,8 @@ $_bp = bp();
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script>/* Farbschema vor dem ersten Rendern setzen (kein Aufblitzen) */(function(){try{var t=localStorage.getItem('pq-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');document.documentElement.setAttribute('data-theme-pref',t);}catch(e){}})();</script>
+<script src="<?php echo $_bp; ?>assets/js/actions.js?v=<?php echo @filemtime(__DIR__.'/../assets/js/actions.js'); ?>"></script>
+<script nonce="<?php echo opsCspNonce(); ?>">/* Farbschema vor dem ersten Rendern setzen (kein Aufblitzen) */(function(){try{var t=localStorage.getItem('pq-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',d?'dark':'light');document.documentElement.setAttribute('data-theme-pref',t);}catch(e){}})();</script>
 <title><?php echo e(tcfg('branding.name','Planquadro')); ?><?php echo isset($pageTitle) ? ' – '.e($pageTitle) : ''; ?></title>
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/style.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/style.css'); ?>">
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/planquadro-theme.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/planquadro-theme.css'); ?>">
@@ -92,7 +95,7 @@ $_bp = bp();
 <meta name="color-scheme" content="light dark">
 <meta name="csrf-token" content="<?php echo csrfToken(); ?>">
 <style><?php echo opsBrandCss(); ?></style>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 /* CSRF: jede zustandsändernde Anfrage an den eigenen Server trägt das
    Session-Token im Header X-CSRF-Token (geprüft in includes/auth.php). */
 (function(){
@@ -204,17 +207,17 @@ $_bp = bp();
   </div>
   <div class="nav-right">
     <div class="notif-wrap" id="notifWrap">
-      <button class="notif-bell" onclick="toggleNotif()" title="Benachrichtigungen">
+      <button class="notif-bell" data-action="toggleNotif" title="Benachrichtigungen">
         <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/></svg>
         <span class="notif-count" id="notifCount" style="display:none">0</span>
       </button>
       <div class="notif-panel" id="notifPanel">
-        <div class="notif-panel-head"><b>Benachrichtigungen</b><button class="btn btn-xs btn-outline" onclick="markAllRead()">Alle gelesen</button></div>
+        <div class="notif-panel-head"><b>Benachrichtigungen</b><button class="btn btn-xs btn-outline" data-action="markAllRead">Alle gelesen</button></div>
         <div class="notif-panel-body" id="notifList"><p class="muted" style="padding:.5rem;text-align:center">Keine</p></div>
       </div>
     </div>
     <div class="nav-user-menu" id="userMenu">
-      <button class="nav-user-btn" onclick="document.getElementById('userMenu').classList.toggle('open')">
+      <button class="nav-user-btn" data-action="toggleClass" data-args='["userMenu","open"]'>
         <span class="nav-avatar"><?php echo mb_strtoupper(mb_substr($_cu['first_name'],0,1).mb_substr($_cu['last_name'],0,1)); ?></span>
         <span class="nav-user-info">
           <span class="nav-user-name"><?php echo e($_cu['first_name'].' '.$_cu['last_name']); ?></span>
@@ -231,11 +234,11 @@ $_bp = bp();
           <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
           Mein Profil
         </a>
-        <a href="#" class="nav-drop-item" onclick="event.preventDefault();oMod('changelogMod');">
+        <a href="#" class="nav-drop-item" data-action="oMod" data-args='["changelogMod"]' data-prevent>
           <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
           Was gibt es Neues?
         </a>
-        <a href="#" class="nav-drop-item" onclick="event.preventDefault();oMod('pwMod');">
+        <a href="#" class="nav-drop-item" data-action="oMod" data-args='["pwMod"]' data-prevent>
           <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
           Passwort ändern
         </a>
@@ -243,7 +246,7 @@ $_bp = bp();
           <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
           Datenschutz
         </a>
-        <button type="button" class="nav-drop-item pq-theme-toggle" onclick="pqCycleTheme()" aria-live="polite">
+        <button type="button" class="nav-drop-item pq-theme-toggle" data-action="pqCycleTheme" aria-live="polite">
           <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
           <span>Darstellung: <b id="pqThemeLabel">System</b></span>
         </button>
@@ -258,20 +261,20 @@ $_bp = bp();
 
 <!-- Passwort-Ändern Modal -->
 <div class="modal-bg" id="pwMod"><div class="modal modal-sm">
-<div class="mh"><h3>Passwort ändern</h3><button class="mx" onclick="cMod('pwMod')">&times;</button></div>
+<div class="mh"><h3>Passwort ändern</h3><button class="mx" data-action="cMod" data-args='["pwMod"]'>&times;</button></div>
 <div class="mb">
 <div class="fg"><label>Aktuelles Passwort</label><input type="password" id="pwOld" required></div>
 <div class="fg"><label>Neues Passwort</label><input type="password" id="pwNew" required minlength="6" placeholder="Mind. 6 Zeichen"></div>
 <div class="fg"><label>Neues Passwort bestätigen</label><input type="password" id="pwNew2" required minlength="6"></div>
 </div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('pwMod')">Abbrechen</button><button class="btn btn-primary" onclick="changePassword()">Speichern</button></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["pwMod"]'>Abbrechen</button><button class="btn btn-primary" data-action="changePassword">Speichern</button></div>
 </div></div>
 
 <!-- Changelog Modal -->
 <div class="modal-bg" id="changelogMod"><div class="modal modal-lg" style="max-height:80vh;display:flex;flex-direction:column">
-<div class="mh"><h3>Was gibt es Neues?</h3><button class="mx" onclick="cMod('changelogMod')">&times;</button></div>
+<div class="mh"><h3>Was gibt es Neues?</h3><button class="mx" data-action="cMod" data-args='["changelogMod"]'>&times;</button></div>
 <div class="mb" id="changelogBody" style="overflow-y:auto;flex:1;max-height:60vh"><p class="muted">Laden...</p></div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('changelogMod')">Schließen</button></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["changelogMod"]'>Schließen</button></div>
 </div></div>
 
 <!-- Mobile: desktop-only page warning -->
@@ -282,9 +285,10 @@ $_bp = bp();
 <b>Diese Seite ist für Desktop optimiert</b>
 <span style="font-size:.78rem;color:var(--mu)">Bitte verwende einen Computer für diese Funktion.</span>
 <a href="<?php echo $_bp;?>dashboard" class="btn btn-primary btn-sm" style="margin-top:.5rem">Zum Dashboard</a>
-<button type="button" class="btn btn-outline btn-sm" style="margin-top:.35rem" onclick="document.documentElement.classList.add('mob-force-desktop');try{sessionStorage.setItem('pq-force-desktop','1')}catch(e){}">Trotzdem anzeigen</button>
+<button type="button" class="btn btn-outline btn-sm" style="margin-top:.35rem" data-action="pqForceDesktop">Trotzdem anzeigen</button>
 </div>
-<script>try{if(sessionStorage.getItem('pq-force-desktop')==='1')document.documentElement.classList.add('mob-force-desktop');}catch(e){}</script>
+<script nonce="<?php echo opsCspNonce(); ?>">try{if(sessionStorage.getItem('pq-force-desktop')==='1')document.documentElement.classList.add('mob-force-desktop');}catch(e){}
+pqAction('pqForceDesktop',function(){document.documentElement.classList.add('mob-force-desktop');try{sessionStorage.setItem('pq-force-desktop','1')}catch(e){}});</script>
 <?php endif;?>
 
 <!-- Mobile Bottom Nav -->
@@ -318,10 +322,10 @@ $_bp = bp();
 </div>
 <?php endif; ?>
 <?php if ($_fl): ?>
-<script>document.addEventListener('DOMContentLoaded',function(){toast('<?php echo addslashes(e($_fl['msg'])); ?>','<?php echo e($_fl['type']); ?>');});</script>
+<script nonce="<?php echo opsCspNonce(); ?>">document.addEventListener('DOMContentLoaded',function(){toast('<?php echo addslashes(e($_fl['msg'])); ?>','<?php echo e($_fl['type']); ?>');});</script>
 <?php endif; ?>
 <?php if (canEdit() && getSetting('approval_system_enabled','0')==='1'): ?>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 (function(){
     function refreshBadge(){
         fetch(getApiBase()+'api/change_requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'pending_count'})})
@@ -335,7 +339,7 @@ $_bp = bp();
 })();
 </script>
 <?php endif; ?>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 /* Ensure getApiBase is available before app.js loads */
 if(typeof getApiBase==='undefined'){window.getApiBase=function(){var p=window.location.pathname;return(p.indexOf('/pages/')!==-1||p.indexOf('/api/')!==-1)?'../':'';};window.esc=function(s){if(!s)return '';var d=document.createElement('div');d.appendChild(document.createTextNode(s));return d.innerHTML;};}
 /* Notification Bell */
@@ -357,7 +361,7 @@ if(typeof getApiBase==='undefined'){window.getApiBase=function(){var p=window.lo
             if(!d.success||!d.items||d.items.length===0){el.innerHTML='<p class="muted" style="padding:.75rem;text-align:center;font-size:.82rem">Keine Benachrichtigungen</p>';return;}
             var h='';d.items.forEach(function(n){
                 var cls=n.is_read==='0'||n.is_read===0?'notif-item notif-unread':'notif-item';
-                h+='<div class="'+cls+'" onclick="notifClick('+n.id+',\''+(n.link||'')+'\')"><div class="notif-title">'+esc(n.title)+'</div>';
+                h+='<div class="'+cls+'" '+pqActAttr('notifClick',[+n.id,n.link||''])+'><div class="notif-title">'+esc(n.title)+'</div>';
                 if(n.message)h+='<div class="notif-msg">'+esc(n.message)+'</div>';
                 var dt=new Date(n.created_at);h+='<div class="notif-time">'+('0'+dt.getDate()).slice(-2)+'.'+('0'+(dt.getMonth()+1)).slice(-2)+'. '+('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2)+'</div></div>';
             });el.innerHTML=h;

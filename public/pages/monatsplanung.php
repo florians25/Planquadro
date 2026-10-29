@@ -56,25 +56,25 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 <div class="plan-bar-top">
 <div class="plan-bar-filters">
 <input type="text" id="filterName" class="inp-filter" placeholder="Suchen..." aria-label="Mitarbeitende suchen (Taste /)" title="Mitarbeitende suchen – Taste „/“ springt hierher, Esc leert" autocomplete="off">
-<select id="filterRole" class="sel" onchange="applyFilters()" aria-label="Nach Rolle filtern">
+<select id="filterRole" class="sel" data-action-change="applyFilters" aria-label="Nach Rolle filtern">
 <option value="">Alle Rollen</option>
 <option value="techniker">Techniker</option><option value="teamleiter">Teamleiter</option>
 <option value="verwaltung_r">Verwaltung</option><option value="lager">Lager</option>
 <option value="azubis">Alle Azubis</option>
 <option value="azubi_1">Azubi 1. LJ</option><option value="azubi_2">Azubi 2. LJ</option><option value="azubi_3">Azubi 3. LJ</option>
 </select>
-<select id="filterArea" class="sel" onchange="applyFilters()" aria-label="Nach Einsatzbereich filtern">
+<select id="filterArea" class="sel" data-action-change="applyFilters" aria-label="Nach Einsatzbereich filtern">
 <option value="">Alle Bereiche</option>
 <optgroup label="Kunden"><?php foreach(planAreas('kunde') as $fp):?><option value="<?php echo $fp['id'];?>"><?php echo e($fp['short_code'].' - '.$fp['name']);?></option><?php endforeach;?></optgroup>
 <optgroup label="Allgemein"><?php foreach(planAreas('allgemein') as $fp):?><option value="<?php echo $fp['id'];?>"><?php echo e($fp['short_code'].' - '.$fp['name']);?></option><?php endforeach;?></optgroup>
 </select>
-<button type="button" id="sortToggle" class="sort-toggle-btn" data-mode="standard" onclick="toggleSort()" title="Sortierung umschalten (Standard / A–Z)">
+<button type="button" id="sortToggle" class="sort-toggle-btn" data-mode="standard" data-action="toggleSort" title="Sortierung umschalten (Standard / A–Z)">
 <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h8a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h4a1 1 0 110 2H4a1 1 0 01-1-1z"/></svg>
 <span id="sortToggleLabel">Standard</span>
 </button>
 <?php if($showMineToggle):?><button type="button" class="btn btn-sm btn-outline gp-mine-btn" id="mineToggleBtn" data-pq-filter="mine" aria-pressed="false" title="Nur meine Mitarbeiter anzeigen"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" style="vertical-align:-2px" aria-hidden="true"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg> Meine Mitarbeiter</button><?php endif;?>
-<button type="button" class="btn btn-xs btn-outline" id="draftsOnlyBtn" aria-pressed="false" onclick="toggleDraftsOnly(this)" title="Nur Mitarbeiter mit unveröffentlichten Änderungen anzeigen">Nur Änderungen</button>
-<button class="btn-reset" id="filterResetBtn" onclick="resetFilters()" style="display:none" title="Filter zurücksetzen" aria-label="Filter zurücksetzen">✕</button>
+<button type="button" class="btn btn-xs btn-outline" id="draftsOnlyBtn" aria-pressed="false" data-action="toggleDraftsOnly" data-args='["$this"]' title="Nur Mitarbeiter mit unveröffentlichten Änderungen anzeigen">Nur Änderungen</button>
+<button class="btn-reset" id="filterResetBtn" data-action="resetFilters" style="display:none" title="Filter zurücksetzen" aria-label="Filter zurücksetzen">✕</button>
 <span class="filter-count" id="filterCount" aria-live="polite"></span>
 </div>
 <div class="plan-bar-nav">
@@ -84,19 +84,19 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 <a href="?year=<?php echo $ny;?>&month=<?php echo $nm;?>" class="btn btn-outline"><?php echo monthName($nm);?> &raquo;</a>
 </div>
 <div class="plan-bar-actions">
-<button class="btn btn-outline" onclick="window.print()">Drucken</button>
-<button class="btn btn-outline" onclick="oMod('entryMod')">Erfassen</button>
-<button class="btn btn-outline" onclick="oMod('recurMod')">Dauereinsatz</button>
+<button class="btn btn-outline" data-action="print">Drucken</button>
+<button class="btn btn-outline" data-action="oMod" data-args='["entryMod"]'>Erfassen</button>
+<button class="btn btn-outline" data-action="oMod" data-args='["recurMod"]'>Dauereinsatz</button>
 <?php if(canEdit()||hasPerm('use_planning_assistant')):?>
 <a href="<?php echo bp();?>planungsassistent" class="btn btn-assistant" title="Komplexen Einsatz oder Kundenprojekt planen">
 <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm7.707 8.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
 <span class="btn-txt">Assistent</span><span class="btn-beta">Beta</span></a>
 <?php endif;?>
 <?php if(hasPerm('plan_publish_own')):?>
-<button class="btn btn-primary" onclick="publishPlan(<?php echo $y;?>,<?php echo $m;?>,false)">Meine Änderungen veröffentlichen</button>
+<button class="btn btn-primary" <?php echo opsActionAttr('publishPlan',[(int)$y,(int)$m,false]);?>>Meine Änderungen veröffentlichen</button>
 <?php endif;?>
 <?php if(hasPerm('plan_publish_all')):?>
-<button class="btn btn-outline" onclick="publishPlan(<?php echo $y;?>,<?php echo $m;?>,true)" title="Alle Änderungen veröffentlichen" style="border-color:var(--p);color:var(--p)">Alle veröffentlichen</button>
+<button class="btn btn-outline" <?php echo opsActionAttr('publishPlan',[(int)$y,(int)$m,true]);?> title="Alle Änderungen veröffentlichen" style="border-color:var(--p);color:var(--p)">Alle veröffentlichen</button>
 <?php endif;?>
 </div>
 </div>
@@ -116,7 +116,7 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 <div id="otherDraftsBanner" class="other-drafts-banner no-print" style="display:none">
 <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;flex-shrink:0;color:#0369a1"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
 <span id="otherDraftsText"></span>
-<?php if(hasPerm('plan_publish_all')):?><button class="btn btn-xs btn-outline" style="margin-left:auto;border-color:#0369a1;color:#0369a1" onclick="publishPlan(<?php echo $y;?>,<?php echo $m;?>,true)">Alle veröffentlichen</button><?php endif;?>
+<?php if(hasPerm('plan_publish_all')):?><button class="btn btn-xs btn-outline" style="margin-left:auto;border-color:#0369a1;color:#0369a1" <?php echo opsActionAttr('publishPlan',[(int)$y,(int)$m,true]);?>>Alle veröffentlichen</button><?php endif;?>
 </div>
 
 <!-- Toolbar -->
@@ -132,7 +132,7 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 <option value="<?php echo $p['id'];?>" data-c="<?php echo e($p['color']);?>" data-f="<?php echo e($p['fg_color']);?>" data-k="<?php echo e($p['short_code']);?>"><?php echo e($p['short_code'].' – '.$p['name']);?></option>
 <?php endforeach;?></optgroup></select></div>
 <div class="tbg tbs"><span id="toolSt" class="muted">Werkzeug wählen</span>
-<button class="btn btn-xs btn-outline" id="toolDeselect" style="display:none" onclick="deselectTool()">✕ Ablegen</button>
+<button class="btn btn-xs btn-outline" id="toolDeselect" style="display:none" data-action="deselectTool">✕ Ablegen</button>
 <span id="liveUpdateHint" class="live-update-hint" style="display:none;margin-left:auto">Aktualisiert</span></div>
 </div>
 <div class="tb-row">
@@ -166,7 +166,7 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 <div class="tbg">
 <div class="tb-nv-box">
 <label class="tb-nv-toggle" title="Umschalten: Einträge veröffentlichen / nicht veröffentlichen">
-<input type="checkbox" id="toolInternal" onchange="updateNvToggle()">
+<input type="checkbox" id="toolInternal" data-action-change="updateNvToggle">
 <span class="tb-nv-track"><span class="tb-nv-thumb"></span></span>
 </label>
 <span class="tb-nv-label" id="tbNvLabel">Veröffentlichen</span>
@@ -265,9 +265,9 @@ data-d="<?php echo $d;?>" data-u="<?php echo $u['id'];?>" data-r="<?php echo $ce
 <?php if($see):?><td class="cr-end <?php echo ($absSee&&vacLeftAtEnd($u['id'],$y,$m)<0)?'txt-d':'';?>"><?php echo $absSee?number_format(vacLeftAtEnd($u['id'],$y,$m),1,',',''):'·';?></td><?php endif;?>
 <?php if($showWots):?><td class="cw no-print">
 <?php if($wotCnt>0):?><span class="wot-cnt"><?php echo $wotCnt;?></span>
-<span class="wot-eye" onclick="openWotDetail(<?php echo $u['id'];?>,'<?php echo e($u['last_name'].', '.$u['first_name']);?>')"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg></span>
-<?php if(canEdit()):?><span class="wot-edit" onclick="openWotManager(<?php echo $u['id'];?>,'<?php echo e($u['last_name'].', '.$u['first_name']);?>')"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg></span><?php endif;?>
-<?php else:?><?php if(canEdit()):?><span class="wot-edit" onclick="openWotManager(<?php echo $u['id'];?>,'<?php echo e($u['last_name'].', '.$u['first_name']);?>')"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg></span><?php endif;?><?php endif;?>
+<span class="wot-eye" <?php echo opsActionAttr('openWotDetail',[(int)$u['id'],$u['last_name'].', '.$u['first_name']]);?>><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg></span>
+<?php if(canEdit()):?><span class="wot-edit" <?php echo opsActionAttr('openWotManager',[(int)$u['id'],$u['last_name'].', '.$u['first_name']]);?>><svg viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg></span><?php endif;?>
+<?php else:?><?php if(canEdit()):?><span class="wot-edit" <?php echo opsActionAttr('openWotManager',[(int)$u['id'],$u['last_name'].', '.$u['first_name']]);?>><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg></span><?php endif;?><?php endif;?>
 </td>
 <td class="ch-col no-print"><input type="text" inputmode="decimal" class="inp-hours" value="<?php echo e($md['hours']??'');?>" data-uid="<?php echo $u['id'];?>" placeholder="–"></td>
 <?php if($canErl):?><td class="cs-col no-print"><input type="checkbox" class="inp-snow" data-uid="<?php echo $u['id'];?>" <?php if($md['snow_checked']??0) echo 'checked';?>></td><?php endif;?><?php endif;?>
@@ -275,15 +275,15 @@ data-d="<?php echo $d;?>" data-u="<?php echo $u['id'];?>" data-r="<?php echo $ce
 </tbody></table></div>
 
 <!-- WOT Detail Modal -->
-<div class="modal-bg modal-lock" id="wotDetMod"><div class="modal"><div class="mh"><h3 id="wotDetTitle">WOTs</h3><button class="mx" onclick="cMod('wotDetMod')">&times;</button></div><div class="mb"><div id="wotDetList"><p class="muted">Laden...</p></div></div><div class="mf"><button class="btn btn-outline" onclick="cMod('wotDetMod')">Schließen</button></div></div></div>
+<div class="modal-bg modal-lock" id="wotDetMod"><div class="modal"><div class="mh"><h3 id="wotDetTitle">WOTs</h3><button class="mx" data-action="cMod" data-args='["wotDetMod"]'>&times;</button></div><div class="mb"><div id="wotDetList"><p class="muted">Laden...</p></div></div><div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["wotDetMod"]'>Schließen</button></div></div></div>
 <!-- WOT Manager Modal -->
-<div class="modal-bg modal-lock" id="wotMgrMod"><div class="modal modal-lg"><div class="mh"><h3 id="wotMgrTitle">WOTs verwalten</h3><button class="mx" onclick="cMod('wotMgrMod')">&times;</button></div><div class="mb"><div id="wotMgrList" style="margin-bottom:.75rem"><p class="muted">Laden...</p></div><div style="border-top:1px solid var(--bd);padding-top:.75rem"><h4 style="font-size:.82rem;font-weight:700;margin-bottom:.5rem">Neuen WOT hinzufügen</h4><div class="fg2"><div class="fg"><label>WOT-Nummer</label><input type="text" id="nwNum" placeholder="WOT0123456"></div><div class="fg"><label>Farbe</label><input type="color" id="nwColor" value="#3b82f6"></div></div><div class="fg"><label>Link (optional)</label><input type="url" id="nwLink" placeholder="https://..."></div><div class="fg"><label>Bemerkung (optional)</label><textarea id="nwRem" rows="2" placeholder="z.B. Prio hoch..."></textarea></div><label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--mu);margin-bottom:.5rem"><input type="checkbox" id="nwVisible" checked> Für Mitarbeiter sichtbar</label><button class="btn btn-primary" onclick="addWot()">WOT hinzufügen</button></div></div><div class="mf"><button class="btn btn-outline" onclick="cMod('wotMgrMod')">Schließen</button></div></div></div>
+<div class="modal-bg modal-lock" id="wotMgrMod"><div class="modal modal-lg"><div class="mh"><h3 id="wotMgrTitle">WOTs verwalten</h3><button class="mx" data-action="cMod" data-args='["wotMgrMod"]'>&times;</button></div><div class="mb"><div id="wotMgrList" style="margin-bottom:.75rem"><p class="muted">Laden...</p></div><div style="border-top:1px solid var(--bd);padding-top:.75rem"><h4 style="font-size:.82rem;font-weight:700;margin-bottom:.5rem">Neuen WOT hinzufügen</h4><div class="fg2"><div class="fg"><label>WOT-Nummer</label><input type="text" id="nwNum" placeholder="WOT0123456"></div><div class="fg"><label>Farbe</label><input type="color" id="nwColor" value="#3b82f6"></div></div><div class="fg"><label>Link (optional)</label><input type="url" id="nwLink" placeholder="https://..."></div><div class="fg"><label>Bemerkung (optional)</label><textarea id="nwRem" rows="2" placeholder="z.B. Prio hoch..."></textarea></div><label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--mu);margin-bottom:.5rem"><input type="checkbox" id="nwVisible" checked> Für Mitarbeiter sichtbar</label><button class="btn btn-primary" data-action="addWot">WOT hinzufügen</button></div></div><div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["wotMgrMod"]'>Schließen</button></div></div></div>
 <input type="hidden" id="wotMgrUid" value="0">
 <!-- Manual Entry Modal -->
-<div class="modal-bg" id="entryMod"><div class="modal modal-lg"><div class="mh"><h3>Einsatz / Eintrag erfassen</h3><button class="mx" onclick="cMod('entryMod')">&times;</button></div><div class="mb"><div class="fg"><label>Mitarbeiter <span class="muted" style="font-weight:400">(mehrere möglich – z.B. Onsite-Team)</span></label><input type="text" class="inp-filter sup-search" id="entryUserSearch" placeholder="Mitarbeiter suchen..." oninput="filterEntryUsers()" style="margin-bottom:.4rem"><div class="entry-pick-bar"><button type="button" class="btn btn-xs btn-outline" onclick="entryUsersAll(true)">Alle</button><button type="button" class="btn btn-xs btn-outline" onclick="entryUsersAll(false)">Keine</button><span class="muted" style="font-size:.78rem;margin-left:auto"><b id="entryUserCnt">0</b> ausgewählt</span></div><div class="sup-pick" id="entryUserPick" style="max-height:240px"><?php foreach(planningUsers() as $eu): $epArea=(!empty($eu['primary_area_id'])&&isset($pam[$eu['primary_area_id']]))?$pam[$eu['primary_area_id']]:null;?><label class="sup-pick-item" data-name="<?php echo e(mb_strtolower($eu['last_name'].' '.$eu['first_name']));?>"><input type="checkbox" class="entryUserCb" value="<?php echo $eu['id'];?>" onchange="updateEntryCnt()"><span class="epi-name"><?php echo e($eu['last_name'].', '.$eu['first_name']);?></span><span class="epi-meta"><?php if($epArea):?><span class="epi-tag" style="background:<?php echo e($epArea['color']);?>;color:<?php echo e($epArea['fg_color']);?>" title="Team / Stammbereich"><?php echo e($epArea['short_code']);?></span><?php endif;?><?php if(!empty($eu['os_level'])):?><span class="epi-tag epi-os" title="OS-Level"><?php echo e($eu['os_level']);?></span><?php endif;?><?php if(!empty($eu['training_profession'])):?><span class="epi-tag epi-tp" title="Ausbildungsberuf"><?php echo e($eu['training_profession']);?></span><?php endif;?><span class="epi-tag epi-role"><?php echo e(roleName($eu['role']));?></span></span></label><?php endforeach;?></div></div><div class="fg2"><div class="fg"><label>Datum von</label><input type="date" id="entryFrom" value="<?php echo sprintf('%04d-%02d-01',$y,$m);?>"></div><div class="fg"><label>Datum bis</label><input type="date" id="entryTo" value="<?php echo date('Y-m-t',strtotime(sprintf('%04d-%02d-01',$y,$m)));?>"></div></div><div class="fg"><label>Typ</label><select class="sel" id="entryType"><option value="">– Bitte wählen –</option><optgroup label="Einsatz (Kunden)"><?php foreach(planAreas('kunde') as $p):?><option value="a:<?php echo $p['id'];?>"><?php echo e($p['short_code'].' - '.$p['name']);?></option><?php endforeach;?></optgroup><optgroup label="Einsatz (Allgemein)"><?php foreach(planAreas('allgemein') as $p):?><option value="a:<?php echo $p['id'];?>"><?php echo e($p['short_code'].' - '.$p['name']);?></option><?php endforeach;?></optgroup><optgroup label="Abwesenheit"><option value="x:krank_attest">K – Krank mit Attest</option><option value="x:krank_ganz">K – Krank ohne Attest</option><option value="x:krank_halb">k – Krank (halber Tag)</option><option value="x:urlaub_genehmigt">U – Urlaub genehmigt</option><option value="x:urlaub_ganz">U – Urlaub beantragt</option><option value="x:urlaub_halb">u – Urlaub (halber Tag)</option><option value="x:gleitzeit">GL – Gleitzeit</option><option value="x:gesperrt">— – Gesperrt</option><option value="x:offen">? – Offen / noch zu klären</option></optgroup></select></div><label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--mu)"><input type="checkbox" id="entryWe"> Wochenende einschließen</label></div><div class="mf"><button class="btn btn-outline" onclick="cMod('entryMod')">Abbrechen</button><button class="btn btn-primary" onclick="saveEntry()">Prüfen &amp; Speichern</button></div></div></div>
+<div class="modal-bg" id="entryMod"><div class="modal modal-lg"><div class="mh"><h3>Einsatz / Eintrag erfassen</h3><button class="mx" data-action="cMod" data-args='["entryMod"]'>&times;</button></div><div class="mb"><div class="fg"><label>Mitarbeiter <span class="muted" style="font-weight:400">(mehrere möglich – z.B. Onsite-Team)</span></label><input type="text" class="inp-filter sup-search" id="entryUserSearch" placeholder="Mitarbeiter suchen..." data-action-input="filterEntryUsers" style="margin-bottom:.4rem"><div class="entry-pick-bar"><button type="button" class="btn btn-xs btn-outline" data-action="entryUsersAll" data-args="[true]">Alle</button><button type="button" class="btn btn-xs btn-outline" data-action="entryUsersAll" data-args="[false]">Keine</button><span class="muted" style="font-size:.78rem;margin-left:auto"><b id="entryUserCnt">0</b> ausgewählt</span></div><div class="sup-pick" id="entryUserPick" style="max-height:240px"><?php foreach(planningUsers() as $eu): $epArea=(!empty($eu['primary_area_id'])&&isset($pam[$eu['primary_area_id']]))?$pam[$eu['primary_area_id']]:null;?><label class="sup-pick-item" data-name="<?php echo e(mb_strtolower($eu['last_name'].' '.$eu['first_name']));?>"><input type="checkbox" class="entryUserCb" value="<?php echo $eu['id'];?>" data-action-change="updateEntryCnt"><span class="epi-name"><?php echo e($eu['last_name'].', '.$eu['first_name']);?></span><span class="epi-meta"><?php if($epArea):?><span class="epi-tag" style="background:<?php echo e($epArea['color']);?>;color:<?php echo e($epArea['fg_color']);?>" title="Team / Stammbereich"><?php echo e($epArea['short_code']);?></span><?php endif;?><?php if(!empty($eu['os_level'])):?><span class="epi-tag epi-os" title="OS-Level"><?php echo e($eu['os_level']);?></span><?php endif;?><?php if(!empty($eu['training_profession'])):?><span class="epi-tag epi-tp" title="Ausbildungsberuf"><?php echo e($eu['training_profession']);?></span><?php endif;?><span class="epi-tag epi-role"><?php echo e(roleName($eu['role']));?></span></span></label><?php endforeach;?></div></div><div class="fg2"><div class="fg"><label>Datum von</label><input type="date" id="entryFrom" value="<?php echo sprintf('%04d-%02d-01',$y,$m);?>"></div><div class="fg"><label>Datum bis</label><input type="date" id="entryTo" value="<?php echo date('Y-m-t',strtotime(sprintf('%04d-%02d-01',$y,$m)));?>"></div></div><div class="fg"><label>Typ</label><select class="sel" id="entryType"><option value="">– Bitte wählen –</option><optgroup label="Einsatz (Kunden)"><?php foreach(planAreas('kunde') as $p):?><option value="a:<?php echo $p['id'];?>"><?php echo e($p['short_code'].' - '.$p['name']);?></option><?php endforeach;?></optgroup><optgroup label="Einsatz (Allgemein)"><?php foreach(planAreas('allgemein') as $p):?><option value="a:<?php echo $p['id'];?>"><?php echo e($p['short_code'].' - '.$p['name']);?></option><?php endforeach;?></optgroup><optgroup label="Abwesenheit"><option value="x:krank_attest">K – Krank mit Attest</option><option value="x:krank_ganz">K – Krank ohne Attest</option><option value="x:krank_halb">k – Krank (halber Tag)</option><option value="x:urlaub_genehmigt">U – Urlaub genehmigt</option><option value="x:urlaub_ganz">U – Urlaub beantragt</option><option value="x:urlaub_halb">u – Urlaub (halber Tag)</option><option value="x:gleitzeit">GL – Gleitzeit</option><option value="x:gesperrt">— – Gesperrt</option><option value="x:offen">? – Offen / noch zu klären</option></optgroup></select></div><label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--mu)"><input type="checkbox" id="entryWe"> Wochenende einschließen</label></div><div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["entryMod"]'>Abbrechen</button><button class="btn btn-primary" data-action="saveEntry">Prüfen &amp; Speichern</button></div></div></div>
 <!-- Dauereinsatz Modal -->
 <div class="modal-bg" id="recurMod"><div class="modal modal-lg">
-<div class="mh"><h3>Dauereinsatz anlegen</h3><button class="mx" onclick="cMod('recurMod')">&times;</button></div>
+<div class="mh"><h3>Dauereinsatz anlegen</h3><button class="mx" data-action="cMod" data-args='["recurMod"]'>&times;</button></div>
 <div class="mb">
 <!-- Step indicators -->
 <div class="recur-steps">
@@ -295,8 +295,8 @@ data-d="<?php echo $d;?>" data-u="<?php echo $u['id'];?>" data-r="<?php echo $ce
 <!-- Step 1: Mitarbeiter -->
 <div class="recur-panel" id="rp1">
 <div style="display:flex;gap:.5rem;margin-bottom:.5rem">
-<input type="text" class="inp-filter" id="recurSearch" placeholder="Suchen..." oninput="filterUserPick(this)" style="flex:1">
-<select class="sel sel-sm" id="recurRoleFilter" onchange="filterRecurRole()">
+<input type="text" class="inp-filter" id="recurSearch" placeholder="Suchen..." data-action-input="filterUserPick" data-args='["$this"]' style="flex:1">
+<select class="sel sel-sm" id="recurRoleFilter" data-action-change="filterRecurRole">
 <option value="">Alle Rollen</option>
 <option value="techniker">Techniker</option><option value="teamleiter">Teamleiter</option>
 <option value="verwaltung">Verwaltung</option><option value="lager">Lager</option>
@@ -305,10 +305,10 @@ data-d="<?php echo $d;?>" data-u="<?php echo $u['id'];?>" data-r="<?php echo $ce
 </select>
 </div>
 <div class="recur-quick-btns">
-<button class="btn btn-xs btn-outline" onclick="recurSelectAll(true)">Alle auswählen</button>
-<button class="btn btn-xs btn-outline" onclick="recurSelectAll(false)">Alle abwählen</button>
-<button class="btn btn-xs btn-outline" onclick="recurSelectRole('techniker')">Nur Techniker</button>
-<button class="btn btn-xs btn-outline" onclick="recurSelectRole('azubi')">Nur Azubis</button>
+<button class="btn btn-xs btn-outline" data-action="recurSelectAll" data-args="[true]">Alle auswählen</button>
+<button class="btn btn-xs btn-outline" data-action="recurSelectAll" data-args="[false]">Alle abwählen</button>
+<button class="btn btn-xs btn-outline" data-action="recurSelectRole" data-args='["techniker"]'>Nur Techniker</button>
+<button class="btn btn-xs btn-outline" data-action="recurSelectRole" data-args='["azubi"]'>Nur Azubis</button>
 </div>
 <div class="user-pick" id="recurUserPick" style="max-height:260px"><?php foreach(planningUsers() as $eu):
 $rn=roleName($eu['role']); $rc=$eu['role'];
@@ -358,10 +358,10 @@ $rn=roleName($eu['role']); $rc=$eu['role'];
 </div>
 </div>
 <div class="mf">
-<button class="btn btn-outline" onclick="cMod('recurMod')">Abbrechen</button>
-<button class="btn btn-outline" id="recurPrevBtn" onclick="recurStep(-1)" style="display:none">&laquo; Zurück</button>
-<button class="btn btn-primary" id="recurNextBtn" onclick="recurStep(1)">Weiter &raquo;</button>
-<button class="btn btn-primary" id="recurSaveBtn" onclick="saveRecurring()" style="display:none">Anlegen</button>
+<button class="btn btn-outline" data-action="cMod" data-args='["recurMod"]'>Abbrechen</button>
+<button class="btn btn-outline" id="recurPrevBtn" data-action="recurStep" data-args="[-1]" style="display:none">&laquo; Zurück</button>
+<button class="btn btn-primary" id="recurNextBtn" data-action="recurStep" data-args="[1]">Weiter &raquo;</button>
+<button class="btn btn-primary" id="recurSaveBtn" data-action="saveRecurring" style="display:none">Anlegen</button>
 </div>
 </div></div>
 
@@ -380,7 +380,7 @@ $rn=roleName($eu['role']); $rc=$eu['role'];
 
 <?php $pqPlusPage = 'monatsplanung'; require __DIR__.'/../includes/planning_plus.php'; /* Planungshilfen (planning-plus.js) */ ?>
 <?php require_once __DIR__.'/../includes/legend.php'; ?>
-<script>var PY=<?php echo $y;?>,PM=<?php echo $m;?>;
+<script nonce="<?php echo opsCspNonce(); ?>">var PY=<?php echo $y;?>,PM=<?php echo $m;?>;
 var CAN_INTERNAL=<?php echo $canInternal?'true':'false';?>;
 var CAN_UNLOCK_VAC=<?php echo hasPerm('unlock_vacation')?'true':'false';?>;
 var CAN_PUBLISH_OWN=<?php echo hasPerm('plan_publish_own')?'true':'false';?>;

@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
 $pageTitle = 'Planbereiche';
 require_once __DIR__ . '/../includes/header.php';
 ?>
-<div class="ph"><h1>Planbereiche</h1><button class="btn btn-sm btn-primary" onclick="oAreaMod()">Neuer Bereich</button></div>
+<div class="ph"><h1>Planbereiche</h1><button class="btn btn-sm btn-primary" data-action="oAreaMod">Neuer Bereich</button></div>
 <p class="muted" style="margin:-.25rem 0 .75rem;font-size:.82rem">Die Reihenfolge wird automatisch vergeben (keine doppelten Werte). Zum Umsortieren die Pfeile nutzen.</p>
 <?php foreach([['Kunden',planAreas('kunde')],['Allgemein',planAreas('allgemein')]] as [$title,$list]):?>
 <div class="card mb"><div class="ch"><?php echo $title;?></div><div class="cb p0">
@@ -94,21 +94,21 @@ require_once __DIR__ . '/../includes/header.php';
 <tr>
 <td><div class="area-sort-cell"><span class="area-sort-no"><?php echo $a['sort_order'];?></span>
 <span class="area-sort-btns">
-<button class="btn btn-xs btn-outline area-sort-btn" title="Nach oben" onclick="moveArea(<?php echo $a['id'];?>,'up')"<?php if($idx===0)echo ' disabled';?>>&#9650;</button>
-<button class="btn btn-xs btn-outline area-sort-btn" title="Nach unten" onclick="moveArea(<?php echo $a['id'];?>,'down')"<?php if($idx===$cnt-1)echo ' disabled';?>>&#9660;</button>
+<button class="btn btn-xs btn-outline area-sort-btn" title="Nach oben" <?php echo opsActionAttr('moveArea',[(int)$a['id'],'up']);?><?php if($idx===0)echo ' disabled';?>>&#9650;</button>
+<button class="btn btn-xs btn-outline area-sort-btn" title="Nach unten" <?php echo opsActionAttr('moveArea',[(int)$a['id'],'down']);?><?php if($idx===$cnt-1)echo ' disabled';?>>&#9660;</button>
 </span></div></td>
 <td><b><?php echo e($a['short_code']);?></b></td><td><?php echo e($a['name']);?></td>
 <td><span class="tag" style="background:<?php echo e($a['color']);?>;color:<?php echo e($a['fg_color']);?>"><?php echo e($a['short_code']);?></span></td>
 <td class="tbl-acts">
-<button class="btn btn-xs btn-outline" onclick='oAreaMod(<?php echo json_encode($a,JSON_HEX_APOS|JSON_HEX_QUOT);?>)'>Bearbeiten</button>
-<button class="btn btn-xs btn-outline btn-danger-text" onclick="delArea(<?php echo $a['id'];?>)">Löschen</button>
+<button class="btn btn-xs btn-outline" <?php echo opsActionAttr('oAreaMod',[$a]);?>>Bearbeiten</button>
+<button class="btn btn-xs btn-outline btn-danger-text" <?php echo opsActionAttr('delArea',[(int)$a['id']]);?>>Löschen</button>
 </td></tr>
 <?php endforeach;?><?php if(empty($list)):?><tr><td colspan="5" class="muted tc">Keine Eintraege</td></tr><?php endif;?>
 </tbody></table></div></div>
 <?php endforeach;?>
 
 <div class="modal-bg" id="areaMod"><div class="modal">
-<div class="mh"><h3 id="amT">Planbereich</h3><button class="mx" onclick="cMod('areaMod')">&times;</button></div>
+<div class="mh"><h3 id="amT">Planbereich</h3><button class="mx" data-action="cMod" data-args='["areaMod"]'>&times;</button></div>
 <input type="hidden" id="aId" value="0">
 <div class="mb"><div class="fg2">
 <div class="fg"><label>Name</label><input type="text" id="aN" required></div>
@@ -119,9 +119,9 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 <p class="muted" style="font-size:.78rem;margin-top:.5rem">Die Reihenfolge wird automatisch vergeben. Neue Bereiche landen am Ende und lassen sich in der Liste per Pfeil verschieben.</p>
 </div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('areaMod')">Abbrechen</button><button class="btn btn-primary" onclick="saveArea()">Speichern</button></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["areaMod"]'>Abbrechen</button><button class="btn btn-primary" data-action="saveArea">Speichern</button></div>
 </div></div>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 function oAreaMod(a){document.getElementById('amT').textContent=a?'Bearbeiten: '+a.short_code:'Neuer Planbereich';document.getElementById('aId').value=a?a.id:0;document.getElementById('aN').value=a?a.name:'';document.getElementById('aC').value=a?a.short_code:'';document.getElementById('aBg').value=a?a.color:'#3b82f6';document.getElementById('aFg').value=a?a.fg_color:'#ffffff';document.getElementById('aTp').value=a?a.area_type:'kunde';oMod('areaMod');}
 function saveArea(){var fd=new FormData();fd.append('action','save');fd.append('id',document.getElementById('aId').value);fd.append('name',document.getElementById('aN').value);fd.append('short_code',document.getElementById('aC').value);fd.append('color',document.getElementById('aBg').value);fd.append('fg_color',document.getElementById('aFg').value);fd.append('area_type',document.getElementById('aTp').value);ajaxPost('planbereiche',fd,function(){cMod('areaMod');setTimeout(function(){location.reload();},600);});}
 function delArea(id){epConfirm('Bereich wirklich löschen?',function(){var fd=new FormData();fd.append('action','del');fd.append('id',id);ajaxPost('planbereiche',fd,function(){setTimeout(function(){location.reload();},600);});});}

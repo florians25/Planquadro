@@ -244,7 +244,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 <div class="dash-approval-grid" id="dashApprovalGrid"></div>
 </div>
 </div>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 (function(){
     var base=window.location.pathname;base=(base.indexOf('/pages/')!==-1||base.indexOf('/api/')!==-1)?'../':'';
     fetch(base+'api/change_requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'dashboard_stats'})})
@@ -400,7 +400,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 </div>
 </div><!-- /.pq-dash -->
 
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 (function(){
     var base=window.location.pathname;base=(base.indexOf('/pages/')!==-1||base.indexOf('/api/')!==-1)?'../':'';
     fetch(base+'api/announcements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'active'})})

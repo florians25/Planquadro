@@ -74,6 +74,13 @@ Testdatenbank muss „test“ enthalten (Schutz vor versehentlichem Löschen).
 | `HealthTest` | `/api/healthz`, `/api/readyz` (auch SaaS, mandantenbezogen) |
 | `Unit/BackupCryptoTest`, `Unit/BackupFormatTest` | Verschlüsselung inkl. Manipulation/Abschneiden, GFS-Aufbewahrung, tar, Zeilenzähler, S3-Signatur |
 
+| `CspTest`, `Unit/NoInlineHandlersTest` | CSP-Header mit Nonce auf allen Seiten je Rolle; keine Inline-Handler, keine Skripte ohne Nonce, jede statische `data-action` definiert (S-21, S-22) |
+
+Browser-Rundgang (Chromium/Playwright, verändert Daten – nur Wegwerf-DB mit
+`php bin/demo.php`): `BASE=http://127.0.0.1:8080/ PQ_DEMO_PW=… node tests/browser/csp-tour.cjs`
+besucht alle Seiten als admin, Manager, Teamleiter und Mitarbeiter, sammelt
+`securitypolicyviolation`-Ereignisse und JS-Fehler und klickt die wichtigsten Abläufe.
+
 Teilen sich mehrere Checkouts eine Datenbankinstanz, je Checkout einen eigenen
 `PQ_TEST_DB_NAME` (z. B. `planquadro_test_feature`) verwenden.
 
@@ -87,6 +94,40 @@ sh tests/deploy/compose-smoke.sh     # baut den Stack am Ende wieder ab (KEEP=1 
 ```
 
 Neue Fehlerbehebungen bekommen einen Test, der **vor** dem Fix fehlschlägt.
+
+## Oberfläche: keine Inline-Handler, keine Inline-Skripte ohne Nonce
+
+Die Content-Security-Policy (`opsSendCsp()` in `app/lib/Security.php`) erlaubt Skripte nur
+aus eigenen Dateien oder mit der Nonce des Requests. Daher gilt:
+
+- **Keine** `onclick=`, `onchange=`, `oninput=` … – weder in PHP-Templates noch in per JS
+  erzeugtem HTML. Der Test `tests/Unit/NoInlineHandlersTest.php` schlägt sonst fehl.
+- Stattdessen Ereignis-Delegation über `public/assets/js/actions.js` (im `<head>`
+  geladen, vor allen anderen Skripten):
+
+  | Attribut | Wirkung |
+  |---|---|
+  | `data-action="name"` | bei `click` |
+  | `data-action-change="name"`, `data-action-input="name"` | bei `change` / `input` |
+  | `data-args='[1,"text"]'` | Argumente (JSON-Array); Platzhalter `"$this"`, `"$event"`, `"$value"`, `"$checked"` |
+  | `data-prevent` | `preventDefault()` vor dem Aufruf |
+  | `data-return` | Rückgabe `false` verhindert die Standardaktion (wie `return f()`) |
+
+  `name` ist eine globale Funktion (`saveSettings`, auch Pfad `ABW.save`) oder eine mit
+  `pqAction('name', function (el, ev, …args) { … })` registrierte Aktion – für Einzeiler,
+  die früher direkt im Attribut standen. Native Browserfunktionen sind nicht aufrufbar;
+  dafür gibt es `print`, `reload`, `select`, `toggleClass`, `setValue`. Mehrere Aktionen
+  auf dem Weg nach oben laufen wie beim Bubbling (innen zuerst, `stopPropagation()` beendet).
+- Werte aus PHP immer über `opsActionAttr('name', [$id, $text])` ausgeben (JSON, HTML-escaped,
+  IDs vorher `(int)`); Platzhalter dort mit `opsActionToken('this')`. In JS-Markup
+  `pqActAttr('name', [id, text])` verwenden; rein numerische Werte dürfen direkt
+  (`data-args="['+id+']"`) stehen.
+- Inline-`<script>`-Blöcke tragen `nonce="<?php echo opsCspNonce(); ?>"`; Event-Handler als
+  Eigenschaft (`el.onclick = …`) und `addEventListener` sind erlaubt, `javascript:`-URLs,
+  `eval`/`new Function` und String-`setTimeout` nicht.
+- Inline-`style`-Attribute bleiben erlaubt.
+- Übergangsweise gelockert ist nur `OPS_CSP_LEGACY_PAGES` (Planungsassistent bis zum
+  Neubau); die Liste muss mit der Ausnahmeliste im Test übereinstimmen.
 
 ## Migrationen
 

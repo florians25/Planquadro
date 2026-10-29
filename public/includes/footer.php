@@ -8,6 +8,6 @@
 </footer>
 <script defer src="<?php echo bp(); ?>assets/js/app.js?v=<?php echo @filemtime(__DIR__.'/../assets/js/app.js'); ?>"></script>
 <script defer src="<?php echo bp(); ?>assets/js/planning-plus.js?v=<?php echo @filemtime(__DIR__.'/../assets/js/planning-plus.js'); ?>"></script>
-<script>document.addEventListener('DOMContentLoaded',function(){var l=document.getElementById('appLoader');if(l){l.classList.add('loaded');setTimeout(function(){l.remove();},400);}});</script>
+<script nonce="<?php echo opsCspNonce(); ?>">document.addEventListener('DOMContentLoaded',function(){var l=document.getElementById('appLoader');if(l){l.classList.add('loaded');setTimeout(function(){l.remove();},400);}});</script>
 </body>
 </html>

@@ -152,6 +152,8 @@ function opsKernelBoot(bool $handlers = true): void
     static $booted = false;
     if (PHP_SAPI === 'cli') return;
     if (!headers_sent()) header('X-Request-ID: ' . opsRequestId());
+    /* Content-Security-Policy mit Nonce für Inline-Skripte (S-22) */
+    if (function_exists('opsSendCsp')) opsSendCsp();
     if ($booted || !$handlers) return;
     $booted = true;
     /* Fehlertexte nie in die Antwort schreiben – sie gehen ins Log */

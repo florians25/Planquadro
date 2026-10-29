@@ -42,7 +42,13 @@ Header set X-Frame-Options "SAMEORIGIN"
 Header set X-XSS-Protection "1; mode=block"
 Header set Referrer-Policy "strict-origin-when-cross-origin"
 Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
-Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'self'"
+# Content-Security-Policy: setzt PHP je Request mit Nonce für Inline-Skripte
+# (opsSendCsp() in app/lib/Security.php) – hier bewusst NICHT, sonst würde
+# Apache den PHP-Header überschreiben. Statische Dokumente (SVG/HTML) erhalten
+# eine Policy ganz ohne Skripte:
+<FilesMatch "\.(svg|html?)$">
+    Header set Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'self'"
+</FilesMatch>
 Header set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
 </IfModule>
 

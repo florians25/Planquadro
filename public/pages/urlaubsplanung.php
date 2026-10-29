@@ -9,11 +9,11 @@ $y=isset($_GET['year'])?(int)$_GET['year']:(int)date('Y'); $users=planningUsers(
 ?>
 <div class="ph"><div class="phl"><h1>Urlaubsplanung <?php echo $y;?></h1></div><div class="phr">
 <a href="?year=<?php echo $y-1;?>" class="btn btn-sm btn-outline">&laquo;</a><a href="?year=<?php echo(int)date('Y');?>" class="btn btn-sm btn-outline">Aktuell</a><a href="?year=<?php echo $y+1;?>" class="btn btn-sm btn-outline">&raquo;</a>
-<?php if(canEdit()):?><button class="btn btn-sm btn-primary" onclick="oMod('bulkVacMod')">Urlaub für ALLE</button><?php endif;?>
+<?php if(canEdit()):?><button class="btn btn-sm btn-primary" data-action="oMod" data-args='["bulkVacMod"]'>Urlaub für ALLE</button><?php endif;?>
 </div></div>
 <div class="card"><div class="ch" style="display:flex;justify-content:space-between;align-items:center">
 <span>Übersicht <?php echo $y;?></span>
-<input type="text" class="inp-filter" id="urlaubSearch" placeholder="Mitarbeiter suchen..." oninput="filterUrlaub()" style="max-width:220px">
+<input type="text" class="inp-filter" id="urlaubSearch" placeholder="Mitarbeiter suchen..." data-action-input="filterUrlaub" style="max-width:220px">
 </div>
 <div class="cb p0"><table class="tbl" id="urlaubTbl"><thead><tr><th>Mitarbeiter</th><th>Rolle</th><th>Anspruch</th><th>Genommen</th><th>Rest</th><th>Kranktage</th></tr></thead><tbody>
 <?php foreach($users as $u): if($u['role']==='admin') continue; $ud=vacUsed($u['id'],$y); $rl=vacLeft($u['id'],$y); $sk=sickDays($u['id'],$y);?>
@@ -27,7 +27,7 @@ $y=isset($_GET['year'])?(int)$_GET['year']:(int)date('Y'); $users=planningUsers(
 <?php if(canEdit()):?>
 <!-- Bulk vacation modal -->
 <div class="modal-bg" id="bulkVacMod"><div class="modal">
-<div class="mh"><h3>Urlaub für ALLE eintragen</h3><button class="mx" onclick="cMod('bulkVacMod')">&times;</button></div>
+<div class="mh"><h3>Urlaub für ALLE eintragen</h3><button class="mx" data-action="cMod" data-args='["bulkVacMod"]'>&times;</button></div>
 <div class="mb">
 <p class="modal-hint">Trägt für alle aktiven Mitarbeiter den gewählten Urlaubstyp im Zeitraum ein (z.B. Betriebsurlaub Weihnachten).</p>
 <div class="fg2">
@@ -42,9 +42,9 @@ $y=isset($_GET['year'])?(int)$_GET['year']:(int)date('Y'); $users=planningUsers(
 </select></div>
 <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--mu)"><input type="checkbox" id="bvSkipHol" checked> Feiertage/Wochenenden überspringen</label>
 </div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('bulkVacMod')">Abbrechen</button><button class="btn btn-primary" onclick="saveBulkVac()">Für alle eintragen</button></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["bulkVacMod"]'>Abbrechen</button><button class="btn btn-primary" data-action="saveBulkVac">Für alle eintragen</button></div>
 </div></div>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 function saveBulkVac(){
     var from=document.getElementById('bvFrom').value,to=document.getElementById('bvTo').value,type=document.getElementById('bvType').value;
     var skipHol=document.getElementById('bvSkipHol').checked;
@@ -78,7 +78,7 @@ function saveBulkVac(){
 }
 </script>
 <?php endif;?>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 function filterUrlaub(){
     var q=(document.getElementById('urlaubSearch').value||'').toLowerCase().trim();
     document.querySelectorAll('#urlaubTbl tbody tr').forEach(function(r){

@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: "22"
       - name: JS-Syntax
-        run: node --check public/assets/js/app.js
+        run: for f in public/assets/js/*.js; do node --check "$f"; done
       - name: Keine Laufzeit-DDL in Requests
         run: |
           if grep -rnE "exec\((\"|')\s*(ALTER|CREATE) TABLE" public; then

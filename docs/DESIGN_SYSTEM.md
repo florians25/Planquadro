@@ -135,8 +135,23 @@ unverändert.
 - **Touch**: Antippen verhält sich wie bisher (kein Ziehen, kein versehentliches
   Verschieben beim Scrollen). Verschieben per Langdruck ist nicht umgesetzt.
 - Der Gesamtplan bleibt eine Leseansicht (dort kein Drag-and-drop).
-- Neue Interaktionen verwenden keine Inline-Handler (Vorbereitung für eine CSP ohne
-  `unsafe-inline`).
+- Interaktionen verwenden keine Inline-Handler, sondern `data-action` (siehe
+  „Interaktion und CSP“).
+
+## Interaktion und CSP
+
+Die Oberfläche läuft unter einer strikten Content-Security-Policy ohne `unsafe-inline` für
+Skripte. Knöpfe, Felder und per JS erzeugtes Markup binden Aktionen deklarativ:
+
+```html
+<button class="btn btn-primary" data-action="saveSettings">Speichern</button>
+<button class="mx" data-action="cMod" data-args='["pwMod"]'>&times;</button>
+<select data-action-change="applyFilters">…</select>
+<button<?php echo opsActionAttr('deleteUser', [(int)$u['id'], $name]); ?>>Entfernen</button>
+```
+
+Regeln, Platzhalter und Hilfsfunktionen: `docs/DEVELOPMENT.md` („Oberfläche: keine
+Inline-Handler“). Inline-`style` bleibt erlaubt (dynamische Raster- und Markenfarben).
 
 ## Planungshilfen (`planning-plus.js`, `planning-plus.css`)
 

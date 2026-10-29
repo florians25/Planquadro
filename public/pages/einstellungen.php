@@ -141,24 +141,24 @@ $dbVer=$db->query('SELECT VERSION() as v')->fetch()['v']; $phpVer=phpversion();
 }
 </style>
 
-<div class="ph"><h1>Systemeinstellungen</h1><div class="phr"><a class="btn btn-outline" href="organisation">Organisation &amp; Branding</a> <button class="btn btn-primary" onclick="saveSettings()">Speichern</button></div></div>
+<div class="ph"><h1>Systemeinstellungen</h1><div class="phr"><a class="btn btn-outline" href="organisation">Organisation &amp; Branding</a> <button class="btn btn-primary" data-action="saveSettings">Speichern</button></div></div>
 
 <div class="st-wrap">
 <!-- ===== SIDEBAR ===== -->
 <div class="st-side">
-<button class="st-nav active" onclick="stNav(0)"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Allgemein</button>
-<button class="st-nav" onclick="stNav(1)"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>Planung</button>
-<button class="st-nav" onclick="stNav(2)"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>Sicherheit</button>
-<button class="st-nav" onclick="stNav(3)"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>Login &amp; Zugriff</button>
+<button class="st-nav active" data-action="stNav" data-args="[0]"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>Allgemein</button>
+<button class="st-nav" data-action="stNav" data-args="[1]"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>Planung</button>
+<button class="st-nav" data-action="stNav" data-args="[2]"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>Sicherheit</button>
+<button class="st-nav" data-action="stNav" data-args="[3]"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>Login &amp; Zugriff</button>
 <div class="st-sep"></div>
-<button class="st-nav" onclick="stNav(4)"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>Wartung</button>
-<button class="st-nav" onclick="stNav(5)"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>Datenimport</button>
-<button class="st-nav" onclick="stNav(6)"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1z" clip-rule="evenodd"/></svg>Changelog</button>
+<button class="st-nav" data-action="stNav" data-args="[4]"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>Wartung</button>
+<button class="st-nav" data-action="stNav" data-args="[5]"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>Datenimport</button>
+<button class="st-nav" data-action="stNav" data-args="[6]"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1z" clip-rule="evenodd"/></svg>Changelog</button>
 <div class="st-sep"></div>
-<button class="st-nav" onclick="stNav(7)"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd"/></svg>System</button>
-<button class="st-nav" onclick="stNav(8)"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>Audit-Log</button>
-<button class="st-nav" onclick="stNav(9)"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L6.382 6H3a1 1 0 000 2h.341l.764 8.336A2 2 0 006.098 18h7.804a2 2 0 001.993-1.664L16.659 8H17a1 1 0 100-2h-3.382l-1.724-3.447A1 1 0 0011 2H9zm1 4l-1-2h2l-1 2z" clip-rule="evenodd"/></svg>Bereinigung</button>
-<button class="st-nav" onclick="stNav(10)"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/></svg>Backup</button>
+<button class="st-nav" data-action="stNav" data-args="[7]"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd"/></svg>System</button>
+<button class="st-nav" data-action="stNav" data-args="[8]"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>Audit-Log</button>
+<button class="st-nav" data-action="stNav" data-args="[9]"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L6.382 6H3a1 1 0 000 2h.341l.764 8.336A2 2 0 006.098 18h7.804a2 2 0 001.993-1.664L16.659 8H17a1 1 0 100-2h-3.382l-1.724-3.447A1 1 0 0011 2H9zm1 4l-1-2h2l-1 2z" clip-rule="evenodd"/></svg>Bereinigung</button>
+<button class="st-nav" data-action="stNav" data-args="[10]"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/></svg>Backup</button>
 </div>
 
 <!-- ===== MAIN CONTENT ===== -->
@@ -283,7 +283,7 @@ $epaYears = array_filter(array_map('intval', explode(',', (string)getSetting('ep
 <div class="st-stat"><div class="st-stat-n" id="lsFailed" style="color:var(--err)">–</div><div class="st-stat-l">Fehlversuche (7d)</div></div>
 <div class="st-stat"><div class="st-stat-n" id="lsLocked" style="color:var(--wn)">–</div><div class="st-stat-l">Gesperrt</div></div>
 </div>
-<div style="display:flex;gap:.4rem;margin-bottom:.75rem"><button class="btn btn-xs btn-outline" onclick="loadLoginStats()">Aktualisieren</button><button class="btn btn-xs btn-outline btn-danger-text" onclick="clearLockouts()">Alle Sperren aufheben</button></div>
+<div style="display:flex;gap:.4rem;margin-bottom:.75rem"><button class="btn btn-xs btn-outline" data-action="loadLoginStats">Aktualisieren</button><button class="btn btn-xs btn-outline btn-danger-text" data-action="clearLockouts">Alle Sperren aufheben</button></div>
 <div class="st-card"><div class="st-card-h">Login-Statistik (Tagesübersicht)</div><div id="loginLogList"><p class="muted">Laden...</p></div></div>
 </div>
 
@@ -295,12 +295,12 @@ $epaYears = array_filter(array_map('intval', explode(',', (string)getSetting('ep
 <div class="st-row" style="flex-direction:column;align-items:stretch"><div class="st-row-l"><div class="st-row-t">Wartungsnachricht</div></div><textarea id="sMsg" rows="2" style="width:100%;margin-top:.35rem;padding:.4rem .55rem;border:1px solid var(--bd);border-radius:var(--r);font-size:.82rem;resize:vertical"><?php echo e(getSetting('maintenance_message','Das System wird gewartet.'));?></textarea></div>
 </div>
 <div class="st-card">
-<div class="st-card-h" style="justify-content:space-between">Geplante Wartungen <button class="btn btn-xs btn-primary" onclick="oMod('modAddMaint')">+ Neue Wartung</button></div>
+<div class="st-card-h" style="justify-content:space-between">Geplante Wartungen <button class="btn btn-xs btn-primary" data-action="oMod" data-args='["modAddMaint"]'>+ Neue Wartung</button></div>
 <div id="maintList"><p class="muted">Laden...</p></div>
 </div>
 
 <div class="st-card" style="margin-top:1rem">
-<div class="st-card-h" style="justify-content:space-between">Meldungen (Dashboard) <button class="btn btn-xs btn-primary" onclick="oMod('modAddAnn')">+ Neue Meldung</button></div>
+<div class="st-card-h" style="justify-content:space-between">Meldungen (Dashboard) <button class="btn btn-xs btn-primary" data-action="oMod" data-args='["modAddAnn"]'>+ Neue Meldung</button></div>
 <div id="annList"><p class="muted">Laden...</p></div>
 </div>
 </div>
@@ -315,14 +315,14 @@ Feiertag: <code>{"name":"Neujahr","date":"2026-01-01","type":"feiertag"}</code><
 Ferien: <code>{"name":"Osterferien","date":"2026-03-30","type":"ferien"}</code>
 </div>
 <div class="fg"><label>JSON-Daten</label><textarea id="importJson" rows="8" placeholder='[{"name":"Neujahr","date":"2026-01-01","type":"feiertag"}]' style="font-family:monospace;font-size:.8rem"></textarea></div>
-<button class="btn btn-sm btn-primary" onclick="importHolidays()">Importieren</button>
+<button class="btn btn-sm btn-primary" data-action="importHolidays">Importieren</button>
 </div>
 </div>
 
 <!-- 6: Changelog -->
 <div class="st-sec" id="sP6">
 <div class="st-h">Changelog</div><div class="st-sub">Änderungsprotokoll verwalten</div>
-<div style="margin-bottom:.75rem"><button class="btn btn-sm btn-primary" onclick="oMod('modAddCl')">+ Neuer Eintrag</button></div>
+<div style="margin-bottom:.75rem"><button class="btn btn-sm btn-primary" data-action="oMod" data-args='["modAddCl"]'>+ Neuer Eintrag</button></div>
 <div class="st-card"><div id="clList"><p class="muted">Laden...</p></div></div>
 </div>
 
@@ -350,9 +350,9 @@ Ferien: <code>{"name":"Osterferien","date":"2026-03-30","type":"ferien"}</code>
 <div class="st-sec" id="sP8">
 <div class="st-h">Audit-Log</div><div class="st-sub">Sicherheitsprotokoll aller Systemaktionen</div>
 <div style="display:flex;gap:.4rem;margin-bottom:.75rem;align-items:center">
-<select id="auditFilter" class="sel sel-sm" onchange="loadAudit(0)" style="width:auto"><option value="">Alle</option><option value="login_success">Login OK</option><option value="login_failed">Login Fail</option><option value="password_changed">Passwort</option></select>
-<button class="btn btn-xs btn-outline" onclick="loadAudit(0)">Aktualisieren</button>
-<button class="btn btn-xs btn-outline btn-danger-text" onclick="clearAuditLog()">Ältere löschen (>90d)</button>
+<select id="auditFilter" class="sel sel-sm" data-action-change="loadAudit" data-args="[0]" style="width:auto"><option value="">Alle</option><option value="login_success">Login OK</option><option value="login_failed">Login Fail</option><option value="password_changed">Passwort</option></select>
+<button class="btn btn-xs btn-outline" data-action="loadAudit" data-args="[0]">Aktualisieren</button>
+<button class="btn btn-xs btn-outline btn-danger-text" data-action="clearAuditLog">Ältere löschen (>90d)</button>
 </div>
 <div id="auditLogBody"><p class="muted">Laden...</p></div>
 </div>
@@ -360,13 +360,13 @@ Ferien: <code>{"name":"Osterferien","date":"2026-03-30","type":"ferien"}</code>
 <!-- 9: Bereinigung -->
 <div class="st-sec" id="sP9">
 <div class="st-h">Bereinigung</div><div class="st-sub">Alte Daten löschen und Datenbank optimieren</div>
-<div class="st-li"><div class="st-li-info"><b>Alte Benachrichtigungen</b><span>Gelesene, älter als 30 Tage</span></div><button class="btn btn-xs btn-outline btn-danger-text" onclick="dbCleanup('old_notifications')">Bereinigen</button></div>
-<div class="st-li"><div class="st-li-info"><b>Bearbeitungsstatus</b><span>Live-Editing-Locks entfernen</span></div><button class="btn btn-xs btn-outline btn-danger-text" onclick="dbCleanup('editing_status')">Bereinigen</button></div>
-<div class="st-li"><div class="st-li-info"><b>Erledigte Anträge</b><span>Genehmigte/abgelehnte älter als 90 Tage</span></div><button class="btn btn-xs btn-outline btn-danger-text" onclick="dbCleanup('old_requests')">Bereinigen</button></div>
-<div class="st-li"><div class="st-li-info"><b>Login-Protokoll</b><span>Einträge älter als 30 Tage</span></div><button class="btn btn-xs btn-outline btn-danger-text" onclick="dbCleanup('old_login_attempts')">Bereinigen</button></div>
-<div class="st-li"><div class="st-li-info"><b>Feiertags-Einsätze</b><span>Einsätze an Feiertagen entfernen</span></div><div style="display:flex;gap:.3rem;align-items:center"><input type="number" id="cleanupHolYear" value="<?php echo date('Y');?>" class="st-inp" min="2020" max="2040"><button class="btn btn-xs btn-outline btn-danger-text" onclick="dbCleanup('holiday_entries',document.getElementById('cleanupHolYear').value)">Los</button></div></div>
-<div class="st-li"><div class="st-li-info"><b>Publish-Log</b><span>Auf 100 Einträge kürzen</span></div><button class="btn btn-xs btn-outline btn-danger-text" onclick="dbCleanup('publish_log')">Bereinigen</button></div>
-<div class="st-li st-li-danger"><div class="st-li-info"><b style="color:var(--err)">Jahres-Daten löschen</b><span>Unwiderruflich!</span></div><div style="display:flex;gap:.3rem;align-items:center"><input type="number" id="cleanupYear" placeholder="Jahr" class="st-inp" min="2020" max="2040"><button class="btn btn-xs btn-danger" onclick="dbCleanup('delete_year')">Löschen</button></div></div>
+<div class="st-li"><div class="st-li-info"><b>Alte Benachrichtigungen</b><span>Gelesene, älter als 30 Tage</span></div><button class="btn btn-xs btn-outline btn-danger-text" data-action="dbCleanup" data-args='["old_notifications"]'>Bereinigen</button></div>
+<div class="st-li"><div class="st-li-info"><b>Bearbeitungsstatus</b><span>Live-Editing-Locks entfernen</span></div><button class="btn btn-xs btn-outline btn-danger-text" data-action="dbCleanup" data-args='["editing_status"]'>Bereinigen</button></div>
+<div class="st-li"><div class="st-li-info"><b>Erledigte Anträge</b><span>Genehmigte/abgelehnte älter als 90 Tage</span></div><button class="btn btn-xs btn-outline btn-danger-text" data-action="dbCleanup" data-args='["old_requests"]'>Bereinigen</button></div>
+<div class="st-li"><div class="st-li-info"><b>Login-Protokoll</b><span>Einträge älter als 30 Tage</span></div><button class="btn btn-xs btn-outline btn-danger-text" data-action="dbCleanup" data-args='["old_login_attempts"]'>Bereinigen</button></div>
+<div class="st-li"><div class="st-li-info"><b>Feiertags-Einsätze</b><span>Einsätze an Feiertagen entfernen</span></div><div style="display:flex;gap:.3rem;align-items:center"><input type="number" id="cleanupHolYear" value="<?php echo date('Y');?>" class="st-inp" min="2020" max="2040"><button class="btn btn-xs btn-outline btn-danger-text" data-action="dbCleanupHolidayYear">Los</button></div></div>
+<div class="st-li"><div class="st-li-info"><b>Publish-Log</b><span>Auf 100 Einträge kürzen</span></div><button class="btn btn-xs btn-outline btn-danger-text" data-action="dbCleanup" data-args='["publish_log"]'>Bereinigen</button></div>
+<div class="st-li st-li-danger"><div class="st-li-info"><b style="color:var(--err)">Jahres-Daten löschen</b><span>Unwiderruflich!</span></div><div style="display:flex;gap:.3rem;align-items:center"><input type="number" id="cleanupYear" placeholder="Jahr" class="st-inp" min="2020" max="2040"><button class="btn btn-xs btn-danger" data-action="dbCleanup" data-args='["delete_year"]'>Löschen</button></div></div>
 </div>
 
 <!-- 10: Backup & Restore -->
@@ -376,10 +376,10 @@ Ferien: <code>{"name":"Osterferien","date":"2026-03-30","type":"ferien"}</code>
 <div id="backupState" style="margin-bottom:.75rem"><p class="muted" style="padding:.5rem">Laden...</p></div>
 
 <div style="display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap">
-<button class="btn btn-primary" id="backupCreateBtn" onclick="createBackup()">
+<button class="btn btn-primary" id="backupCreateBtn" data-action="createBackup">
 <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;margin-right:.3rem;vertical-align:middle"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/></svg>
 Backup jetzt erstellen</button>
-<button class="btn btn-outline" onclick="loadBackups()">Aktualisieren</button>
+<button class="btn btn-outline" data-action="loadBackups">Aktualisieren</button>
 </div>
 
 <div class="st-card">
@@ -402,28 +402,28 @@ Backup jetzt erstellen</button>
 <!-- ===== MODALS (für Erfassung/Bearbeitung) ===== -->
 
 <!-- Modal: Neue Wartung -->
-<div class="modal-bg" id="modAddMaint"><div class="modal"><div class="mh"><h3>Neue Wartung planen</h3><button class="mx" onclick="cMod('modAddMaint')">&times;</button></div><div class="mb">
+<div class="modal-bg" id="modAddMaint"><div class="modal"><div class="mh"><h3>Neue Wartung planen</h3><button class="mx" data-action="cMod" data-args='["modAddMaint"]'>&times;</button></div><div class="mb">
 <div class="fg"><label>Titel</label><input type="text" id="maintTitle" placeholder="z.B. Server-Update"></div>
 <div class="fg"><label>Beschreibung (optional)</label><input type="text" id="maintDesc" placeholder="Details zur Wartung"></div>
 <div class="fg2"><div class="fg"><label>Start</label><input type="datetime-local" id="maintStart"></div><div class="fg"><label>Ende (optional)</label><input type="datetime-local" id="maintEnd"></div></div>
-</div><div class="mf"><button class="btn btn-outline" onclick="cMod('modAddMaint')">Abbrechen</button><button class="btn btn-primary" onclick="addMaint()">Wartung planen</button></div></div></div>
+</div><div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["modAddMaint"]'>Abbrechen</button><button class="btn btn-primary" data-action="addMaint">Wartung planen</button></div></div></div>
 
 <!-- Modal: Neuer Changelog-Eintrag -->
-<div class="modal-bg" id="modAddCl"><div class="modal modal-sm"><div class="mh"><h3>Changelog-Eintrag erstellen</h3><button class="mx" onclick="cMod('modAddCl')">&times;</button></div><div class="mb" style="max-height:60vh;overflow-y:auto">
+<div class="modal-bg" id="modAddCl"><div class="modal modal-sm"><div class="mh"><h3>Changelog-Eintrag erstellen</h3><button class="mx" data-action="cMod" data-args='["modAddCl"]'>&times;</button></div><div class="mb" style="max-height:60vh;overflow-y:auto">
 <div class="fg2"><div class="fg"><label>Version</label><input type="text" id="clVer" placeholder="z.B. 6.1.2"></div><div class="fg"><label>Datum</label><input type="date" id="clDate" value="<?php echo date('Y-m-d');?>"></div></div>
 <div class="fg"><label>Typ</label><select class="sel" id="clType"><option value="feature">Feature</option><option value="bugfix">Bugfix</option><option value="improvement">Verbesserung</option><option value="security">Sicherheit</option><option value="breaking">Breaking Change</option></select></div>
 <div class="fg"><label>Inhalt</label><textarea id="clContent" rows="10" placeholder="Was ist neu?&#10;&#10;Zeilenumbrüche und Aufzählungen möglich:&#10;- Feature 1&#10;- Feature 2" style="font-family:monospace;font-size:.8rem;resize:vertical"></textarea></div>
-</div><div class="mf"><button class="btn btn-outline" onclick="cMod('modAddCl')">Abbrechen</button><button class="btn btn-primary" onclick="addCl()">Speichern</button></div></div></div>
+</div><div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["modAddCl"]'>Abbrechen</button><button class="btn btn-primary" data-action="addCl">Speichern</button></div></div></div>
 
 <!-- Modal: Neue Meldung -->
-<div class="modal-bg" id="modAddAnn"><div class="modal modal-sm"><div class="mh"><h3>Neue Meldung</h3><button class="mx" onclick="cMod('modAddAnn')">&times;</button></div><div class="mb">
+<div class="modal-bg" id="modAddAnn"><div class="modal modal-sm"><div class="mh"><h3>Neue Meldung</h3><button class="mx" data-action="cMod" data-args='["modAddAnn"]'>&times;</button></div><div class="mb">
 <div class="fg"><label>Titel</label><input type="text" id="annTitle" placeholder="z.B. Serverumzug am Wochenende"></div>
 <div class="fg"><label>Inhalt</label><textarea id="annContent" rows="4" placeholder="Details zur Meldung..." style="resize:vertical"></textarea></div>
 <div class="fg"><label>Priorität</label>
 <div style="display:flex;gap:.4rem">
-<label class="ann-prio-opt" onclick="document.getElementById('annPrio').value='info'" id="annPrioInfo"><span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:700">Info</span></label>
-<label class="ann-prio-opt" onclick="document.getElementById('annPrio').value='warning'" id="annPrioWarn"><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:700">Warnung</span></label>
-<label class="ann-prio-opt" onclick="document.getElementById('annPrio').value='critical'" id="annPrioCrit"><span style="background:#fef2f2;color:#991b1b;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:700">Kritisch</span></label>
+<label class="ann-prio-opt" data-action="setValue" data-args='["annPrio","info"]' id="annPrioInfo"><span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:700">Info</span></label>
+<label class="ann-prio-opt" data-action="setValue" data-args='["annPrio","warning"]' id="annPrioWarn"><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:700">Warnung</span></label>
+<label class="ann-prio-opt" data-action="setValue" data-args='["annPrio","critical"]' id="annPrioCrit"><span style="background:#fef2f2;color:#991b1b;padding:2px 8px;border-radius:4px;font-size:.72rem;font-weight:700">Kritisch</span></label>
 </div>
 <input type="hidden" id="annPrio" value="info">
 </div>
@@ -431,14 +431,14 @@ Backup jetzt erstellen</button>
 <div class="fg"><label>Sichtbar ab (optional)</label><input type="date" id="annFrom"></div>
 <div class="fg"><label>Sichtbar bis (optional)</label><input type="date" id="annUntil"></div>
 </div>
-</div><div class="mf"><button class="btn btn-outline" onclick="cMod('modAddAnn')">Abbrechen</button><button class="btn btn-primary" onclick="saveAnn()">Speichern</button></div></div></div>
+</div><div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["modAddAnn"]'>Abbrechen</button><button class="btn btn-primary" data-action="saveAnn">Speichern</button></div></div></div>
 
 <!-- Modal: Datenimport (JSON) -->
-<div class="modal-bg" id="modImport"><div class="modal modal-lg"><div class="mh"><h3>Feiertage/Ferien importieren</h3><button class="mx" onclick="cMod('modImport')">&times;</button></div><div class="mb">
+<div class="modal-bg" id="modImport"><div class="modal modal-lg"><div class="mh"><h3>Feiertage/Ferien importieren</h3><button class="mx" data-action="cMod" data-args='["modImport"]'>&times;</button></div><div class="mb">
 <div class="fg"><label>JSON-Daten</label><textarea id="importJsonMod" rows="12" placeholder='[{"name":"Neujahr","date":"2026-01-01","type":"feiertag"}]' style="font-family:monospace;font-size:.8rem"></textarea></div>
-</div><div class="mf"><button class="btn btn-outline" onclick="cMod('modImport')">Abbrechen</button><button class="btn btn-primary" onclick="importHolidaysMod()">Importieren</button></div></div></div>
+</div><div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["modImport"]'>Abbrechen</button><button class="btn btn-primary" data-action="importHolidaysMod">Importieren</button></div></div></div>
 
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 /* === Sidebar Navigation === */
 function stNav(idx){
     document.querySelectorAll('.st-nav').forEach(function(n,i){n.classList.toggle('active',i===idx);});
@@ -494,6 +494,7 @@ function saveSettings(){
 }
 
 /* === Cleanup === */
+pqAction('dbCleanupHolidayYear',function(){dbCleanup('holiday_entries',document.getElementById('cleanupHolYear').value);});
 function dbCleanup(type,yO){
     var d={action:'cleanup',type:type};
     if(type==='delete_year'){var yr=document.getElementById('cleanupYear').value;if(!yr){toast('Jahr eingeben','warning');return;}d.year=parseInt(yr);}
@@ -518,7 +519,7 @@ function loadClList(){
             h+='<span class="badge" style="background:'+(typeBg[et]||typeBg.feature)+';color:'+(typeCol[et]||typeCol.feature)+';font-size:.58rem">'+(typeLabel[et]||et)+'</span> ';
             h+='<span class="muted" style="font-size:.7rem">'+esc(e.release_date||'')+'</span>';
             h+='<div style="font-size:.76rem;color:var(--tx2);margin-top:.15rem;white-space:pre-wrap">'+esc(e.content).substring(0,200)+'</div></div>';
-            h+='<button class="btn btn-xs btn-outline btn-danger-text" onclick="delCl('+e.id+')" style="flex-shrink:0;margin-left:.5rem">Entf.</button></div>';
+            h+='<button class="btn btn-xs btn-outline btn-danger-text" data-action="delCl" data-args="['+e.id+']" style="flex-shrink:0;margin-left:.5rem">Entf.</button></div>';
         });el.innerHTML=h;
     }).catch(function(){el.innerHTML='<p class="muted">Fehler beim Laden</p>';});
 }
@@ -542,7 +543,7 @@ function loadMaintList(){
         var h='';d.items.forEach(function(m){
             h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--bd)">';
             h+='<div><b style="font-size:.82rem">'+esc(m.title)+'</b> <span class="muted" style="font-size:.7rem">'+esc(m.start_date)+(m.end_date?' \u2013 '+esc(m.end_date):'')+'</span></div>';
-            h+='<button class="btn btn-xs btn-outline btn-danger-text" onclick="delMaint('+m.id+')">Entf.</button></div>';
+            h+='<button class="btn btn-xs btn-outline btn-danger-text" data-action="delMaint" data-args="['+m.id+']">Entf.</button></div>';
         });el.innerHTML=h;
     }).catch(function(){});
 }
@@ -600,9 +601,9 @@ function loadAudit(p){
         });h+='</tbody></table>';
         if(d.pages>1){
             h+='<div style="display:flex;justify-content:center;gap:.4rem;padding:.5rem 0">';
-            if(auditPage>0)h+='<button class="btn btn-xs btn-outline" onclick="loadAudit('+(auditPage-1)+')">&laquo;</button>';
+            if(auditPage>0)h+='<button class="btn btn-xs btn-outline" data-action="loadAudit" data-args="['+(auditPage-1)+']">&laquo;</button>';
             h+='<span class="muted" style="font-size:.72rem">'+(auditPage+1)+'/'+d.pages+'</span>';
-            if(auditPage<d.pages-1)h+='<button class="btn btn-xs btn-outline" onclick="loadAudit('+(auditPage+1)+')">&raquo;</button>';
+            if(auditPage<d.pages-1)h+='<button class="btn btn-xs btn-outline" data-action="loadAudit" data-args="['+(auditPage+1)+']">&raquo;</button>';
             h+='</div>';
         }
         el.innerHTML=h;
@@ -690,8 +691,8 @@ function loadAnnList(){
             h+='<span class="muted" style="font-size:.65rem">'+dates+(a.first_name?' \u00b7 '+esc(a.first_name+' '+a.last_name):'')+'</span>';
             h+='</div>';
             h+='<div style="display:flex;gap:.3rem;align-items:center">';
-            h+='<button class="btn btn-xs btn-outline" onclick="toggleAnn('+a.id+')">'+(active?'Deaktivieren':'Aktivieren')+'</button>';
-            h+='<button class="btn btn-xs btn-outline btn-danger-text" onclick="deleteAnn('+a.id+')">L\u00f6schen</button>';
+            h+='<button class="btn btn-xs btn-outline" data-action="toggleAnn" data-args="['+a.id+']">'+(active?'Deaktivieren':'Aktivieren')+'</button>';
+            h+='<button class="btn btn-xs btn-outline btn-danger-text" data-action="deleteAnn" data-args="['+a.id+']">L\u00f6schen</button>';
             h+='</div></div>';
         });
         el.innerHTML=h;

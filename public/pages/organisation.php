@@ -304,7 +304,7 @@ $redirectUri = oidcRedirectUri();
 .org-fs legend{font-size:.8rem;font-weight:600;padding:0 .3rem}
 .org-map input,.org-map select{width:100%}
 </style>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 (function(){
   function send(form, action, extra){
     var fd = form ? new FormData(form) : new FormData();

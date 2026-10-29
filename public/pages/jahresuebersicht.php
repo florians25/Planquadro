@@ -32,12 +32,12 @@ foreach($groups as $gn=>$gu) {
 <a href="?year=<?php echo $y+1;?>" class="btn btn-outline"><?php echo $y+1;?> &raquo;</a>
 </div>
 <div class="plan-bar-filters">
-<input type="text" class="inp-filter" placeholder="Suchen..." oninput="filterPlan(this.value)">
+<input type="text" class="inp-filter" placeholder="Suchen..." data-action-input="filterPlan" data-args='["$value"]'>
 </div>
 <div class="plan-bar-actions">
-<?php if(canEdit()):?><button class="btn btn-outline" onclick="oMod('yearMod')">Jahreseinsatz planen</button><?php endif;?>
-<?php if(hasPerm('plan_publish_year')):?><button class="btn btn-outline" style="border-color:var(--p);color:var(--p)" onclick="publishYear(<?php echo $y;?>)">Jahr <?php echo $y;?> veröffentlichen</button><?php endif;?>
-<button class="btn btn-outline" onclick="window.print()">Drucken</button>
+<?php if(canEdit()):?><button class="btn btn-outline" data-action="oMod" data-args='["yearMod"]'>Jahreseinsatz planen</button><?php endif;?>
+<?php if(hasPerm('plan_publish_year')):?><button class="btn btn-outline" style="border-color:var(--p);color:var(--p)" <?php echo opsActionAttr('publishYear',[(int)$y]);?>>Jahr <?php echo $y;?> veröffentlichen</button><?php endif;?>
+<button class="btn btn-outline" data-action="print">Drucken</button>
 </div>
 </div>
 </div>
@@ -127,7 +127,7 @@ echo '>'.$label.'</td>';}}?>
 <?php if(canEdit()):?>
 <!-- Jahreseinsatz Modal -->
 <div class="modal-bg" id="yearMod"><div class="modal">
-<div class="mh"><h3>Jahreseinsatz planen</h3><button class="mx" onclick="cMod('yearMod')">&times;</button></div>
+<div class="mh"><h3>Jahreseinsatz planen</h3><button class="mx" data-action="cMod" data-args='["yearMod"]'>&times;</button></div>
 <div class="mb">
 <p class="modal-hint">Setzt den gleichen Einsatz für alle Werktage des Jahres <?php echo $y;?>. Wochenenden und Feiertage werden automatisch übersprungen.</p>
 <div class="fg"><label>Mitarbeiter</label><select id="yrUser"><?php foreach(planningUsers() as $eu):?><option value="<?php echo $eu['id'];?>"><?php echo e($eu['last_name'].', '.$eu['first_name']);?></option><?php endforeach;?></select></div>
@@ -135,7 +135,7 @@ echo '>'.$label.'</td>';}}?>
 <optgroup label="Kunden"><?php foreach(planAreas('kunde') as $p):?><option value="<?php echo $p['id'];?>"><?php echo e($p['short_code'].' – '.$p['name']);?></option><?php endforeach;?></optgroup>
 <optgroup label="Allgemein"><?php foreach(planAreas('allgemein') as $p):?><option value="<?php echo $p['id'];?>"><?php echo e($p['short_code'].' – '.$p['name']);?></option><?php endforeach;?></optgroup>
 </select></div>
-</div><div class="mf"><button class="btn btn-outline" onclick="cMod('yearMod')">Abbrechen</button><button class="btn btn-primary" onclick="saveYearPlan(<?php echo $y;?>)">Für ganzes Jahr setzen</button></div>
+</div><div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["yearMod"]'>Abbrechen</button><button class="btn btn-primary" <?php echo opsActionAttr('saveYearPlan',[(int)$y]);?>>Für ganzes Jahr setzen</button></div>
 </div></div>
 <?php endif;?>
 

@@ -45,14 +45,14 @@ if ($view === 'year') {
 <?php else:?>
 <a href="?view=month&year=<?php echo $y;?>&month=<?php echo(int)date('m');?>" class="btn btn-outline">Monatsansicht</a>
 <?php endif;?>
-<button class="btn btn-outline no-print desk-only" onclick="window.print()">Drucken</button>
+<button class="btn btn-outline no-print desk-only" data-action="print">Drucken</button>
 </div></div>
 
 <!-- Mein Plan Tabs -->
 <?php if($approvalEnabled): ?>
 <div class="mp-tabs no-print">
-<button class="mp-tab mp-tab-active" onclick="switchMpTab(0)">Mein Plan</button>
-<button class="mp-tab" onclick="switchMpTab(1)" id="mpTabReq">Meine Anträge</button>
+<button class="mp-tab mp-tab-active" data-action="switchMpTab" data-args="[0]">Mein Plan</button>
+<button class="mp-tab" data-action="switchMpTab" data-args="[1]" id="mpTabReq">Meine Anträge</button>
 </div>
 <?php endif; ?>
 <div id="mpTabPlan">
@@ -72,7 +72,7 @@ if ($view === 'year') {
     <span class="mp-ag-title"><?php echo monthName($m).' '.$y;?></span>
     <a href="?view=month&display=visual&year=<?php echo $ny;?>&month=<?php echo $nm;?>" class="mp-ag-navbtn" aria-label="Nächster Monat">&rsaquo;</a>
   </div>
-  <a href="?view=month&display=visual&year=<?php echo(int)date('Y');?>&month=<?php echo(int)date('n');?>#mpToday" class="mp-ag-todaybtn" onclick="return mpJumpToday();">Heute</a>
+  <a href="?view=month&display=visual&year=<?php echo(int)date('Y');?>&month=<?php echo(int)date('n');?>#mpToday" class="mp-ag-todaybtn" data-action="mpJumpToday" data-return>Heute</a>
   <div class="mp-ag-summary">
     <div class="mp-ag-sum-item"><span class="mp-ag-sum-n"><?php echo $agEin;?></span><span class="mp-ag-sum-l">Einsätze</span></div>
     <div class="mp-ag-sum-item"><span class="mp-ag-sum-n"><?php echo $agAbw;?></span><span class="mp-ag-sum-l">Abwesend</span></div>
@@ -321,20 +321,20 @@ $curKw=kw($d);$kwChanged=($curKw!==$lastKw);$lastKw=$curKw;
 
 <!-- Stats -->
 <div class="ma-hero">
-<div class="ma-stat ma-stat-pending active" onclick="mrFilter('pending')"><div class="ma-stat-n" id="mrSP">–</div><div class="ma-stat-l">Offen</div></div>
-<div class="ma-stat ma-stat-ok" onclick="mrFilter('approved')"><div class="ma-stat-n" id="mrSA">–</div><div class="ma-stat-l">Genehmigt</div></div>
-<div class="ma-stat ma-stat-rej" onclick="mrFilter('rejected')"><div class="ma-stat-n" id="mrSR">–</div><div class="ma-stat-l">Abgelehnt</div></div>
+<div class="ma-stat ma-stat-pending active" data-action="mrFilter" data-args='["pending"]'><div class="ma-stat-n" id="mrSP">–</div><div class="ma-stat-l">Offen</div></div>
+<div class="ma-stat ma-stat-ok" data-action="mrFilter" data-args='["approved"]'><div class="ma-stat-n" id="mrSA">–</div><div class="ma-stat-l">Genehmigt</div></div>
+<div class="ma-stat ma-stat-rej" data-action="mrFilter" data-args='["rejected"]'><div class="ma-stat-n" id="mrSR">–</div><div class="ma-stat-l">Abgelehnt</div></div>
 </div>
 
 <!-- Filter bar with pill buttons -->
 <div class="ma-bar">
-<button class="ma-filter-btn" data-v="" onclick="mrSetFilter(this)">Alle</button>
-<button class="ma-filter-btn active" data-v="pending" onclick="mrSetFilter(this)">Offen</button>
-<button class="ma-filter-btn" data-v="approved" onclick="mrSetFilter(this)">Genehmigt</button>
-<button class="ma-filter-btn" data-v="rejected" onclick="mrSetFilter(this)">Abgelehnt</button>
+<button class="ma-filter-btn" data-v="" data-action="mrSetFilter" data-args='["$this"]'>Alle</button>
+<button class="ma-filter-btn active" data-v="pending" data-action="mrSetFilter" data-args='["$this"]'>Offen</button>
+<button class="ma-filter-btn" data-v="approved" data-action="mrSetFilter" data-args='["$this"]'>Genehmigt</button>
+<button class="ma-filter-btn" data-v="rejected" data-action="mrSetFilter" data-args='["$this"]'>Abgelehnt</button>
 <div style="margin-left:auto;display:flex;gap:.3rem">
-<button class="ma-filter-btn active" id="mrTabCur2" onclick="mrSetTab2('current')">Aktuell</button>
-<button class="ma-filter-btn" id="mrTabArc2" onclick="mrSetTab2('archive')">Archiv</button>
+<button class="ma-filter-btn active" id="mrTabCur2" data-action="mrSetTab2" data-args='["current"]'>Aktuell</button>
+<button class="ma-filter-btn" id="mrTabArc2" data-action="mrSetTab2" data-args='["archive"]'>Archiv</button>
 </div>
 </div>
 
@@ -345,7 +345,7 @@ $curKw=kw($d);$kwChanged=($curKw!==$lastKw);$lastKw=$curKw;
 <option value="">Alle</option><option value="pending"<?php echo ($u['role']==='mitarbeiter')?' selected':'';?>>Offen</option><option value="approved">Genehmigt</option><option value="rejected">Abgelehnt</option>
 </select>
 
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 /* Mobile-Agenda: zu "Heute" springen. Ist heute im aktuell gezeigten Monat
    sichtbar, sanft dorthin scrollen; sonst dem Link in den aktuellen Monat folgen. */
 function mpJumpToday(){
@@ -406,6 +406,7 @@ function loadMyRequests(){
     }).catch(function(e){el.innerHTML='<p class="txt-d" style="padding:1rem">'+esc(e.message)+'</p>';});
 }
 
+pqAction({mrPrevPage:function(){mrPage--;renderMR();},mrNextPage:function(){mrPage++;renderMR();}});
 function renderMR(){
     var el=document.getElementById('myReqList'),reqs=mrAllReqs,total=reqs.length;
     if(!total){
@@ -424,7 +425,7 @@ function renderMR(){
 
         html+='<div class="ma-card" id="mac'+idx+'">';
         /* Clickable header */
-        html+='<div class="ma-card-head" onclick="toggleMaCard('+idx+')">';
+        html+='<div class="ma-card-head" data-action="toggleMaCard" data-args="['+idx+']">';
         html+='<div class="ma-card-line" style="background:'+rng.bg+'"></div>';
         html+='<div class="ma-card-body">';
         html+='<div class="ma-card-top">';
@@ -474,9 +475,9 @@ function renderMR(){
     var tp=Math.ceil(total/mrPageSize);
     if(tp>1){
         html+='<div class="ma-pag">';
-        if(mrPage>0)html+='<button class="btn btn-xs btn-outline" onclick="mrPage--;renderMR()">&laquo; Zurück</button>';
+        if(mrPage>0)html+='<button class="btn btn-xs btn-outline" data-action="mrPrevPage">&laquo; Zurück</button>';
         html+='<span class="muted" style="font-size:.75rem">Seite '+(mrPage+1)+' von '+tp+'</span>';
-        if(mrPage<tp-1)html+='<button class="btn btn-xs btn-outline" onclick="mrPage++;renderMR()">Weiter &raquo;</button>';
+        if(mrPage<tp-1)html+='<button class="btn btn-xs btn-outline" data-action="mrNextPage">Weiter &raquo;</button>';
         html+='</div>';
     }
     el.innerHTML=html;

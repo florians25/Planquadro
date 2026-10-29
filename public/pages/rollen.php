@@ -221,7 +221,7 @@ $grantedCnt=0;foreach($permData[$rKey] as $v)if($v)$grantedCnt++;
 $totalPerms=count($allPerms);
 $isSys=in_array($rKey,$systemRoles);
 ?>
-<button class="rl-role-card <?php if($first) echo 'active';?>" data-role="<?php echo $rKey;?>" onclick="rlSwitch('<?php echo $rKey;?>')">
+<button class="rl-role-card <?php if($first) echo 'active';?>" data-role="<?php echo $rKey;?>" <?php echo opsActionAttr('rlSwitch',[$rKey]);?>>
 <div class="rl-role-dot" style="background:<?php echo e($clr);?>"></div>
 <div class="rl-role-info">
 <span class="rl-role-name"><?php echo e($rName);?><?php if(!$isSys):?><span style="font-size:.55rem;color:var(--mu);font-weight:400;margin-left:.3rem">custom</span><?php endif;?></span>
@@ -230,7 +230,7 @@ $isSys=in_array($rKey,$systemRoles);
 <svg class="rl-role-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
 </button>
 <?php $first=false; endforeach; ?>
-<button class="rl-new-role-btn" onclick="oMod('newRoleMod')">
+<button class="rl-new-role-btn" data-action="oMod" data-args='["newRoleMod"]'>
 <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
 Neue Rolle erstellen
 </button>
@@ -248,9 +248,9 @@ $rPerms = $permData[$rKey]; $clr=roleColor($rKey); ?>
 <span class="muted" style="font-size:.75rem"><?php echo $userCounts[$rKey]??0;?> aktive Nutzer<?php if(isset($baseRoles[$rKey])):?> · eigene Rolle, angelegt auf Basis von <?php echo e(roleName($baseRoles[$rKey]));?><?php endif;?></span></div>
 </div>
 <div class="rl-panel-acts">
-<button class="btn btn-outline btn-sm" onclick="rlToggleAll('<?php echo $rKey;?>',true)">Alle an</button>
-<button class="btn btn-outline btn-sm" onclick="rlToggleAll('<?php echo $rKey;?>',false)">Alle aus</button>
-<?php if(!in_array($rKey,$systemRoles)):?><button class="btn btn-outline btn-sm" data-role-key="<?php echo e($rKey);?>" data-role-label="<?php echo e($rName);?>" data-role-color="<?php echo e($clr);?>" onclick="rlOpenRename(this)">Umbenennen</button><button class="btn btn-outline btn-sm" style="color:var(--err);border-color:var(--err)" onclick="rlDeleteRole('<?php echo $rKey;?>','<?php echo e($rName);?>')">Rolle löschen</button><?php endif;?>
+<button class="btn btn-outline btn-sm" <?php echo opsActionAttr('rlToggleAll',[$rKey,true]);?>>Alle an</button>
+<button class="btn btn-outline btn-sm" <?php echo opsActionAttr('rlToggleAll',[$rKey,false]);?>>Alle aus</button>
+<?php if(!in_array($rKey,$systemRoles)):?><button class="btn btn-outline btn-sm" data-role-key="<?php echo e($rKey);?>" data-role-label="<?php echo e($rName);?>" data-role-color="<?php echo e($clr);?>" data-action="rlOpenRename" data-args='["$this"]'>Umbenennen</button><button class="btn btn-outline btn-sm" style="color:var(--err);border-color:var(--err)" <?php echo opsActionAttr('rlDeleteRole',[$rKey,$rName]);?>>Rolle löschen</button><?php endif;?>
 </div>
 </div>
 
@@ -269,10 +269,10 @@ $locked = $rKey === 'admin' && ($pKey === 'manage_roles' || permissionIsRoleBoun
 <div class="rl-perm-text">
 <span class="rl-perm-label"><?php echo e($allPerms[$pKey]);?></span>
 <span class="rl-perm-hint"><?php echo e($catalog[$pKey]['description']??$pKey);?><?php if($locked):?> (für Administratoren immer erteilt)<?php endif;?></span>
-<?php $ov=getUserOverrides($pKey);if($ov):?><span class="rl-override-tags"><?php foreach($ov as $o):?><span class="rl-override-tag <?php echo $o['granted']?'rl-ov-grant':'rl-ov-deny';?>"><?php echo e($o['first_name'].' '.$o['last_name']);?><button class="rl-ov-rm" onclick="rlRemoveOverride(<?php echo $o['user_id'];?>,'<?php echo $pKey;?>',this)">&times;</button></span><?php endforeach;?></span><?php endif;?>
+<?php $ov=getUserOverrides($pKey);if($ov):?><span class="rl-override-tags"><?php foreach($ov as $o):?><span class="rl-override-tag <?php echo $o['granted']?'rl-ov-grant':'rl-ov-deny';?>"><?php echo e($o['first_name'].' '.$o['last_name']);?><button class="rl-ov-rm" <?php echo opsActionAttr('rlRemoveOverride',[(int)$o['user_id'],$pKey,opsActionToken('this')]);?>>&times;</button></span><?php endforeach;?></span><?php endif;?>
 </div>
 <div class="rl-perm-acts">
-<button type="button" class="rl-user-btn" onclick="rlOpenOverride('<?php echo $pKey;?>','<?php echo e($allPerms[$pKey]);?>','<?php echo $rKey;?>')" title="Einzelne Person zuweisen/verweigern">
+<button type="button" class="rl-user-btn" <?php echo opsActionAttr('rlOpenOverride',[$pKey,$allPerms[$pKey],$rKey]);?> title="Einzelne Person zuweisen/verweigern">
 <svg viewBox="0 0 20 20" fill="currentColor" style="width:13px;height:13px"><path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/></svg>
 </button>
 <label class="rl-toggle" title="<?php echo $locked ? 'Für Administratoren fest erteilt' : 'Für alle in dieser Rolle ein/aus';?>">
@@ -287,7 +287,7 @@ $locked = $rKey === 'admin' && ($pKey === 'manage_roles' || permissionIsRoleBoun
 
 <div class="rl-save-bar">
 <span class="rl-save-info" id="rlMsg_<?php echo $rKey;?>"></span>
-<button class="btn btn-primary" onclick="rlSave('<?php echo $rKey;?>')">
+<button class="btn btn-primary" <?php echo opsActionAttr('rlSave',[$rKey]);?>>
 <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;margin-right:.35rem"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
 Speichern
 </button>
@@ -344,21 +344,21 @@ Speichern
 
 <!-- User Override Modal -->
 <div class="modal-bg" id="overrideMod"><div class="modal">
-<div class="mh"><h3 id="overrideTitle">Berechtigung zuweisen</h3><button class="mx" onclick="cMod('overrideMod')">&times;</button></div>
+<div class="mh"><h3 id="overrideTitle">Berechtigung zuweisen</h3><button class="mx" data-action="cMod" data-args='["overrideMod"]'>&times;</button></div>
 <div class="mb">
 <div class="fg"><label>Modus wählen</label>
 <div class="rl-ov-modes">
-<label class="rl-ov-mode" id="ovModeGrant" onclick="rlSetOverrideMode('grant')">
+<label class="rl-ov-mode" id="ovModeGrant" data-action="rlSetOverrideMode" data-args='["grant"]'>
 <input type="radio" name="overrideMode" value="grant" checked>
 <div class="rl-ov-mode-icon" style="background:#dcfce7;color:#16a34a"><svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></div>
 <div><b>Zusätzlich gewähren</b><span class="muted" style="font-size:.68rem;display:block">Ausgewählte Personen erhalten dieses Recht zusätzlich</span></div>
 </label>
-<label class="rl-ov-mode" id="ovModeNobody" onclick="rlSetOverrideMode('nobody')">
+<label class="rl-ov-mode" id="ovModeNobody" data-action="rlSetOverrideMode" data-args='["nobody"]'>
 <input type="radio" name="overrideMode" value="nobody">
 <div class="rl-ov-mode-icon" style="background:#fef3c7;color:#d97706"><svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></div>
 <div><b>Niemand außer</b><span class="muted" style="font-size:.68rem;display:block">NUR ausgewählte Personen – Rollen-Schalter wird deaktiviert</span></div>
 </label>
-<label class="rl-ov-mode" id="ovModeDeny" onclick="rlSetOverrideMode('deny')">
+<label class="rl-ov-mode" id="ovModeDeny" data-action="rlSetOverrideMode" data-args='["deny"]'>
 <input type="radio" name="overrideMode" value="deny">
 <div class="rl-ov-mode-icon" style="background:#fef2f2;color:#dc2626"><svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg></div>
 <div><b>Verweigern für</b><span class="muted" style="font-size:.68rem;display:block">Ausgewählte Personen verlieren dieses Recht</span></div>
@@ -366,7 +366,7 @@ Speichern
 </div>
 </div>
 <div class="fg"><label>Personen auswählen</label>
-<input type="text" class="inp-filter" id="overrideSearch" placeholder="Suchen..." oninput="rlFilterOverrideUsers()" style="margin-bottom:.4rem">
+<input type="text" class="inp-filter" id="overrideSearch" placeholder="Suchen..." data-action-input="rlFilterOverrideUsers" style="margin-bottom:.4rem">
 <div style="max-height:200px;overflow-y:auto;border:1px solid var(--bd);border-radius:var(--r);padding:.25rem" id="overrideUserList">
 <?php foreach(allUsers(true) as $ou):?>
 <label class="rl-ov-user-item" data-search="<?php echo e(mb_strtolower($ou['last_name'].' '.$ou['first_name']));?>"><input type="checkbox" value="<?php echo $ou['id'];?>" class="ovUserCb"> <?php echo e($ou['last_name'].', '.$ou['first_name']);?> <span class="muted" style="font-size:.65rem">(<?php echo e(roleName($ou['role']));?>)</span></label>
@@ -376,12 +376,12 @@ Speichern
 <input type="hidden" id="overridePerm" value="">
 <input type="hidden" id="overrideRole" value="">
 </div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('overrideMod')">Abbrechen</button><button class="btn btn-primary" onclick="rlSaveOverrides()">Zuweisen</button></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["overrideMod"]'>Abbrechen</button><button class="btn btn-primary" data-action="rlSaveOverrides">Zuweisen</button></div>
 </div></div>
 
 <!-- New Role Modal -->
 <div class="modal-bg" id="newRoleMod"><div class="modal modal-sm">
-<div class="mh"><h3>Neue Rolle erstellen</h3><button class="mx" onclick="cMod('newRoleMod')">&times;</button></div>
+<div class="mh"><h3>Neue Rolle erstellen</h3><button class="mx" data-action="cMod" data-args='["newRoleMod"]'>&times;</button></div>
 <div class="mb">
 <div class="fg"><label>Rollen-Schlüssel</label><input type="text" id="nrKey" placeholder="z.B. praktikant" pattern="[a-z0-9_]+" maxlength="30" style="font-family:monospace"><span class="muted" style="font-size:.65rem">Kleinbuchstaben, Zahlen, Unterstriche. Wird intern verwendet.</span></div>
 <div class="fg"><label>Anzeigename</label><input type="text" id="nrLabel" placeholder="z.B. Praktikant" maxlength="100"></div>
@@ -392,19 +392,19 @@ Speichern
 </select></div>
 </div>
 </div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('newRoleMod')">Abbrechen</button><button class="btn btn-primary" onclick="rlCreateRole()">Rolle erstellen</button></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["newRoleMod"]'>Abbrechen</button><button class="btn btn-primary" data-action="rlCreateRole">Rolle erstellen</button></div>
 </div></div>
 
 <!-- Rename Role Modal -->
 <div class="modal-bg" id="renameRoleMod"><div class="modal modal-sm">
-<div class="mh"><h3>Rolle umbenennen</h3><button class="mx" onclick="cMod('renameRoleMod')">&times;</button></div>
+<div class="mh"><h3>Rolle umbenennen</h3><button class="mx" data-action="cMod" data-args='["renameRoleMod"]'>&times;</button></div>
 <div class="mb">
 <input type="hidden" id="rrKey" value="">
 <div class="fg"><label for="rrLabel">Anzeigename</label><input type="text" id="rrLabel" maxlength="100"></div>
 <div class="fg"><label for="rrColor">Farbe</label><input type="color" id="rrColor" value="#6b7280"></div>
 <span class="muted" style="font-size:.65rem">Der Rollen-Schlüssel <code id="rrKeyShow"></code> bleibt unverändert; Benutzer und Rechte bleiben zugeordnet.</span>
 </div>
-<div class="mf"><button class="btn btn-outline" onclick="cMod('renameRoleMod')">Abbrechen</button><button class="btn btn-primary" onclick="rlRenameRole()">Speichern</button></div>
+<div class="mf"><button class="btn btn-outline" data-action="cMod" data-args='["renameRoleMod"]'>Abbrechen</button><button class="btn btn-primary" data-action="rlRenameRole">Speichern</button></div>
 </div></div>
 
 <style>
@@ -431,7 +431,7 @@ Speichern
 .rl-new-role-btn:hover{border-color:var(--p);color:var(--p);background:rgba(37,87,214,.03)}
 </style>
 
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 var RL_CSRF='<?php echo $csrf;?>';
 function rlSwitch(role){
     document.querySelectorAll('.rl-role-card').forEach(function(c){c.classList.toggle('active',c.dataset.role===role);});

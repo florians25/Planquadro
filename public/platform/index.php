@@ -26,7 +26,8 @@ ini_set('session.use_strict_mode', '1');
 $dbStore = opsStartSessionStore('platform');
 if (!session_start() && $dbStore) opsSessionStoreUnavailable();
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'");
+/* Strikte CSP wie in der Anwendung (keine Inline-Skripte), zusätzlich nie einbettbar */
+opsSendCsp("'none'");
 
 $pdb = opsPlatformDB();
 $ipHash = substr(hash('sha256', opsClientIp() . '|' . opsAppKeyPlatform()), 0, 16);

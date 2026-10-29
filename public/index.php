@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../app/lib/Security.php';
+opsSendCsp();
 require_once __DIR__ . '/../app/config/database.php';
 opsStartSession();
 require_once __DIR__ . '/../app/lib/TenantConfig.php';
@@ -167,6 +168,7 @@ if ($reqUpper) $pwReqs[] = 'Ein Großbuchstabe';
 if ($reqNum) $pwReqs[] = 'Eine Zahl';
 if ($reqSpec) $pwReqs[] = 'Ein Sonderzeichen';
 ?><!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="assets/js/actions.js?v=<?php echo @filemtime(__DIR__.'/assets/js/actions.js'); ?>"></script>
 <link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml"><link rel="icon" href="assets/brand/favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png"><meta name="theme-color" content="#14213D">
 <title><?php echo htmlspecialchars($brandName); ?> – Login</title>
 <style>
@@ -259,7 +261,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="captcha-label">
         <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
         Sicherheitsabfrage
-        <button type="button" class="captcha-refresh" onclick="location.reload()" title="Neue Aufgabe">
+        <button type="button" class="captcha-refresh" data-action="reload" title="Neue Aufgabe">
           <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
         </button>
       </div>
@@ -279,7 +281,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
   <div class="lf"><?php echo $brandName === 'Planquadro' ? 'Planquadro · Jeder Einsatz an seinem Platz.' : htmlspecialchars($brandName) . (tcfg('branding.show_vendor', true) ? ' · mit Planquadro' : ''); ?></div>
 </div>
-<script>
+<script nonce="<?php echo opsCspNonce(); ?>">
 /* Prevent double-submit */
 document.getElementById('loginForm')&&document.getElementById('loginForm').addEventListener('submit',function(){
     var b=document.getElementById('loginBtn');if(b){b.disabled=true;b.textContent='Wird geprüft...';}
