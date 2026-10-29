@@ -78,7 +78,7 @@ Wenn Docker Hub beim Bauen Limits meldet: `PQ_PHP_BASE=mirror.gcr.io/library/php
 | Volume | Inhalt |
 |---|---|
 | `db-data` | MariaDB-Datenverzeichnis |
-| `app-data` → `/data` | `storage/` (Mandantendateien), `backups/` (lokale Archive), `sessions/` |
+| `app-data` → `/data` | `storage/` (Mandantendateien), `backups/` (lokale Archive), `sessions/` (nur `PQ_SESSION_STORE=files`) |
 | `caddy-data`, `caddy-config` | Zertifikate von Caddy |
 | `./secrets/` (Host) | Passwörter und öffentlicher Backup-Schlüssel (Docker-Secrets, `*_FILE`) |
 
@@ -140,6 +140,75 @@ services:
 Healthchecks für Load Balancer: `GET /api/healthz` (Prozess lebt, ohne DB) und
 `GET /api/readyz` (DB erreichbar, keine offenen Migrationen; im SaaS-Modus zusätzlich die
 Mandanten-DB des angefragten Hosts). Beide liefern JSON ohne interne Details.
+
+### Mail-Alarme (SMTP)
+
+Das Image enthält kein sendmail. Backup-Alarme per Mail gehen deshalb über den
+eingebauten SMTP-Client (ohne zusätzliche Programme; STARTTLS ist Pflicht):
+
+```bash
+printf '%s' 'smtp-passwort' > secrets/smtp_password && chmod 600 secrets/smtp_password
+```
+
+```yaml
+# docker-compose.override.yml
+services:
+  backup:
+    environment:
+      PQ_ALERT_EMAIL: it@example.de
+      PQ_SMTP_HOST: smtp.example.de
+      PQ_SMTP_PORT: "587"
+      PQ_SMTP_USER: planquadro@example.de
+      PQ_SMTP_PASS_FILE: /run/secrets/smtp_password
+      PQ_SMTP_FROM: planquadro@example.de
+    secrets: [smtp_password]
+secrets:
+  smtp_password:
+    file: ./secrets/smtp_password
+```
+
+Prüfen: `docker compose exec backup php bin/backup.php alert-test` (meldet je Kanal OK
+oder FEHLER, Details im Log). Ohne `PQ_SMTP_HOST` wird die Mail mit Warnung übersprungen;
+ein konfigurierter Webhook funktioniert unabhängig davon. Alle Variablen:
+[CONFIGURATION.md](CONFIGURATION.md#smtp-versand).
+
+### Mehrere App-Container (Load Balancer)
+
+Standardmäßig liegen Sitzungen als Dateien im Volume eines Containers. Für mehrere
+App-Container müssen sie gemeinsam sein: `PQ_SESSION_STORE=db` speichert sie in der
+Datenbank (Self-Hosting in `PQ_DB_NAME`, SaaS in der jeweiligen Mandanten-DB, die
+Plattform-Administration in der Plattform-DB). Sticky Sessions sind dann nicht nötig.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.replicas.yml --profile proxy up -d
+# Anzahl: PQ_APP_REPLICAS=3 in .env, oder
+docker compose -f docker-compose.yml -f docker-compose.replicas.yml --profile proxy up -d --scale app=3
+```
+
+[`docker-compose.replicas.yml`](../docker-compose.replicas.yml) setzt `PQ_SESSION_STORE=db`,
+entfernt den festen Host-Port der App und lässt Caddy per Round Robin auf alle Replikate
+verteilen ([`Caddyfile.replicas`](../docker/caddy/Caddyfile.replicas), dynamische
+Auflösung über den Docker-DNS). Kombinierbar mit `docker-compose.saas.yml`.
+
+Hinweise zum Load Balancer:
+
+- **Eigener Load Balancer** (nginx, HAProxy, Traefik, Cloud-LB): alle Replikate als
+  Backend, `X-Forwarded-For` und `X-Forwarded-Proto` setzen, dessen Adresse in
+  `PQ_TRUSTED_PROXIES`, `PQ_FORCE_SECURE_COOKIES=1`. Health-Check: `GET /api/readyz`.
+- **Timeouts:** Lese-Timeout ≥ 120 s (Planungsassistent, Backup im Browser).
+- **Sperren:** parallele Requests derselben Sitzung laufen wie bei Dateisessions
+  nacheinander; Live-Polling wartet höchstens `PQ_SESSION_POLL_LOCK_TIMEOUT` (1 s) und
+  läuft dann nur lesend weiter.
+- **Dateien:** `/data/storage` muss für alle Replikate derselbe Speicher sein – auf einem
+  Docker-Host das gemeinsame Volume `app-data`, über mehrere Hosts NFS o. ä. Die
+  Sitzungsdateien unter `/data/sessions` werden mit `db` nicht mehr benutzt.
+- **Migrationen:** jedes Replikat migriert beim Start unter einer DB-Sperre; nur eines
+  führt sie aus. Updates wie gewohnt mit `docker compose … up -d` (Compose ersetzt alle
+  Replikate; angemeldete Benutzer bleiben angemeldet, weil die Sitzungen in der DB liegen).
+- **Datenbank-Cluster:** Die Sitzungssperre nutzt `GET_LOCK()`; Galera unterstützt das
+  nicht clusterweit – Schreibzugriffe auf einen Knoten leiten.
+- Abgemeldete oder abgelaufene Sitzungen löscht PHP selbst und stündlich der Dienst
+  `backup` (`php bin/scheduler.php sessions-gc`).
 
 ## 3. Ohne Docker: Apache + PHP auf Linux
 

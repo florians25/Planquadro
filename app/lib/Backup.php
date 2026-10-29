@@ -1106,16 +1106,27 @@ final class BackupAlerter
     /** Sendet höchstens einmal je $repeatHours und Schlüssel. */
     public function alert(string $key, string $subject, string $message, array $details = []): bool
     {
-        $hook = opsEnv('PQ_ALERT_WEBHOOK');
-        $mail = opsEnv('PQ_ALERT_EMAIL');
-        if ($hook === '' && $mail === '') return false;
+        if (opsEnv('PQ_ALERT_WEBHOOK') === '' && opsEnv('PQ_ALERT_EMAIL') === '') return false;
         $state = is_readable($this->stateFile) ? (json_decode((string)file_get_contents($this->stateFile), true) ?: []) : [];
         $repeat = max(1, (int)opsEnv('PQ_ALERT_REPEAT_HOURS', '24')) * 3600;
         if (isset($state[$key]) && time() - (int)$state[$key] < $repeat) return false;
+        $sent = in_array(true, $this->send($key, $subject, $message, $details), true);
+        if ($sent) { $state[$key] = time(); @file_put_contents($this->stateFile, json_encode($state)); }
+        return $sent;
+    }
+
+    /**
+     * Versendet sofort über alle konfigurierten Kanäle (ohne Wiederholsperre).
+     * @return array<string,bool> Kanal (webhook, mail) => Erfolg
+     */
+    public function send(string $key, string $subject, string $message, array $details = []): array
+    {
+        $hook = opsEnv('PQ_ALERT_WEBHOOK');
+        $mail = opsEnv('PQ_ALERT_EMAIL');
         $host = opsEnv('PQ_BASE_URL', gethostname() ?: 'planquadro');
         $payload = ['source' => 'planquadro-backup', 'event' => $key, 'subject' => $subject, 'message' => $message,
                     'host' => $host, 'time' => gmdate('c'), 'details' => $details, 'text' => "[Planquadro] $subject: $message"];
-        $sent = false;
+        $res = [];
         if ($hook !== '') {
             $ch = curl_init($hook);
             curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -1123,17 +1134,16 @@ final class BackupAlerter
             $ok = curl_exec($ch) !== false && curl_getinfo($ch, CURLINFO_RESPONSE_CODE) < 300;
             curl_close($ch);
             if (!$ok) error_log('Planquadro backup: Webhook-Alarm fehlgeschlagen');
-            $sent = $sent || $ok;
+            $res['webhook'] = $ok;
         }
         if ($mail !== '') {
-            $from = opsEnv('PQ_ALERT_FROM', 'planquadro@' . (gethostname() ?: 'localhost'));
+            require_once __DIR__ . '/Mail.php';
             $body = "$message\n\n" . json_encode($details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\nHost: $host\n";
-            $ok = @mail($mail, '=?UTF-8?B?' . base64_encode("[Planquadro] $subject") . '?=', $body, "From: $from\r\nContent-Type: text/plain; charset=UTF-8");
-            if (!$ok) error_log('Planquadro backup: Mail-Alarm fehlgeschlagen');
-            $sent = $sent || $ok;
+            $r = opsSendMail($mail, "[Planquadro] $subject", $body);
+            if (!$r['ok']) error_log('Planquadro backup: Mail-Alarm ' . ($r['method'] === 'none' ? 'übersprungen' : 'fehlgeschlagen') . ': ' . $r['error']);
+            $res['mail'] = $r['ok'];
         }
-        if ($sent) { $state[$key] = time(); @file_put_contents($this->stateFile, json_encode($state)); }
-        return $sent;
+        return $res;
     }
 
     public function clear(string $key): void

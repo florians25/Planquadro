@@ -294,7 +294,7 @@ REPEATABLE READ (MariaDB/MySQL-Standard) und READ COMMITTED gleichermaßen.
 |---|---|---|
 | Auslieferung | Docker-Image `planquadro/app` (PHP-FPM + Nginx oder Apache) + `docker-compose.yml` mit MariaDB, optional Caddy für HTTPS | gleiches Image, horizontal skaliert hinter Load Balancer |
 | Mandanten | genau einer (`PQ_MODE=selfhosted`) | viele, Auflösung über Host/Subdomain |
-| Sessions | Datei oder DB | Redis/DB (zustandslose App-Container) |
+| Sessions | Datei oder DB (`PQ_SESSION_STORE`, umgesetzt) | Redis/DB (zustandslose App-Container) |
 | Dateien | Volume `/data` | S3-kompatibler Speicher |
 | Migrationen | `php bin/migrate.php up` beim Container-Start (mit Sperre) | eigener Job vor dem Rollout |
 | Backups | `bin/backup` (siehe Roadmap Phase 4), lokal + extern | zentral, mandantengenaue Exporte |

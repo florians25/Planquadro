@@ -25,8 +25,27 @@ function opsStartSession(): void
         'httponly' => true,
         'samesite' => 'Strict',
     ]);
-    session_start();
+    /* PQ_SESSION_STORE=db: Sitzungen in der (Mandanten-)Datenbank, für mehrere App-Container */
+    $dbStore = opsStartSessionStore('tenant');
+    if (!session_start() && $dbStore) opsSessionStoreUnavailable();
     if (function_exists('opsBindSessionToTenant')) opsBindSessionToTenant();
+}
+
+/** Lädt und registriert den DB-Session-Handler (nur bei PQ_SESSION_STORE=db). */
+function opsStartSessionStore(string $target): bool
+{
+    if (!function_exists('opsEnv') || !defined('DB_HOST')) return false;
+    require_once __DIR__ . '/SessionStore.php';
+    return opsUseSessionStore($target);
+}
+
+/** Sitzungsspeicher nicht erreichbar: lieber 503 als ein Request ohne Sitzung. */
+function opsSessionStoreUnavailable(): void
+{
+    error_log('Planquadro: Sitzungsspeicher (PQ_SESSION_STORE=db) nicht verfügbar – Datenbank und Migration 0008 prüfen.');
+    http_response_code(503);
+    header('Retry-After: 5');
+    exit('Dienst vorübergehend nicht verfügbar.');
 }
 
 /**

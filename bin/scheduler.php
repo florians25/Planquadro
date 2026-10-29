@@ -13,6 +13,10 @@
  *     privater Schlüssel konfiguriert ist (siehe docs/BACKUP.md, „Restore-Test“)
  *   - stündliche Prüfung auf veraltete Backups (> PQ_BACKUP_MAX_AGE_HOURS)
  *     mit Alarm per Webhook/Mail
+ *   - stündlich: abgelaufene Sitzungen löschen (nur PQ_SESSION_STORE=db,
+ *     alle Mandanten und Plattform-DB; zusätzlich zur GC von PHP)
+ *
+ *   php bin/scheduler.php sessions-gc   Sitzungen sofort aufräumen (Anzahl je Bereich)
  * Prüfintervall: PQ_SCHEDULER_INTERVAL Sekunden (Standard 60).
  * PQ_BACKUP_ENABLED=0 schaltet die Backups ab (z. B. auf Testsystemen).
  *
@@ -21,6 +25,7 @@
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require_once __DIR__ . '/../app/config/database.php';
 require_once __DIR__ . '/../app/lib/Backup.php';
+require_once __DIR__ . '/../app/lib/SessionStore.php';
 set_time_limit(0);
 
 $cmd = $argv[1] ?? 'loop';
@@ -46,6 +51,21 @@ $stop = false;
 if (function_exists('pcntl_async_signals')) {
     pcntl_async_signals(true);
     foreach ([SIGTERM, SIGINT] as $sig) pcntl_signal($sig, function () use (&$stop) { $stop = true; });
+}
+
+/** Abgelaufene DB-Sitzungen aller Bereiche löschen. @return array<string,int> */
+function sessionsGc(): array
+{
+    $out = [];
+    foreach ((new Backup())->scopes() as $sc) {
+        try {
+            $out[$sc['scope']] = opsSessionGc(BackupDb::pdo($sc['conn'], $sc['db']));
+        } catch (PDOException $e) {
+            /* 1146: Tabelle fehlt (Migration noch nicht eingespielt) */
+            if (($e->errorInfo[1] ?? 0) !== 1146) logLine("Sitzungen {$sc['scope']}: FEHLER " . $e->getMessage());
+        }
+    }
+    return $out;
 }
 
 function tick(string $stateFile): void
@@ -90,12 +110,20 @@ function tick(string $stateFile): void
         $state['last_stale_check'] = $hour;
         try { foreach ($b->checkStale() as $s) logLine("Alarm gesendet: Backup veraltet ($s)"); }
         catch (Throwable $e) { logLine('Statusprüfung FEHLER: ' . $e->getMessage()); }
+        if (opsSessionStore() === 'db') {
+            try { $n = array_sum(sessionsGc()); if ($n > 0) logLine("Abgelaufene Sitzungen gelöscht: $n"); }
+            catch (Throwable $e) { logLine('Sitzungs-GC FEHLER: ' . $e->getMessage()); }
+        }
     }
     file_put_contents($stateFile, json_encode($state));
 }
 
+if ($cmd === 'sessions-gc') {
+    foreach (sessionsGc() as $scope => $n) fwrite(STDOUT, "$scope: $n\n");
+    exit(0);
+}
 if ($cmd === 'once') { touch($beat); tick($stateFile); exit(0); }
-if ($cmd !== 'loop') { fwrite(STDERR, "Aufruf: php bin/scheduler.php [loop|once|health]\n"); exit(2); }
+if ($cmd !== 'loop') { fwrite(STDERR, "Aufruf: php bin/scheduler.php [loop|once|health|sessions-gc]\n"); exit(2); }
 
 logLine(sprintf('Scheduler gestartet (Backup %s, Restore-Test Tag %s %s, Intervall %ds, Zeitzone %s)',
     opsEnv('PQ_BACKUP_TIME', '02:30'), opsEnv('PQ_RESTORE_TEST_DAY', '7'), opsEnv('PQ_RESTORE_TEST_TIME', '04:30'),

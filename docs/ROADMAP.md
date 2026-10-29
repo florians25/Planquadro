@@ -188,8 +188,11 @@ Offen (bewusst verschoben, kein Funktionsverlust):
 > Compose mit MariaDB, Backup-Scheduler und optional Caddy, `/api/healthz` und `/api/readyz`,
 > Backup-System mit libsodium statt `age`/`restic` (keine externen Programme nötig), Restore-Test in
 > eine Wegwerf-Datenbank (statt Wegwerf-Container), Deploy-Test- und Release-Workflow. Dokumentation:
-> INSTALLATION, CONFIGURATION, UPDATE, BACKUP, DISASTER_RECOVERY. Offen: gemeinsame Sessions
-> (Redis/DB) für mehrere App-Container, Image-Veröffentlichung erst nach Freigabe.
+> INSTALLATION, CONFIGURATION, UPDATE, BACKUP, DISASTER_RECOVERY. Gemeinsame Sessions für mehrere
+> App-Container ✅ (`PQ_SESSION_STORE=db`, Datenbank statt Redis – kein zusätzlicher Dienst;
+> Beispiel `docker-compose.replicas.yml`), Mail-Alarme per SMTP im Image ✅ (eingebauter
+> SMTP-Client statt msmtp). Offen: Image-Veröffentlichung erst nach Freigabe; Redis-Sessions
+> nur bei Bedarf (sehr hohe Last); Galera-taugliche Sitzungssperre.
 
 - Docker-Image (PHP-FPM + Nginx), `docker-compose.yml` (App, MariaDB, optional Caddy für
   HTTPS, optional Redis), Healthchecks (`/healthz` live, `/readyz` DB + Migrationen),

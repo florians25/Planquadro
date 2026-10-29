@@ -79,6 +79,37 @@ fi
 $DC exec -T backup php bin/backup.php status --check > "$WORK/status.json" || fail "Backup-Status nicht gesund: $(cat "$WORK/status.json")"
 $DC exec -T backup php bin/scheduler.php health || fail "Scheduler-Heartbeat"
 
+step "Mail-Alarm über SMTP (Mailpit, Pflicht-STARTTLS, Zertifikatsprüfung)"
+MT="$WORK/mailtest"; mkdir -p "$MT"; chmod 0755 "$MT"
+openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj '/CN=mailpit' -addext 'subjectAltName=DNS:mailpit' \
+    -keyout "$MT/mailpit.key" -out "$MT/mailpit.crt" >/dev/null 2>&1 || fail "Testzertifikat"
+chmod 0644 "$MT/mailpit.key" "$MT/mailpit.crt"
+DCM="$DC -f docker-compose.yml -f tests/deploy/compose.mailtest.yml"
+MP="http://127.0.0.1:${PQ_MAILPIT_PORT:-8025}"
+PQ_MAILTEST_DIR="$MT" $DCM up -d --no-build mailpit backup
+i=0
+until curl -sf --noproxy '*' -o /dev/null "$MP/api/v1/messages"; do
+    i=$((i + 1)); [ $i -gt 30 ] && fail "Mailpit nicht erreichbar"
+    sleep 2
+done
+smtp_env="-e PQ_ALERT_EMAIL=ops@example.test -e PQ_ALERT_WEBHOOK= -e PQ_SMTP_HOST=mailpit -e PQ_SMTP_PORT=1025 \
+ -e PQ_SMTP_TLS=starttls -e PQ_SMTP_USER=alarm -e PQ_SMTP_PASS=ci-geheim -e PQ_SMTP_FROM=planquadro@example.test \
+ -e PQ_SMTP_CA_FILE=/mailtest/mailpit.crt"
+# shellcheck disable=SC2086
+PQ_MAILTEST_DIR="$MT" $DCM exec -T $smtp_env backup php bin/backup.php alert-test || fail "alert-test über SMTP"
+curl -sS --noproxy '*' "$MP/api/v1/messages" > "$WORK/mail.json"
+grep -q 'ops@example.test' "$WORK/mail.json" || fail "Mail nicht bei Mailpit angekommen: $(cat "$WORK/mail.json")"
+grep -q 'Testalarm' "$WORK/mail.json" || fail "Betreff fehlt"
+# ohne gültiges Zertifikat (keine CA) muss der Versand scheitern – kein Rückfall auf Klartext
+# shellcheck disable=SC2086
+if PQ_MAILTEST_DIR="$MT" $DCM exec -T $smtp_env -e PQ_SMTP_CA_FILE= backup php bin/backup.php alert-test >/dev/null 2>&1; then
+    fail "SMTP mit unbekanntem Zertifikat darf nicht gelingen"
+fi
+# ohne SMTP-Konfiguration: Mail wird mit Warnung übersprungen (kein sendmail im Image)
+PQ_MAILTEST_DIR="$MT" $DCM exec -T -e PQ_ALERT_EMAIL=ops@example.test -e PQ_ALERT_WEBHOOK= backup php bin/backup.php alert-test > "$WORK/skip.txt" 2>&1 && fail "ohne SMTP darf alert-test nicht OK melden"
+grep -q 'übersprungen' "$WORK/skip.txt" || fail "Warnung 'übersprungen' fehlt: $(cat "$WORK/skip.txt")"
+PQ_MAILTEST_DIR="$MT" $DCM rm -sf mailpit >/dev/null 2>&1 || true
+
 step "Neustart: Migrationen idempotent, App wieder bereit"
 $DC restart app
 i=0

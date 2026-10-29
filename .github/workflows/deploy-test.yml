@@ -85,9 +85,14 @@ jobs:
           # direkter Zugriff mit gefälschtem Header darf kein Secure-Cookie erzeugen
           ! curl -sI -H 'X-Forwarded-Proto: https' http://127.0.0.1:8080/ | grep -qi '^set-cookie:.*secure'
 
+      - name: Mehrere App-Replikate (DB-Sessions, Caddy Round Robin)
+        run: sh tests/deploy/replicas-smoke.sh
+
       - name: Logs bei Fehlern
         if: failure()
-        run: docker compose --profile proxy logs --tail 200 || true
+        run: |
+          docker compose --profile proxy logs --tail 200 || true
+          docker compose -f docker-compose.yml -f docker-compose.replicas.yml --profile proxy logs --tail 200 || true
 
       - name: Abbau
         if: always()

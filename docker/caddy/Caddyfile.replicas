@@ -1,0 +1,38 @@
+# Planquadro – Caddy als Load Balancer vor mehreren App-Replikaten
+# (docker-compose.replicas.yml; Grundlagen siehe Caddyfile)
+#
+# "dynamic a app 8080" fragt den Docker-DNS regelmäßig nach allen Adressen des
+# Dienstes "app" ab – neu gestartete oder skalierte Replikate werden ohne
+# Neustart von Caddy aufgenommen. Voraussetzung: PQ_SESSION_STORE=db, sonst
+# kennt jedes Replikat nur seine eigenen Sitzungen (Sticky Sessions sind dann
+# NICHT nötig). Fällt ein Replikat aus, wird es 30 s gemieden (passive
+# Prüfung) und die Anfrage bis zu 5 s lang auf ein anderes Replikat gelegt.
+
+{$PQ_DOMAIN} {
+	encode zstd gzip
+
+	request_body {
+		max_size 50MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy {
+		dynamic a app 8080 {
+			refresh 5s
+		}
+		lb_policy round_robin
+		lb_try_duration 5s
+		fail_duration 30s
+		# nur zur Diagnose/für den Deploymenttest: welches Replikat geantwortet hat
+		header_down X-PQ-Upstream {http.reverse_proxy.upstream.hostport}
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

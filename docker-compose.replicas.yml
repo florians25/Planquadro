@@ -1,0 +1,36 @@
+# Planquadro – Beispiel-Override: mehrere App-Container hinter Caddy
+# ---------------------------------------------------------------------------
+#   docker compose -f docker-compose.yml -f docker-compose.replicas.yml --profile proxy up -d
+#   (zusammen mit docker-compose.saas.yml kombinierbar; Compose ≥ 2.24 wegen !reset)
+#
+# - PQ_SESSION_STORE=db: Sitzungen liegen in der Datenbank (selfhosted in
+#   PQ_DB_NAME, SaaS in der Mandanten-DB) und gelten in jedem Replikat;
+#   keine Sticky Sessions nötig
+# - Caddy verteilt per Round Robin auf alle Replikate (docker/caddy/Caddyfile.replicas)
+# - die App ist nur noch über den Proxy erreichbar (kein fester Host-Port, sonst
+#   kollidieren die Replikate)
+# - Migrationen: jedes Replikat migriert beim Start unter einer DB-Sperre,
+#   parallele Starts sind unkritisch
+# - Dateien (/data/storage) liegen im gemeinsamen Volume app-data; das reicht
+#   auf EINEM Docker-Host. Über mehrere Hosts hinweg braucht /data einen
+#   gemeinsamen Speicher (NFS o. ä.) – siehe docs/INSTALLATION.md
+# - Eigener Load Balancer statt Caddy: alle Replikate als Backend eintragen,
+#   X-Forwarded-Proto/-For setzen und dessen Adresse in PQ_TRUSTED_PROXIES
+
+services:
+  app:
+    environment:
+      PQ_SESSION_STORE: db
+    ports: !reset []
+    deploy:
+      replicas: ${PQ_APP_REPLICAS:-2}
+
+  backup:
+    environment:
+      PQ_SESSION_STORE: db
+
+  proxy:
+    volumes:
+      - ./docker/caddy/Caddyfile.replicas:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config

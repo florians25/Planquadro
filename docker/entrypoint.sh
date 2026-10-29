@@ -67,6 +67,17 @@ if [ -n "${PQ_BACKUP_PRIVATE_KEY_FILE:-}${PQ_BACKUP_PRIVATE_KEY:-}" ]; then
     log "Hinweis: privater Backup-Schlüssel ist in diesem Container verfügbar (nur für Restore-Tests nötig, siehe docs/BACKUP.md)."
 fi
 
+if [ -n "${PQ_ALERT_EMAIL:-}" ] && [ -z "${PQ_SMTP_HOST:-}" ] && [ ! -x /usr/sbin/sendmail ]; then
+    log "WARNUNG: PQ_ALERT_EMAIL gesetzt, aber kein PQ_SMTP_HOST (und kein sendmail im Image) – Mail-Alarme werden übersprungen. Test: php bin/backup.php alert-test"
+fi
+if [ -n "${PQ_SMTP_HOST:-}" ] && [ "${PQ_SMTP_TLS:-starttls}" = "none" ] && [ -n "${PQ_SMTP_USER:-}" ]; then
+    log "WARNUNG: PQ_SMTP_TLS=none mit PQ_SMTP_USER – Zugangsdaten gehen unverschlüsselt über das Netz."
+fi
+case "${PQ_SESSION_STORE:-files}" in
+    files|db) ;;
+    *) log "WARNUNG: unbekannter Wert PQ_SESSION_STORE=${PQ_SESSION_STORE} – es werden Dateisessions verwendet." ;;
+esac
+
 mkdir -p /data/storage /data/backups /data/sessions 2>/dev/null || true
 
 # --- 2./3. Datenbank und Migrationen

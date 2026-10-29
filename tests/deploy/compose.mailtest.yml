@@ -1,0 +1,26 @@
+# Planquadro – Deploymenttest: Mail-Catcher für SMTP-Alarme (nur Tests)
+# ---------------------------------------------------------------------------
+# Wird von tests/deploy/compose-smoke.sh zusätzlich zu docker-compose.yml
+# geladen. Mailpit nimmt Mails per SMTP mit Pflicht-STARTTLS und beliebigen
+# Zugangsdaten an; das Testzertifikat (CN/SAN "mailpit") erzeugt das Skript in
+# PQ_MAILTEST_DIR. Der Backup-Dienst bekommt das Zertifikat als CA, damit die
+# Zertifikatsprüfung des SMTP-Clients (PQ_SMTP_VERIFY_PEER=1) mitgetestet wird.
+
+services:
+  mailpit:
+    image: ${PQ_MAILPIT_IMAGE:-docker.io/axllent/mailpit:latest}
+    environment:
+      MP_SMTP_TLS_CERT: /certs/mailpit.crt
+      MP_SMTP_TLS_KEY: /certs/mailpit.key
+      MP_SMTP_REQUIRE_STARTTLS: "true"
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+    volumes:
+      - ${PQ_MAILTEST_DIR:-./secrets/mailtest}:/certs:ro
+    ports:
+      - "127.0.0.1:${PQ_MAILPIT_PORT:-8025}:8025"
+    networks:
+      - planquadro
+
+  backup:
+    volumes:
+      - ${PQ_MAILTEST_DIR:-./secrets/mailtest}:/mailtest:ro

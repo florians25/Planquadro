@@ -55,6 +55,19 @@ SaaS-Betrieb zusätzlich das Recht, Datenbanken mit dem Präfix `planquadro_` an
 | `PQ_OIDC_CLIENT_SECRET` ✱ | – | Client-Secret für OIDC/SSO statt Speicherung in der TenantConfig |
 | `PQ_OIDC_ALLOW_HTTP` | – | `1` = Identity-Provider auch ohne HTTPS (nur Tests) |
 
+## Sitzungen
+
+| Variable | Standard | Bedeutung |
+|---|---|---|
+| `PQ_SESSION_STORE` | `files` | `files` = PHP-Dateisessions (Container: `/data/sessions`) wie bisher; `db` = Tabelle `sessions` (Migration `0008`) – nötig für **mehrere App-Container** hinter einem Load Balancer. Self-Hosting: in `PQ_DB_NAME`; SaaS: in der Datenbank des jeweiligen Mandanten, Plattform-Administration in der Plattform-DB. Gespeichert wird nur der SHA-256 der Session-ID. |
+| `PQ_SESSION_LIFETIME` | `86400` | nur `db`: Sitzungen ohne jeden Zugriff seit so vielen Sekunden gelten als abgelaufen und werden gelöscht (PHP-GC und stündlich im Scheduler, sofort: `php bin/scheduler.php sessions-gc`). Muss ≥ dem Leerlauf-Timeout der Einstellungen sein (max. 1440 min); dieses bleibt unverändert maßgeblich. |
+| `PQ_SESSION_LOCK_TIMEOUT` | `10` | nur `db`: Sekunden, die ein Request auf die Sperre seiner Sitzung wartet (parallele Requests derselben Sitzung laufen wie bei Dateisessions nacheinander). Danach läuft er nur lesend weiter – Änderungen an der Sitzung aus diesem Request werden nicht gespeichert. |
+| `PQ_SESSION_POLL_LOCK_TIMEOUT` | `1` | nur `db`: dasselbe für Polling (`live_status`, `notifications`), damit ein langer Request das Live-Polling nicht blockiert |
+
+Hinweis: Die Sperre nutzt `GET_LOCK()` (MariaDB ≥ 10.0, MySQL ≥ 5.7). In Galera-Clustern
+ist `GET_LOCK()` nicht verfügbar bzw. nicht clusterweit – dort `files` mit Sticky Sessions
+verwenden oder alle Schreibzugriffe auf einen Knoten leiten.
+
 ## Container-Start (Entrypoint)
 
 | Variable | Standard | Bedeutung |
@@ -109,9 +122,27 @@ SaaS-Betrieb zusätzlich das Recht, Datenbanken mit dem Präfix `planquadro_` an
 | Variable | Standard | Bedeutung |
 |---|---|---|
 | `PQ_ALERT_WEBHOOK` | – | URL; JSON-POST mit `event`, `subject`, `message`, `text`, `details` (kompatibel mit Slack/Mattermost-Incoming-Webhooks über `text`) |
-| `PQ_ALERT_EMAIL` | – | Empfänger; Versand über PHP `mail()` (im Container nur mit konfiguriertem `sendmail_path`, sonst Webhook nutzen) |
-| `PQ_ALERT_FROM` | `planquadro@<hostname>` | Absender |
+| `PQ_ALERT_EMAIL` | – | Empfänger, mehrere komma-/semikolongetrennt. Versand über SMTP (`PQ_SMTP_*`); ohne `PQ_SMTP_HOST` über PHP `mail()`, falls ein sendmail vorhanden ist – sonst (z. B. im Docker-Image) wird die Mail mit Warnung im Log übersprungen, der Webhook funktioniert weiter |
+| `PQ_ALERT_FROM` | `planquadro@<hostname>` | Absender (wenn `PQ_SMTP_FROM` fehlt) |
 | `PQ_ALERT_REPEAT_HOURS` | `24` | gleichen Alarm frühestens nach so vielen Stunden wiederholen |
+
+#### SMTP-Versand
+
+| Variable | Standard | Bedeutung |
+|---|---|---|
+| `PQ_SMTP_HOST` | – | SMTP-Server (Relay des Providers, Office 365, Mailcow, …); leer = kein SMTP |
+| `PQ_SMTP_PORT` | `587` / `465` / `25` | je nach `PQ_SMTP_TLS` |
+| `PQ_SMTP_TLS` | `starttls` | `starttls` = Verschlüsselung Pflicht (bietet der Server kein STARTTLS an, wird **nicht** unverschlüsselt gesendet); `tls` = implizites TLS (Port 465); `none` = unverschlüsselt (nur internes Relay) |
+| `PQ_SMTP_USER` | – | Benutzer für AUTH (PLAIN oder LOGIN); leer = ohne Anmeldung |
+| `PQ_SMTP_PASS` ✱ | – | Passwort (Compose: `PQ_SMTP_PASS_FILE=/run/secrets/smtp_password`) |
+| `PQ_SMTP_FROM` | `PQ_ALERT_FROM` | Absender (Envelope und `From:`) |
+| `PQ_SMTP_HELO` | Hostname | Name im `EHLO` |
+| `PQ_SMTP_TIMEOUT` | `15` | Sekunden je Verbindung/Antwort |
+| `PQ_SMTP_VERIFY_PEER` | `1` | `0` = Zertifikat nicht prüfen (nur Tests) |
+| `PQ_SMTP_CA_FILE` | System-CAs | eigene CA (PEM) für interne Mailserver |
+
+Testen: `php bin/backup.php alert-test` (Compose: `docker compose exec backup php bin/backup.php alert-test`)
+sendet sofort über alle konfigurierten Kanäle, ohne Wiederholsperre, und meldet je Kanal OK/FEHLER.
 
 Alarm-Anlässe: fehlgeschlagenes Backup, fehlgeschlagenes externes Ziel, fehlgeschlagener
 Restore-Test, letztes erfolgreiches Backup älter als `PQ_BACKUP_MAX_AGE_HOURS`.

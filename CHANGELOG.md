@@ -62,6 +62,15 @@ nichts ändert.
   Schlüssel, Schlüsselanzeige und Restore im Browser entfallen (Sicherheitsbefunde B-01 … B-05).
   Alte Backups lassen sich mit `bin/backup.php legacy-decrypt` weiter öffnen.
 - Doku: `INSTALLATION`, `CONFIGURATION`, `UPDATE`, `BACKUP`, `DISASTER_RECOVERY`.
+- **Mehrere App-Container** (optional): `PQ_SESSION_STORE=db` legt Sitzungen in der
+  Datenbank ab (SaaS: in der Mandanten-DB, Plattform-Administration in der Plattform-DB),
+  gespeichert wird nur ein Hash der Session-ID. Parallele Requests derselben Sitzung
+  überschreiben sich nicht; Live-Polling wird dabei nicht blockiert. Beispiel mit Caddy als
+  Load Balancer: `docker-compose.replicas.yml`. Standard bleiben Dateisessions.
+- **Mail-Alarme per SMTP** (`PQ_SMTP_*`), auch im Docker-Image: verschlüsselt (STARTTLS
+  oder TLS), mit Anmeldung und Zertifikatsprüfung. Ohne Konfiguration wird die Mail wie
+  bisher nicht versendet – jetzt mit klarer Warnung im Log; der Webhook funktioniert
+  unabhängig davon. Neu: `php bin/backup.php alert-test`.
 
 ### Oberfläche (Phase 5)
 - Planquadro-Designsystem mit Dark Mode (folgt dem System, umschaltbar), besseren

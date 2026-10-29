@@ -12,9 +12,9 @@
 #   aufführen (kommagetrennt); für sehr viele Mandanten On-Demand-TLS oder ein
 #   Wildcard-Zertifikat per DNS-Challenge verwenden (docs/INSTALLATION.md)
 #
-# Hinweis: Für horizontale Skalierung mehrerer App-Container werden gemeinsame
-# Sessions benötigt (Phase 3/4-Folgearbeit, ARCHITECTURE.md B.7). Dieses Beispiel
-# betreibt einen App-Container.
+# Mehrere App-Container: zusätzlich docker-compose.replicas.yml laden
+# (PQ_SESSION_STORE=db – Sitzungen in der jeweiligen Mandanten-DB, siehe
+# docs/INSTALLATION.md, „Mehrere App-Container“).
 
 services:
   app:

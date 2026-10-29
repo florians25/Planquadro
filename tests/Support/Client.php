@@ -41,6 +41,17 @@ final class Client
         return $this->request('POST', '/', http_build_query($fields), ['Content-Type: application/x-www-form-urlencoded']);
     }
 
+    /** Wert eines Cookies aus dem Cookie-Speicher (null, wenn nicht gesetzt). */
+    public function cookie(string $name): ?string
+    {
+        foreach (file($this->jar, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
+            if ($line === '' || ($line[0] === '#' && strncmp($line, '#HttpOnly_', 10) !== 0)) continue;
+            $f = explode("\t", $line);
+            if (count($f) >= 7 && $f[5] === $name) return $f[6];
+        }
+        return null;
+    }
+
     public function get(string $path, array $headers = []): Response
     {
         return $this->request('GET', $path, null, $headers);

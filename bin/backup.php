@@ -11,6 +11,7 @@
  *   php bin/backup.php restore-test [--tenant=<slug>] [--key=<datei>]
  *   php bin/backup.php status [--check]              JSON; --check: Exit 3, wenn nicht gesund
  *   php bin/backup.php prune [--tenant=<slug>]       nur Aufbewahrungsregeln anwenden
+ *   php bin/backup.php alert-test                    Testalarm über Webhook/Mail (ohne Wiederholsperre)
  *   php bin/backup.php decrypt <archiv> --out=<datei.tar> [--key=<datei>]
  *   php bin/backup.php legacy-decrypt <datei.epbak> <schlüsseldatei> [--out=<datei.sql>]
  *
@@ -170,6 +171,12 @@ try {
             }
         }
         exit(0);
+
+    case 'alert-test':
+        $res = $b->alerter()->send('test', 'Testalarm', 'Testalarm von bin/backup.php alert-test – die Alarmierung funktioniert.', ['scope' => 'test']);
+        if (!$res) bail('Kein Alarmkanal konfiguriert (PQ_ALERT_WEBHOOK, PQ_ALERT_EMAIL).');
+        foreach ($res as $ch => $ok) say(sprintf('%-8s %s', $ch, $ok ? 'OK' : 'FEHLER (Details im Log/stderr)'));
+        exit(in_array(false, $res, true) ? 1 : 0);
 
     default:
         bail("Unbekannter Befehl: $cmd (php bin/backup.php help)");

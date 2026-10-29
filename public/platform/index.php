@@ -22,7 +22,9 @@ session_name('PQPLATFORM');
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || getenv('PQ_FORCE_SECURE_COOKIES') === '1';
 session_set_cookie_params(['lifetime' => 0, 'path' => '/platform/', 'secure' => $https, 'httponly' => true, 'samesite' => 'Strict']);
 ini_set('session.use_strict_mode', '1');
-session_start();
+/* PQ_SESSION_STORE=db: Tabelle sessions der Plattform-Datenbank (nie die eines Mandanten) */
+$dbStore = opsStartSessionStore('platform');
+if (!session_start() && $dbStore) opsSessionStoreUnavailable();
 header('X-Frame-Options: DENY');
 header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'");
 

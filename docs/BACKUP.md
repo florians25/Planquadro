@@ -127,6 +127,30 @@ journalctl -u planquadro-backup.service
 Alternativ cron: [`deploy/cron/planquadro`](../deploy/cron/planquadro) nach `/etc/cron.d/`.
 Shared Hosting ohne Shell: siehe [INSTALLATION.md](INSTALLATION.md#shared-hosting).
 
+## Alarme
+
+Anlässe: fehlgeschlagenes Backup, fehlgeschlagenes externes Ziel, fehlgeschlagener
+Restore-Test, letztes erfolgreiches Backup älter als `PQ_BACKUP_MAX_AGE_HOURS`. Derselbe
+Alarm wird höchstens alle `PQ_ALERT_REPEAT_HOURS` (24 h) wiederholt.
+
+| Kanal | Konfiguration | Hinweis |
+|---|---|---|
+| Webhook | `PQ_ALERT_WEBHOOK` | JSON-POST (`event`, `subject`, `message`, `text`, `details`); Slack/Mattermost/ntfy |
+| Mail über SMTP | `PQ_ALERT_EMAIL`, `PQ_SMTP_HOST`, `PQ_SMTP_*` | eingebauter SMTP-Client, STARTTLS Pflicht (oder `PQ_SMTP_TLS=tls`), AUTH PLAIN/LOGIN, Zertifikatsprüfung |
+| Mail über `mail()` | `PQ_ALERT_EMAIL` ohne `PQ_SMTP_HOST` | nur wenn ein sendmail vorhanden ist (klassischer Server); im Docker-Image nicht – dann wird die Mail mit Warnung im Log übersprungen |
+
+Beide Kanäle sind unabhängig: fällt die Mail aus, kommt der Webhook trotzdem an und
+umgekehrt. Testen ohne Wiederholsperre:
+
+```bash
+php bin/backup.php alert-test                          # ohne Docker
+docker compose exec backup php bin/backup.php alert-test
+```
+
+Ausgabe je Kanal `OK` oder `FEHLER`, Exit-Code 1 bei einem Fehler; die Ursache (z. B.
+„Server bietet kein STARTTLS an“, „AUTH PLAIN abgelehnt“) steht auf stderr bzw. im
+Container-Log, Passwörter nie. Variablen: [CONFIGURATION.md](CONFIGURATION.md#alarme).
+
 ## Befehle
 
 ```bash
@@ -217,6 +241,10 @@ extern), entschlüsselt es, spielt es in eine Wegwerf-Datenbank `planquadro_rt_<
 vergleicht Zeilenzahlen aller Tabellen und Migrationsstand mit dem Manifest, entpackt die
 Dateien, löscht die Wegwerf-Datenbank und protokolliert das Ergebnis (sichtbar in den
 Einstellungen und in `status`). Fehler lösen einen Alarm aus.
+
+Hinweis: Bei `PQ_SESSION_STORE=db` enthält das Backup auch die Tabelle `sessions`
+(nur SHA-256 der Session-IDs, keine Klartext-IDs). Nach einem Restore der Produktion
+können alle Benutzer mit `DELETE FROM sessions` abgemeldet werden.
 
 Der Restore-Test braucht den privaten Schlüssel. Zwei Betriebsarten:
 
