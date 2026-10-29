@@ -24,6 +24,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
             $id=(int)($_POST['id']??0);$n=trim($_POST['name']??'');$c=strtoupper(trim($_POST['short_code']??''));
             $bg=$_POST['color']??'#3b82f6';$fg=$_POST['fg_color']??'#ffffff';$tp=$_POST['area_type']??'kunde';
             if(!in_array($tp,['kunde','allgemein'],true)) $tp='kunde';
+            /* Farben werden ungefiltert in style-Attribute geschrieben → nur Hex zulassen (S-12) */
+            if(opsValidColor($bg)===null || opsValidColor($fg)===null){echo json_encode(['success'=>false,'error'=>'Farben bitte als Hexwert (#rrggbb) angeben.']);exit;}
+            if(mb_strlen($c)>10){echo json_encode(['success'=>false,'error'=>'Kürzel darf höchstens 10 Zeichen haben.']);exit;}
             if($n&&$c){
                 if($id>0){
                     $db->prepare('UPDATE plan_areas SET name=?,short_code=?,color=?,fg_color=?,area_type=? WHERE id=?')
@@ -42,7 +45,18 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
             else echo json_encode(['success'=>false,'error'=>'Name und Kürzel erforderlich.']);exit;
         }
         if ($act==='del'){
-            $db->prepare('DELETE FROM plan_areas WHERE id=?')->execute([(int)$_POST['id']]);
+            /* Befund D-04: assignments.plan_area_id ist ON DELETE CASCADE – das
+               Löschen eines benutzten Bereichs würde die gesamte Einsatzhistorie
+               mitlöschen. Daher nur unbenutzte Bereiche löschen. */
+            $aid=(int)($_POST['id']??0);
+            $refs=0;
+            foreach (['SELECT COUNT(*) FROM assignments WHERE plan_area_id=?',
+                      "SELECT COUNT(*) FROM plan_drafts WHERE change_type='assignment' AND change_value=?",
+                      "SELECT COUNT(*) FROM change_requests WHERE plan_area_id=? AND status='pending'"] as $q) {
+                $st=$db->prepare($q); $st->execute([$aid]); $refs+=(int)$st->fetchColumn();
+            }
+            if($refs>0){echo json_encode(['success'=>false,'error'=>'Der Bereich wird in '.$refs.' Einsätzen/Entwürfen/Anträgen verwendet und kann nicht gelöscht werden. Bitte stattdessen umbenennen oder ans Ende sortieren.']);exit;}
+            $db->prepare('DELETE FROM plan_areas WHERE id=?')->execute([$aid]);
             normalizeAreaSort($db,'kunde'); normalizeAreaSort($db,'allgemein');
             echo json_encode(['success'=>true,'msg'=>'Gelöscht.']);exit;
         }

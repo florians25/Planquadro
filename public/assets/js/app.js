@@ -890,7 +890,7 @@ function openWotManager(uid,name){document.getElementById('wotMgrUid').value=uid
 function openWotDetail(uid,name){document.getElementById('wotDetTitle').textContent='WOTs \u2013 '+name;var list=document.getElementById('wotDetList');list.innerHTML='<p class="muted">Laden...</p>';oMod('wotDetMod');
 fetch(getApiBase()+'api/save_wots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',user_id:uid,year:PY,month:PM})})
 .then(function(r){return r.json();}).then(function(d){if(!d.success||!d.wots||d.wots.length===0){list.innerHTML='<p class="muted">Keine WOTs</p>';return;}
-var html='<ul class="wot-list">';d.wots.forEach(function(w){html+='<li class="wot-item"><div class="wot-item-color" style="background:'+(w.color||'#3b82f6')+'"></div><div class="wot-item-body"><div class="wot-item-num">'+esc(w.wot_number)+'</div>';if(w.link_url)html+='<div class="wot-item-link"><a href="'+esc(w.link_url)+'" target="_blank">'+esc(w.link_url.substring(0,50))+'</a></div>';if(w.remarks)html+='<div class="wot-item-rem">'+esc(w.remarks)+'</div>';html+='</div></li>';});html+='</ul>';list.innerHTML=html;}).catch(function(){list.innerHTML='<p class="txt-d">Fehler</p>';});}
+var html='<ul class="wot-list">';d.wots.forEach(function(w){html+='<li class="wot-item"><div class="wot-item-color" style="background:'+safeColor(w.color||'#3b82f6')+'"></div><div class="wot-item-body"><div class="wot-item-num">'+esc(w.wot_number)+'</div>';if(w.link_url)html+='<div class="wot-item-link"><a href="'+esc(safeUrl(w.link_url))+'" target="_blank" rel="noopener noreferrer">'+esc(w.link_url.substring(0,50))+'</a></div>';if(w.remarks)html+='<div class="wot-item-rem">'+esc(w.remarks)+'</div>';html+='</div></li>';});html+='</ul>';list.innerHTML=html;}).catch(function(){list.innerHTML='<p class="txt-d">Fehler</p>';});}
 
 function loadWotList(uid){var list=document.getElementById('wotMgrList');list.innerHTML='<p class="muted">Laden...</p>';
 fetch(getApiBase()+'api/save_wots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list',user_id:uid,year:PY,month:PM})})
@@ -898,8 +898,8 @@ fetch(getApiBase()+'api/save_wots',{method:'POST',headers:{'Content-Type':'appli
 var html='<ul class="wot-list">';d.wots.forEach(function(w){
 var isHidden=(w.visible_to_user==='0'||w.visible_to_user===0);
 var visIcon=isHidden?'<svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;opacity:.4;vertical-align:middle"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/><path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/></svg>':'<svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;color:var(--ok);vertical-align:middle"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>';
-html+='<li class="wot-item" data-wid="'+w.id+'"><div class="wot-item-color" style="background:'+(w.color||'#3b82f6')+'"></div><div class="wot-item-body"><div class="wot-item-num">'+esc(w.wot_number)+' '+visIcon+'</div>';
-if(w.link_url)html+='<div class="wot-item-link"><a href="'+esc(w.link_url)+'" target="_blank">'+esc(w.link_url.substring(0,50))+'</a></div>';
+html+='<li class="wot-item" data-wid="'+w.id+'"><div class="wot-item-color" style="background:'+safeColor(w.color||'#3b82f6')+'"></div><div class="wot-item-body"><div class="wot-item-num">'+esc(w.wot_number)+' '+visIcon+'</div>';
+if(w.link_url)html+='<div class="wot-item-link"><a href="'+esc(safeUrl(w.link_url))+'" target="_blank" rel="noopener noreferrer">'+esc(w.link_url.substring(0,50))+'</a></div>';
 if(w.remarks)html+='<div class="wot-item-rem">'+esc(w.remarks)+'</div>';
 html+='</div><div class="wot-item-acts"><button class="btn btn-xs btn-outline" onclick="toggleWotVis('+w.id+','+(isHidden?1:0)+')">'+(isHidden?'Zeigen':'Verbergen')+'</button> <button class="btn btn-xs btn-outline" onclick="editWot('+w.id+')">Bearb.</button> <button class="btn btn-xs btn-outline btn-danger-text" onclick="deleteWot('+w.id+')">Entf.</button></div></li>';});html+='</ul>';list.innerHTML=html;}).catch(function(){list.innerHTML='<p class="txt-d">Fehler</p>';});}
 
@@ -1155,7 +1155,13 @@ function saveYearPlan(year){epConfirm('Einsatz f\u00fcr ALLE Werktage '+year+' s
 /* ============================================================ UTILITY ============================================================ */
 function getApiBase(){var p=window.location.pathname;if(p.indexOf('/pages/')!==-1||p.indexOf('/api/')!==-1)return '../';return '';}
 function currentUserId(){return parseInt(document.body.dataset.uid||'0');}
-function esc(s){if(!s)return '';var d=document.createElement('div');d.appendChild(document.createTextNode(s));return d.innerHTML;}
+/* HTML-Escaping für Text UND Attributwerte (Befund S-05: die frühere Variante
+   über textNode/innerHTML maskierte keine Anführungszeichen). */
+function esc(s){if(!s&&s!==0)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+/* Nur http(s)-Links zulassen (WOT-Links u. a.) */
+function safeUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:'';}
+/* Nur Hex-Farben in style-Attributen */
+function safeColor(c){c=String(c||'').trim();return /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(c)?c:'#94a3b8';}
 function rgbToHex(rgb){if(!rgb)return '#3b82f6';if(rgb.charAt(0)==='#')return rgb;var m=rgb.match(/\d+/g);if(!m||m.length<3)return '#3b82f6';return '#'+m.slice(0,3).map(function(x){var h=parseInt(x).toString(16);return h.length===1?'0'+h:h;}).join('');}
 
 /* ============================================================ PASSWORD CHANGE ============================================================ */

@@ -6,19 +6,7 @@ if(!isLoggedIn()){http_response_code(401);echo json_encode(['error'=>'Nicht ange
 $input=json_decode(file_get_contents('php://input'),true);
 $action=$input['action']??'';$db=getDB();
 
-/* Ensure table exists */
-try{$db->exec("CREATE TABLE IF NOT EXISTS `changelog` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `version` VARCHAR(20) NOT NULL,
-  `release_date` DATE DEFAULT NULL,
-  `content` TEXT NOT NULL,
-  `entry_type` VARCHAR(20) DEFAULT 'feature',
-  `created_by` INT DEFAULT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB");
-/* Add entry_type if missing */
-try{$db->exec("ALTER TABLE changelog ADD COLUMN entry_type VARCHAR(20) DEFAULT 'feature' AFTER content");}catch(Exception $e){}
-}catch(Exception $e){}
+/* Tabelle changelog wird per Migration angelegt (kein DDL zur Laufzeit) */
 
 if($action==='list'){
     try{$s=$db->query('SELECT * FROM changelog ORDER BY id DESC LIMIT 20');

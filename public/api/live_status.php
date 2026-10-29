@@ -143,8 +143,6 @@ if($action==='ping'){
         try {
             $db->prepare('INSERT INTO editing_status(user_id,page,year,month) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE last_ping=NOW()')
                 ->execute([$_SESSION['user_id'],'monatsplanung',(int)($input['year']??0),(int)($input['month']??0)]);
-            /* Try adding column dynamically */
-            try { $db->exec('ALTER TABLE editing_status ADD COLUMN target_uid INT DEFAULT NULL'); } catch(Exception $e3) {}
             echo json_encode(['success'=>true]);
         } catch(Exception $e2) { echo json_encode(['success'=>false]); }
     }

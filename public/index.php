@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/../app/lib/Security.php';
+opsStartSession();
 require_once __DIR__ . '/../app/config/database.php';
 if (isset($_SESSION['user_id']) && empty($_SESSION['must_change_password'])) { header('Location: dashboard'); exit; }
 
@@ -11,9 +12,7 @@ function getSecSetting($key, $default) {
     try { $s = getDB()->prepare('SELECT setting_value FROM app_settings WHERE setting_key=?'); $s->execute([$key]); $r = $s->fetch(); return $r ? $r['setting_value'] : $default; }
     catch(Exception $e) { return $default; }
 }
-function getClientIP() {
-    return $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-}
+function getClientIP() { return opsClientIp(); }
 function cleanOldAttempts() {
     try { getDB()->exec("DELETE FROM login_attempts WHERE attempted_at < DATE_SUB(NOW(), INTERVAL 24 HOUR)"); } catch(Exception $e) {}
 }
@@ -51,8 +50,16 @@ try {
 
 cleanOldAttempts();
 
+/* Beide Formulare (Login, Passwortwechsel) sind CSRF-geschützt. Bei
+   ungültigem Token wird nichts verarbeitet und das Formular neu angezeigt. */
+$csrfOk = true;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrfOk = !empty($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], (string)($_POST['_token'] ?? ''));
+    if (!$csrfOk) { $err = 'Die Sitzung ist abgelaufen. Bitte erneut versuchen.'; }
+}
+
 /* Handle password change */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_pw'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $csrfOk && isset($_POST['change_pw'])) {
     $np = $_POST['new_password'] ?? ''; $np2 = $_POST['new_password2'] ?? '';
     $minLen = (int)getSecSetting('min_password_length', '6');
     $reqUpper = getSecSetting('password_require_uppercase', '0') === '1';
@@ -75,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_pw'])) {
 }
 
 /* Handle login */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['change_pw'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $csrfOk && !isset($_POST['change_pw'])) {
     $u = trim($_POST['username'] ?? ''); $p = $_POST['password'] ?? '';
 
     /* Check lockout */
@@ -105,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['change_pw'])) {
                 if ($row && password_verify($p, $row['password_hash'])) {
                     logAttempt($u, true);
                     logAudit($row['id'], 'login_success', 'Login from ' . getClientIP());
+                    opsRegenerateSession();
                     $_SESSION['user_id'] = $row['id'];
                     $_SESSION['login_time'] = time();
                     if ($row['must_change_password'] ?? 0) {
@@ -206,6 +214,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <?php if($showChange): ?>
     <form method="POST" autocomplete="off">
       <input type="hidden" name="change_pw" value="1">
+      <input type="hidden" name="_token" value="<?php echo opsCsrfToken(); ?>">
       <?php if($pwExpired): ?><div class="alert alert-w">Ihr Passwort ist abgelaufen. Bitte ein neues vergeben.</div>
       <?php else: ?><div class="alert alert-w">Bitte vergeben Sie jetzt Ihr persönliches Passwort.</div><?php endif; ?>
       <div class="fg"><label>Neues Passwort</label><input type="password" name="new_password" required autofocus minlength="<?php echo $minLen;?>" placeholder="Neues Passwort" id="npw">
@@ -215,6 +224,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </form>
     <?php else: ?>
     <form method="POST" autocomplete="off" id="loginForm">
+      <input type="hidden" name="_token" value="<?php echo opsCsrfToken(); ?>">
       <div class="fg"><label>Benutzername</label><input type="text" name="username" required autofocus value="<?php echo htmlspecialchars($_POST['username']??'');?>" placeholder="Benutzername" id="loginUser"></div>
       <div class="fg"><label>Passwort</label><input type="password" name="password" required placeholder="Passwort" id="loginPw"></div>
       <?php if($needCaptcha): ?>

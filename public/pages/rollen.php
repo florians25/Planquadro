@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/functions.php';
 
 /* AJAX handler before any HTML output */
 if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+    requireLoginJson(); /* Befund S-14 */
     header('Content-Type: application/json; charset=utf-8');
     if(!hasPerm('manage_roles')){ echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']); exit; }
     $input = json_decode(file_get_contents('php://input'),true);
@@ -15,6 +16,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
         $role = preg_replace('/[^a-z0-9_]/', '', $input['role'] ?? '');
         $perms = $input['perms'] ?? [];
         if (!$role) { echo json_encode(['success'=>false,'error'=>'Rolle fehlt']); exit; }
+        /* Befund S-16: Ohne manage_roles für die Administrator-Rolle könnte
+           niemand mehr Rollen verwalten. */
+        if ($role === 'admin' && !in_array('manage_roles', $perms, true)) {
+            echo json_encode(['success'=>false,'error'=>'Der Administrator-Rolle kann „Rollen & Rechte verwalten“ nicht entzogen werden.']); exit;
+        }
         $allP = array_keys(allPermissions());
         try {
             $db->beginTransaction();
@@ -37,6 +43,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
         $granted = !empty($input['granted']) ? 1 : 0;
         if (!$userId || !$perm) { echo json_encode(['success'=>false,'error'=>'Daten fehlen']); exit; }
         if (!isset(allPermissions()[$perm])) { echo json_encode(['success'=>false,'error'=>'Ungültige Berechtigung']); exit; }
+        if ($perm === 'manage_roles' && !$granted && $userId === (int)$_SESSION['user_id']) {
+            echo json_encode(['success'=>false,'error'=>'Sie können sich dieses Recht nicht selbst entziehen.']); exit;
+        }
         try {
             setUserOverride($userId, $perm, (bool)$granted);
             echo json_encode(['success'=>true,'msg'=>'Benutzer-Überschreibung gespeichert.']);
@@ -66,8 +75,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
         if (!isset(allPermissions()[$perm])) { echo json_encode(['success'=>false,'error'=>'Ungültige Berechtigung']); exit; }
         try {
             $db->beginTransaction();
-            /* Remove all existing overrides for this permission */
-            $db->prepare('DELETE FROM permission_user_overrides WHERE permission=?')->execute([$perm]);
+            /* Nur Overrides der Benutzer dieser Rolle ersetzen – Ausnahmen für
+               Benutzer anderer Rollen bleiben erhalten (Befund S-15). */
+            $db->prepare('DELETE o FROM permission_user_overrides o JOIN users u ON u.id=o.user_id WHERE o.permission=? AND u.role=?')->execute([$perm, $role]);
             /* Get ALL users with this role */
             $s = $db->prepare('SELECT id FROM users WHERE role=? AND active=1');
             $s->execute([$role]);
@@ -83,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
                 setUserOverride($uid, $perm, true);
             }
             $db->commit();
-            $denied = count($allRoleUsers) - count($allowedIds);
+            $denied = count(array_diff(array_map('intval', $allRoleUsers), $allowedIds));
             echo json_encode(['success'=>true,'msg'=>count($allowedIds).' Person(en) erlaubt, '.$denied.' verweigert.']);
         } catch(Exception $e) {
             if($db->inTransaction()) $db->rollBack();
@@ -155,7 +165,7 @@ foreach ($roles as $rKey => $rName) { $permData[$rKey] = allPermsForRole($rKey);
 $permGroups = [
     'Planung' => ['icon'=>'M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z','perms'=>['plan_view','plan_edit','plan_publish_own','plan_publish_all','plan_publish_year','plan_view_internal','view_erl_column','unlock_vacation']],
     'Verwaltung' => ['icon'=>'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z','perms'=>['manage_users','delete_users','manage_settings','manage_roles']],
-    'Sonstiges' => ['icon'=>'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z','perms'=>['view_gesamtplan_details','approve_requests','view_all_employees']],
+    'Sonstiges' => ['icon'=>'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z','perms'=>['view_gesamtplan_details','approve_requests','view_all_employees','manage_absences','use_planning_assistant']],
 ];
 $permDescriptions = [
     'plan_view'=>'Monats- und Gesamtplan einsehen','plan_edit'=>'Einträge im Monatsplan bearbeiten',
@@ -165,6 +175,8 @@ $permDescriptions = [
     'manage_users'=>'Mitarbeiter anlegen und bearbeiten','delete_users'=>'Mitarbeiter endgültig löschen',
     'manage_settings'=>'App-Einstellungen ändern','manage_roles'=>'Diese Seite – Rollen & Rechte verwalten',
     'view_gesamtplan_details'=>'Details im Gesamtplan einsehen','approve_requests'=>'Änderungsanträge genehmigen/ablehnen',
+    'manage_absences'=>'Modul Abwesenheiten: Urlaub, Krankheit und Sperrtage über Zeiträume erfassen',
+    'use_planning_assistant'=>'Planungsassistent öffnen (auch ohne „Plan bearbeiten“)',
     'view_all_employees'=>'Alle Mitarbeiter in der Planung sehen. Ohne dieses Recht sieht der Benutzer nur Mitarbeiter, bei denen er als Vorgesetzter eingetragen ist.',
 ];
 $csrf = csrfToken();
@@ -186,7 +198,7 @@ $totalPerms=count($allPerms);
 $isSys=in_array($rKey,$systemRoles);
 ?>
 <button class="rl-role-card <?php if($first) echo 'active';?>" data-role="<?php echo $rKey;?>" onclick="rlSwitch('<?php echo $rKey;?>')">
-<div class="rl-role-dot" style="background:<?php echo $clr;?>"></div>
+<div class="rl-role-dot" style="background:<?php echo e($clr);?>"></div>
 <div class="rl-role-info">
 <span class="rl-role-name"><?php echo e($rName);?><?php if(!$isSys):?><span style="font-size:.55rem;color:var(--mu);font-weight:400;margin-left:.3rem">custom</span><?php endif;?></span>
 <span class="rl-role-meta"><?php echo $cnt;?> Nutzer · <?php echo $grantedCnt;?>/<?php echo $totalPerms;?> Rechte</span>
@@ -207,7 +219,7 @@ $rPerms = $permData[$rKey]; $clr=roleColor($rKey); ?>
 <div class="rl-panel <?php if($first) echo 'active';?>" id="rlP_<?php echo $rKey;?>">
 <div class="rl-panel-head">
 <div class="rl-panel-title">
-<div class="rl-panel-dot" style="background:<?php echo $clr;?>"></div>
+<div class="rl-panel-dot" style="background:<?php echo e($clr);?>"></div>
 <div><h2 style="font-size:1rem;font-weight:700"><?php echo e($rName);?></h2>
 <span class="muted" style="font-size:.75rem"><?php echo $userCounts[$rKey]??0;?> aktive Nutzer</span></div>
 </div>

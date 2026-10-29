@@ -6,14 +6,8 @@
  */
 require_once __DIR__.'/../../app/config/database.php';
 
-/* Ensure cal_token column exists */
-try {
-    $db = getDB();
-    $cols = $db->query("SHOW COLUMNS FROM users LIKE 'cal_token'")->fetchAll();
-    if (count($cols) === 0) {
-        $db->exec("ALTER TABLE users ADD COLUMN `cal_token` VARCHAR(64) DEFAULT NULL UNIQUE");
-    }
-} catch (Exception $e) { http_response_code(500); exit('Server error'); }
+/* Spalte cal_token wird per Migration angelegt (migrations/opspilot/0001) */
+try { $db = getDB(); } catch (Exception $e) { http_response_code(500); exit('Server error'); }
 
 $token = trim($_GET['token'] ?? '');
 if (!$token || strlen($token) < 32) {
@@ -22,7 +16,8 @@ if (!$token || strlen($token) < 32) {
 }
 
 /* Rate limit by IP */
-$ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+require_once __DIR__.'/../../app/lib/Security.php';
+$ip = opsClientIp();
 $cacheKey = 'ical_' . md5($ip);
 if (function_exists('apcu_fetch')) {
     $hits = apcu_fetch($cacheKey) ?: 0;

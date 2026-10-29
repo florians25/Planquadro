@@ -8,8 +8,9 @@ $input = secureJsonInput();
 $action = $input['action'] ?? '';
 $db = getDB();
 
-/* Public: get active announcements (no auth needed for dashboard) */
+/* Aktive Meldungen: nur für angemeldete Benutzer (Befund S-19) */
 if ($action === 'active') {
+    if (!isLoggedIn()) { http_response_code(401); echo json_encode(['error'=>'Nicht angemeldet']); exit; }
     try {
         $today = date('Y-m-d');
         $s = $db->prepare('SELECT id, title, content, priority, visible_from, visible_until, created_at

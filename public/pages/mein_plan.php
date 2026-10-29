@@ -194,7 +194,7 @@ elseif($hl){$label=$hols[$d]['name'];}
 <?php
 $isFe = $hl && !$isFt;
 ?>
-<div class="vis-day <?php if($td) echo 'vis-day-today '; if($isFt) echo 'vis-day-hol ';if($isFe) echo 'vis-day-ferien ';if($bg && !$isFt) echo 'vis-day-filled ';?>"<?php if($bg && !$isFt):?> style="border-left:4px solid <?php echo $bg;?>;background:<?php echo $bg;?>18"<?php endif;?>>
+<div class="vis-day <?php if($td) echo 'vis-day-today '; if($isFt) echo 'vis-day-hol ';if($isFe) echo 'vis-day-ferien ';if($bg && !$isFt) echo 'vis-day-filled ';?>"<?php if($bg && !$isFt):?> style="border-left:4px solid <?php echo e($bg);?>;background:<?php echo e($bg);?>18"<?php endif;?>>
 <div style="display:flex;justify-content:space-between;align-items:baseline">
 <span class="vis-day-num"><?php echo (int)date('j',strtotime($d));?></span>
 <span class="vis-day-wd"><?php echo wdShort($d);?></span>
@@ -202,7 +202,7 @@ $isFe = $hl && !$isFt;
 <?php if($isFt):?>
 <div class="vis-day-tag"><span class="tag vis-tag-holiday"><?php echo e($label);?></span></div>
 <?php elseif($bg):?>
-<div class="vis-day-tag"><span class="tag" style="background:<?php echo $bg;?>;color:<?php echo $fg;?>"><?php echo e($shortLabel ?: $label);?></span></div>
+<div class="vis-day-tag"><span class="tag" style="background:<?php echo e($bg);?>;color:<?php echo e($fg);?>"><?php echo e($shortLabel ?: $label);?></span></div>
 <?php if($label && $shortLabel):?><div class="vis-day-remark"><?php echo e($label);?></div><?php endif;?>
 <?php elseif($label):?>
 <div class="vis-day-tag"><span class="tag vis-tag-ferien"><?php echo e($label);?></span></div>
@@ -243,7 +243,7 @@ $curKw=kw($d);$kwChanged=($curKw!==$lastKw);$lastKw=$curKw;
 <td style="font-weight:600"><?php echo date('d.m.Y',strtotime($d));?></td>
 <td class="my-plan-wd"><?php echo wdShort($d);?></td>
 <td class="my-plan-kw"><?php echo $curKw;?></td>
-<td><?php if($bg):?><span class="tag" style="background:<?php echo $bg;?>;color:<?php echo $fg;?>"><?php echo e($label);?></span><?php elseif(!$we):?><span class="muted">–</span><?php endif;?></td>
+<td><?php if($bg):?><span class="tag" style="background:<?php echo e($bg);?>;color:<?php echo e($fg);?>"><?php echo e($label);?></span><?php elseif(!$we):?><span class="muted">–</span><?php endif;?></td>
 <td class="muted" style="font-size:.82rem"><?php echo e($remark);?></td>
 </tr>
 <?php endforeach;?>

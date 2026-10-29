@@ -54,8 +54,9 @@ case 'submit_batch':
         $date  = $item['date'] ?? '';
         $type  = $item['type'] ?? '';
         $value = $item['value'] ?? '';
-        if (!$uid || !$date || !$type || !$value) continue;
+        if (!$uid || !opsValidDate($date) || !in_array($type, ['assignment','absence'], true) || !$value) continue;
         if (!canEdit() && $uid !== (int)$cu['id']) continue;
+        if (canEdit() && $uid !== (int)$cu['id'] && !canEditUser($uid)) continue; /* Team-Scope */
         if (!canEdit() && $type === 'absence' && in_array($value, $krankTypes)) continue;
         if (!canEdit() && $value === 'gesperrt') continue;
 
@@ -85,7 +86,7 @@ case 'submit_batch':
     $msg = $saved.' Änderungsantrag/-anträge eingereicht';
     if ($skipped) $msg .= ' ('.$skipped.' übersprungen – bereits offen)';
     echo json_encode(['success'=>true, 'msg'=>$msg, 'count'=>$saved]);
-    } catch(Exception $e) { $db->rollBack(); echo json_encode(['success'=>false,'error'=>$e->getMessage()]); }
+    } catch(Exception $e) { $db->rollBack(); error_log('change_requests: '.$e->getMessage()); echo json_encode(['success'=>false,'error'=>'Datenbankfehler']); }
     exit;
 
 /* == Anträge auflisten (gruppiert, gefiltert) == */
@@ -108,12 +109,13 @@ case 'list':
         array_unshift($params, $status);
         $s = $db->prepare($sql); $s->execute($params);
         echo json_encode(['success'=>true, 'requests'=>$s->fetchAll(PDO::FETCH_ASSOC)]);
-    } catch(Exception $e) { echo json_encode(['success'=>false, 'error'=>$e->getMessage()]); }
+    } catch(Exception $e) { error_log('change_requests: '.$e->getMessage()); echo json_encode(['success'=>false, 'error'=>'Datenbankfehler']); }
     exit;
 
 /* == Sammelgenehmigung == */
 case 'approve_batch':
-    if (!canEdit()) { echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']); exit; }
+    /* Genehmigen erfordert das dafür vorgesehene Recht (Befund S-10) */
+    if (!hasPerm('approve_requests')) { echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']); exit; }
     $ids = $input['ids'] ?? [];
     if (empty($ids)) { echo json_encode(['success'=>false,'error'=>'Keine IDs']); exit; }
     try { $db->beginTransaction(); $done=0;
@@ -140,12 +142,12 @@ case 'approve_batch':
     }
     $db->commit();
     echo json_encode(['success'=>true, 'msg'=>$done.' Antrag/Anträge genehmigt']);
-    } catch(Exception $e) { $db->rollBack(); echo json_encode(['success'=>false,'error'=>$e->getMessage()]); }
+    } catch(Exception $e) { $db->rollBack(); error_log('change_requests: '.$e->getMessage()); echo json_encode(['success'=>false,'error'=>'Datenbankfehler']); }
     exit;
 
 /* == Sammelablehnung == */
 case 'reject_batch':
-    if (!canEdit()) { echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']); exit; }
+    if (!hasPerm('approve_requests')) { echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']); exit; }
     $ids = $input['ids'] ?? []; $reason = trim($input['reason'] ?? '');
     if (empty($ids)) { echo json_encode(['success'=>false,'error'=>'Keine IDs']); exit; }
     try { $done=0;
@@ -163,14 +165,15 @@ case 'reject_batch':
         $done++;
     }
     echo json_encode(['success'=>true, 'msg'=>$done.' Antrag/Anträge abgelehnt']);
-    } catch(Exception $e) { echo json_encode(['success'=>false,'error'=>$e->getMessage()]); }
+    } catch(Exception $e) { error_log('change_requests: '.$e->getMessage()); echo json_encode(['success'=>false,'error'=>'Datenbankfehler']); }
     exit;
 
 /* == Wochenkontext == */
 case 'week_context':
     if (!canEdit()) { echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']); exit; }
     $uid = (int)($input['user_id'] ?? 0); $date = $input['date'] ?? '';
-    if (!$uid || !$date) { echo json_encode(['success'=>false,'error'=>'Fehlende Daten']); exit; }
+    if (!$uid || !opsValidDate($date)) { echo json_encode(['success'=>false,'error'=>'Fehlende Daten']); exit; }
+    if (!canEditUser($uid)) { echo json_encode(['success'=>false,'error'=>'Keine Berechtigung für diesen Mitarbeiter']); exit; }
     $ts = strtotime($date); $dow = (int)date('N', $ts);
     $monTs = strtotime('-'.($dow-1).' days', $ts);
     $weekDays = []; for ($i=0;$i<7;$i++) $weekDays[] = date('Y-m-d', strtotime("+{$i} days", $monTs));
@@ -188,7 +191,9 @@ case 'week_context':
         } else {
             $s2=$db->prepare('SELECT * FROM absences WHERE user_id=? AND absence_date=? AND is_published=1');
             $s2->execute([$uid,$wd]); $r2=$s2->fetch(PDO::FETCH_ASSOC);
-            if ($r2) $cell=array_merge($cell,['type'=>'absence','label'=>absenceLabel($r2['absence_type']),'bg'=>absenceColor($r2['absence_type']),'fg'=>absenceFg($r2['absence_type']),'name'=>absenceName($r2['absence_type'])]);
+            if ($r2 && isConfidentialAbsence($r2['absence_type']) && !canSeeAbsenceDetails($uid)) {
+                $cell=array_merge($cell,['type'=>'absence','label'=>'A','bg'=>'#ef4444','fg'=>'#fff','name'=>'Abwesend']);
+            } elseif ($r2) $cell=array_merge($cell,['type'=>'absence','label'=>absenceLabel($r2['absence_type']),'bg'=>absenceColor($r2['absence_type']),'fg'=>absenceFg($r2['absence_type']),'name'=>absenceName($r2['absence_type'])]);
         }
         $hs=$db->prepare('SELECT * FROM holidays WHERE holiday_date=?');$hs->execute([$wd]);$hol=$hs->fetch(PDO::FETCH_ASSOC);
         if ($hol) $cell['holiday']=$hol['name'];
@@ -205,7 +210,7 @@ case 'my_requests':
     $sql="SELECT cr.*,pa.short_code AS area_code,pa.name AS area_name,pa.color AS area_color,pa.fg_color AS area_fg,ab.first_name AS app_first,ab.last_name AS app_last FROM change_requests cr LEFT JOIN plan_areas pa ON pa.id=cr.plan_area_id LEFT JOIN users ab ON ab.id=cr.approved_by WHERE cr.user_id=?";
     $params=[$uid]; if($status){$sql.=" AND cr.status=?";$params[]=$status;} $sql.=" ORDER BY cr.created_at DESC LIMIT 50";
     try{$s=$db->prepare($sql);$s->execute($params);echo json_encode(['success'=>true,'requests'=>$s->fetchAll(PDO::FETCH_ASSOC)]);}
-    catch(Exception $e){echo json_encode(['success'=>false,'error'=>$e->getMessage()]);}
+    catch(Exception $e){error_log('change_requests: '.$e->getMessage());echo json_encode(['success'=>false,'error'=>'Datenbankfehler']);}
     exit;
 
 /* == Pending-Map (für gestrichelte Umrandung) == */

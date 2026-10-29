@@ -10,6 +10,47 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
     header('Content-Type: application/json; charset=utf-8');
     $act = $_POST['action'] ?? '';
     try {
+        /* Schutz vor Rechteausweitung (Befund S-02):
+           - Die Rolle "admin" vergeben, ändern oder Admin-Konten bearbeiten
+             (Passwort, Status, Rolle, Löschen) darf nur ein Administrator.
+           - Niemand ändert die eigene Rolle oder deaktiviert sich selbst.
+           - Nur bekannte Rollen; Rollen mit "Rollen & Rechte verwalten"
+             vergibt nur, wer dieses Recht selbst hat. */
+        $meId = (int)$_SESSION['user_id'];
+        $iAmAdmin = isAdmin();
+        $targetId = (int)($_POST['id'] ?? 0);
+        $targetRole = null;
+        if ($targetId > 0) {
+            $tr = $db->prepare('SELECT role FROM users WHERE id=?'); $tr->execute([$targetId]);
+            $targetRole = $tr->fetchColumn();
+            if ($targetRole === false) { echo json_encode(['success'=>false,'error'=>'Mitarbeiter nicht gefunden.']); exit; }
+        }
+        $adminOnly = ['save','toggle','reset_pw','delete_user','promote','save_supervisors'];
+        if ($targetRole === 'admin' && !$iAmAdmin && in_array($act, $adminOnly, true)) {
+            echo json_encode(['success'=>false,'error'=>'Administrator-Konten können nur von Administratoren geändert werden.']); exit;
+        }
+        if ($act === 'toggle' && $targetId === $meId) {
+            echo json_encode(['success'=>false,'error'=>'Sie können Ihr eigenes Konto nicht deaktivieren.']); exit;
+        }
+        if ($act === 'save') {
+            $newRole = (string)($_POST['role'] ?? 'mitarbeiter');
+            if (!array_key_exists($newRole, allRoles())) {
+                echo json_encode(['success'=>false,'error'=>'Unbekannte Rolle.']); exit;
+            }
+            if ($newRole === 'admin' && !$iAmAdmin) {
+                echo json_encode(['success'=>false,'error'=>'Die Rolle Administrator kann nur von Administratoren vergeben werden.']); exit;
+            }
+            if ($targetId === $meId && $newRole !== $targetRole) {
+                echo json_encode(['success'=>false,'error'=>'Die eigene Rolle kann nicht geändert werden.']); exit;
+            }
+            if (!$iAmAdmin && $newRole !== $targetRole && !hasPerm('manage_roles')) {
+                $rp = $db->prepare("SELECT granted FROM role_permissions WHERE role=? AND permission='manage_roles'");
+                $rp->execute([$newRole]);
+                if ((int)$rp->fetchColumn() === 1) {
+                    echo json_encode(['success'=>false,'error'=>'Diese Rolle darf Rollen und Rechte verwalten und kann nur von Administratoren vergeben werden.']); exit;
+                }
+            }
+        }
         if ($act === 'save') {
             $id=(int)($_POST['id']??0);
             $d=['username'=>trim($_POST['username']??''),'first_name'=>trim($_POST['first_name']??''),
@@ -35,10 +76,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
                 echo json_encode(['success'=>true,'msg'=>'Mitarbeiter aktualisiert.']); exit;
             } else {
                 $otp='';$pw=$_POST['password']??'';
-                if ($useOtp||!$pw){$otp=strtoupper(substr(md5(random_bytes(8)),0,8));$pw=$otp;}
+                if ($useOtp||!$pw){$otp=strtoupper(bin2hex(random_bytes(5)));$pw=$otp;}
                 $h=password_hash($pw,PASSWORD_DEFAULT);$mcp=($otp)?1:0;
-                $db->prepare('INSERT INTO users(username,password_hash,first_name,last_name,role,vacation_days,os_level,weekend_allowed,training_profession,primary_area_id,must_change_password,initial_password,exit_date,entry_date)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-                   ->execute([$d['username'],$h,$d['first_name'],$d['last_name'],$d['role'],$d['vacation_days'],$d['os_level'],$d['weekend_allowed'],$d['training_profession'],$d['primary_area_id'],$mcp,$otp?:null,$d['exit_date'],$d['entry_date']]);
+                /* Einmalpasswort wird nur einmal angezeigt und nicht im Klartext gespeichert (S-08) */
+                $db->prepare('INSERT INTO users(username,password_hash,first_name,last_name,role,vacation_days,os_level,weekend_allowed,training_profession,primary_area_id,must_change_password,initial_password,exit_date,entry_date)VALUES(?,?,?,?,?,?,?,?,?,?,?,NULL,?,?)')
+                   ->execute([$d['username'],$h,$d['first_name'],$d['last_name'],$d['role'],$d['vacation_days'],$d['os_level'],$d['weekend_allowed'],$d['training_profession'],$d['primary_area_id'],$mcp,$d['exit_date'],$d['entry_date']]);
                 $newId = (int)$db->lastInsertId();
                 foreach ($supervisorIds as $sid) { if ($sid>0 && $sid!==$newId) $db->prepare('INSERT IGNORE INTO user_supervisors(user_id,supervisor_id)VALUES(?,?)')->execute([$newId,$sid]); }
                 if(!empty($_POST['plan_all'])) $db->prepare('INSERT INTO permission_user_overrides(permission,user_id,granted,created_by)VALUES(?,?,1,?)')->execute(['view_all_employees',$newId,(int)$_SESSION['user_id']]);
@@ -80,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
             if(!hasPerm('delete_users')){echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']);exit;}
             $uid=(int)($_POST['id']??0);
             if(!$uid){echo json_encode(['success'=>false,'error'=>'Ungültige ID']);exit;}
-            if($uid===$_SESSION['user_id']){echo json_encode(['success'=>false,'error'=>'Sie können sich nicht selbst löschen.']);exit;}
+            if($uid===(int)$_SESSION['user_id']){echo json_encode(['success'=>false,'error'=>'Sie können sich nicht selbst löschen.']);exit;}
             /* Check if user has data */
             $hasA=$db->prepare('SELECT COUNT(*) c FROM assignments WHERE user_id=?');$hasA->execute([$uid]);$ac=(int)$hasA->fetch()['c'];
             $hasB=$db->prepare('SELECT COUNT(*) c FROM absences WHERE user_id=?');$hasB->execute([$uid]);$bc=(int)$hasB->fetch()['c'];
@@ -94,19 +136,27 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
             echo json_encode(['success'=>true,'msg'=>'Mitarbeiter und alle zugehörigen Daten gelöscht. ('.$ac.' Einsätze, '.$bc.' Abwesenheiten)']); exit;
         }
         if ($act==='reset_pw'){
-            $uid=(int)($_POST['id']??0);$otp=strtoupper(substr(md5(random_bytes(8)),0,8));
-            $db->prepare('UPDATE users SET password_hash=?,must_change_password=1,initial_password=? WHERE id=?')->execute([password_hash($otp,PASSWORD_DEFAULT),$otp,$uid]);
+            $uid=(int)($_POST['id']??0);$otp=strtoupper(bin2hex(random_bytes(5)));
+            $db->prepare('UPDATE users SET password_hash=?,must_change_password=1,initial_password=NULL WHERE id=?')->execute([password_hash($otp,PASSWORD_DEFAULT),$uid]);
             $s=$db->prepare('SELECT first_name,last_name,username FROM users WHERE id=?');$s->execute([$uid]);$row=$s->fetch();
             echo json_encode(['success'=>true,'msg'=>'Einmalpasswort gesetzt.','otp'=>$otp,'user'=>$row]); exit;
         }
         echo json_encode(['success'=>false,'error'=>'Unbekannte Aktion']); exit;
-    } catch(Exception $e) { echo json_encode(['success'=>false,'error'=>$e->getMessage()]); exit; }
+    } catch(Exception $e) {
+        error_log('mitarbeiter: ' . $e->getMessage());
+        $msg = ($e instanceof PDOException && ($e->errorInfo[1] ?? 0) == 1062) ? 'Benutzername ist bereits vergeben.' : 'Speichern fehlgeschlagen.';
+        echo json_encode(['success'=>false,'error'=>$msg]); exit;
+    }
 }
 
 /* ── Normal page rendering ── */
 $pageTitle = 'Mitarbeiter';
 require_once __DIR__ . '/../includes/header.php';
 $users=$db->query("SELECT * FROM users ORDER BY active DESC, FIELD(role,'admin','manager','teamleiter','verwaltung','mitarbeiter','lager','azubi_1','azubi_2','azubi_3'), last_name")->fetchAll();
+/* Geheimnisse gehören nicht ins HTML (Befund S-04): die Zeilen werden als
+   JSON in onclick-Attribute geschrieben. */
+foreach ($users as &$__u) unset($__u['password_hash'], $__u['initial_password'], $__u['cal_token']);
+unset($__u);
 $roles=['admin'=>'Administrator','mitarbeiter'=>'Techniker','teamleiter'=>'Teamleiter','manager'=>'Manager','verwaltung'=>'Verwaltung','lager'=>'Lager','azubi_1'=>'Azubi 1. LJ','azubi_2'=>'Azubi 2. LJ','azubi_3'=>'Azubi 3. LJ'];
 /* Vorgesetzte + Unterstellte laden */
 $supMap=[]; $reportsMap=[];
@@ -231,7 +281,7 @@ elseif(!empty($u['exit_date'])&&$u['exit_date']<$today)$uStatus='exited';
     <div class="fg"><label>Nachname *</label><input type="text" id="uLn" required></div>
   </div>
   <div class="fg2">
-    <div class="fg"><label>Rolle</label><select id="uRole"><?php foreach($roles as $v=>$l):?><option value="<?php echo $v;?>"><?php echo $l;?></option><?php endforeach;?></select></div>
+    <div class="fg"><label>Rolle</label><select id="uRole"><?php foreach($roles as $v=>$l):?><option value="<?php echo e($v);?>"<?php if($v==='admin'&&!isAdmin()) echo ' disabled';?>><?php echo e($l);?></option><?php endforeach;?></select></div>
     <div class="fg"><label>Urlaubstage/Jahr</label><input type="number" step="0.5" id="uVac" value="30"></div>
   </div>
   <div class="fg2">

@@ -1,7 +1,10 @@
 <?php
 $pageTitle = 'Genehmigungen';
-require_once __DIR__ . '/../includes/header.php';
+/* Rechteprüfung VOR jeder Ausgabe – sonst greift die Umleitung nicht (X-02) */
+require_once __DIR__ . '/../includes/functions.php';
+requireLogin();
 if (!canEdit()) { header('Location: dashboard'); exit; }
+require_once __DIR__ . '/../includes/header.php';
 $pam = planAreaMap();
 $approvalEnabled = getSetting('approval_system_enabled','0') === '1';
 ?>

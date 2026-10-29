@@ -207,7 +207,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
       <tr>
         <td><span style="display:inline-flex;align-items:center;gap:.3rem"><span style="width:10px;height:10px;border-radius:2px;background:<?php echo e($ww['color']??'#3b82f6');?>;flex-shrink:0"></span><b><?php echo e($ww['wot_number']); ?></b></span></td>
         <td style="color:var(--tx2)"><?php echo e($ww['remarks'] ?? '–'); ?></td>
-        <?php if($ww['link_url']??''):?><td><a href="<?php echo e($ww['link_url']);?>" target="_blank" style="font-size:.75rem">Öffnen</a></td><?php endif;?>
+        <?php if($ww['link_url']??''):?><td><a href="<?php echo e(opsSafeUrl($ww['link_url']) ?: '#');?>" target="_blank" rel="noopener noreferrer" style="font-size:.75rem">Öffnen</a></td><?php endif;?>
       </tr>
       <?php endforeach; ?>
       </tbody>

@@ -246,13 +246,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             }
             if ($cur) $out[] = $cur;
 
-            /* Vertraulichkeit wie in der Monatsplanung */
+            /* Vertraulichkeit wie in der Monatsplanung. Der interne
+               Gruppierungsschlüssel enthält die Art und wird nie ausgeliefert
+               (Befund S-11). */
             foreach ($out as &$o) {
                 if (isConfidentialAbsence($o['type']) && !canSeeAbsenceDetails($o['user_id'])) {
                     $o['label'] = 'Abwesend';
                     $o['type']  = 'vertraulich';
                     $o['remarks'] = '';
                 }
+                unset($o['key']);
             }
             unset($o);
             usort($out, function ($a, $b) { return strcmp($b['start'], $a['start']); });
@@ -396,7 +399,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
 
             if (!isset($allowed[$uid]))        throw new Exception('Diese Person können Sie nicht verwalten.');
             if (!isset(ABW_TYPES[$type]))      throw new Exception('Unbekannte Art der Abwesenheit.');
-            if (!$from || !$to || $to < $from) throw new Exception('Bitte einen gültigen Zeitraum angeben.');
+            if (!opsValidDate($from) || !opsValidDate($to) || $to < $from) throw new Exception('Bitte einen gültigen Zeitraum angeben.');
             if ($sub && !isset($allowed[$sub])) throw new Exception('Diese Vertretung können Sie nicht einsetzen.');
             if ($sub === $uid)                  throw new Exception('Eine Person kann sich nicht selbst vertreten.');
             foreach ($subMap as $d => $sid) {
@@ -459,6 +462,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                      created_by=VALUES(created_by), created_at=NOW()");
 
             $subCheck = $db->prepare('SELECT absence_type FROM absences WHERE user_id = ? AND absence_date = ?');
+            /* Genehmigter Urlaub und Krankheit sind gesperrt wie in der
+               Monatsplanung (api/save_bulk): überschreiben nur mit
+               „Genehmigten Urlaub entsperren“ (Befund D-03). */
+            $mayUnlock = hasPerm('unlock_vacation');
+            $lockedTypes = ['urlaub_genehmigt','krank_halb','krank_ganz','krank_attest'];
+            $ownCheck = $db->prepare('SELECT absence_type FROM absences WHERE user_id = ? AND absence_date = ? FOR UPDATE');
+            /* Einen bestehenden ANDEREN Einsatz der Vertretung nicht stillschweigend ersetzen */
+            $subAsgCheck = $db->prepare('SELECT plan_area_id FROM assignments WHERE user_id = ? AND plan_date = ? FOR UPDATE');
 
             /* Betroffene Tage und die dort geplanten Einsätze vorab bestimmen. */
             $dates = [];
@@ -477,6 +488,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                 $yy     = (int)date('Y', $t);
                 $mm     = (int)date('n', $t);
                 $areaId = (int)($byDate[$d]['plan_area_id'] ?? 0);
+
+                $ownCheck->execute([$uid, $d]);
+                $ownAbs = $ownCheck->fetchColumn();
+                if ($ownAbs !== false && $ownAbs !== $type && in_array($ownAbs, $lockedTypes, true) && !$mayUnlock) {
+                    $skipped[] = date('d.m.', $t) . ': ' . (ABW_TYPES[$ownAbs] ?? $ownAbs) . ' ist gesperrt';
+                    continue;
+                }
 
                 if ($publish) {
                     /* Tag räumen: Einsatz, alte Abwesenheit und jeder Entwurf –
@@ -498,6 +516,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                     $subAbs = $subCheck->fetchColumn();
                     if ($subAbs !== false && $subAbs !== 'offen') {
                         $skipped[] = date('d.m.', $t) . ': ' . $allowed[$dSub]['last_name'] . ' ist selbst abwesend';
+                        continue;
+                    }
+                    $subAsgCheck->execute([$dSub, $d]);
+                    $subArea = $subAsgCheck->fetchColumn();
+                    if ($subArea !== false && (int)$subArea !== $areaId) {
+                        $skipped[] = date('d.m.', $t) . ': ' . $allowed[$dSub]['last_name'] . ' ist bereits anderweitig eingeplant';
                         continue;
                     }
                     /* Am Eintrag der Vertretung steht, für wen sie einspringt. */
@@ -522,7 +546,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                        $allowed[$uid]['last_name'] . ': ' . (ABW_TYPES[$type] ?? $type) . ' ' . $from . ' bis ' . $to
                        . ' (' . $written . ' Tage' . ($sub ? ', Vertretung: ' . $allowed[$sub]['last_name'] : ', ersatzlos')
                        . ($publish ? ', veröffentlicht' : ', Entwurf') . ')',
-                       $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '']);
+                       opsClientIp()]);
             } catch (Exception $e) {}
 
             $msg = $written . ' Tag(e) ' . ($publish ? 'erfasst und veröffentlicht' : 'als Entwurf angelegt');
@@ -552,23 +576,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             $from = (string)($_POST['from'] ?? '');
             $to   = (string)($_POST['to'] ?? '');
             if (!isset($allowed[$uid])) throw new Exception('Diese Person können Sie nicht verwalten.');
-            if (!$from || !$to)         throw new Exception('Zeitraum fehlt.');
-            $q = $db->prepare('DELETE FROM absences WHERE user_id = ? AND absence_date BETWEEN ? AND ?');
+            if (!opsValidDate($from) || !opsValidDate($to) || $to < $from) throw new Exception('Zeitraum fehlt oder ist ungültig.');
+            if ((strtotime($to) - strtotime($from)) / 86400 > 400) throw new Exception('Der Zeitraum ist zu lang.');
+            /* Gesperrte Arten (genehmigter Urlaub, Krankheit) nur mit
+               unlock_vacation entfernen – wie in der Monatsplanung (D-03). */
+            $keepLocked = hasPerm('unlock_vacation') ? '' : " AND absence_type NOT IN ('urlaub_genehmigt','krank_halb','krank_ganz','krank_attest')";
+            $db->beginTransaction();
+            $q = $db->prepare('DELETE FROM absences WHERE user_id = ? AND absence_date BETWEEN ? AND ?' . $keepLocked);
             $q->execute([$uid, $from, $to]);
             $n = $q->rowCount();
+            $lk = $db->prepare('SELECT COUNT(*) FROM absences WHERE user_id = ? AND absence_date BETWEEN ? AND ?');
+            $lk->execute([$uid, $from, $to]);
+            $kept = (int)$lk->fetchColumn();
             /* Auch noch nicht veröffentlichte Entwürfe derselben Tage entfernen. */
             $d2 = $db->prepare("DELETE FROM plan_drafts WHERE user_id = ? AND plan_date BETWEEN ? AND ?
                                       AND change_type IN ('absence','locked')");
             $d2->execute([$uid, $from, $to]);
             $n += $d2->rowCount();
-            echo json_encode(['success' => true, 'msg' => $n . ' Tag(e) entfernt.']);
+            $db->commit();
+            $msg = $n . ' Tag(e) entfernt.';
+            if ($kept) $msg .= ' ' . $kept . ' gesperrte(r) Tag(e) (genehmigter Urlaub/Krankheit) bleiben erhalten.';
+            echo json_encode(['success' => true, 'msg' => $msg]);
             exit;
         }
 
         echo json_encode(['success' => false, 'error' => 'Unbekannte Aktion.']);
     } catch (Throwable $e) {
         if ($db->inTransaction()) $db->rollBack();
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        /* Fachliche Meldungen (Exception) anzeigen, technische Fehler nur loggen */
+        if ($e instanceof PDOException || !($e instanceof Exception)) {
+            error_log('abwesenheiten: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Technischer Fehler beim Speichern.']);
+        } else {
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
     }
     exit;
 }

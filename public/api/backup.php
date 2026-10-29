@@ -5,6 +5,9 @@
  * - Max 10 backups, oldest gets overwritten
  * - Cron endpoint with secret key
  */
+/* Der Cron-Aufruf authentisiert sich über den Backup-Schlüssel, nicht über
+   eine Session – daher ohne CSRF-Token. */
+if (($_GET['action'] ?? '') === 'cron_backup') define('OPSPILOT_CSRF_EXEMPT', true);
 require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/functions.php';
 require_once __DIR__.'/../includes/security.php';
@@ -58,7 +61,7 @@ function fmtBytes($b) {
 }
 
 /* === Daily cron: no session, auth via key === */
-if ($action === 'cron_backup') {
+if ($action === 'cron_backup' && ($_GET['action'] ?? '') === 'cron_backup') {
     $cronKey = $_GET['key'] ?? $input['key'] ?? '';
     $expected = ''; try { $expected = getSetting('backup_cron_key', ''); } catch(Exception $e) {}
     if (!$expected || !$cronKey || !hash_equals($expected, $cronKey)) {

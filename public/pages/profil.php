@@ -5,14 +5,13 @@ require_once __DIR__ . '/../includes/functions.php';
 
 /* AJAX handler for cal token */
 if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+    requireLoginJson(); /* Befund S-14 */
     header('Content-Type: application/json; charset=utf-8');
     $input = json_decode(file_get_contents('php://input'), true);
     $act = $input['action'] ?? '';
     if ($act === 'generate_cal_token') {
         $token = bin2hex(random_bytes(32));
         try {
-            /* Ensure column exists */
-            try { getDB()->exec("ALTER TABLE users ADD COLUMN `cal_token` VARCHAR(64) DEFAULT NULL UNIQUE"); } catch(Exception $e) {}
             getDB()->prepare('UPDATE users SET cal_token=? WHERE id=?')->execute([$token, $_SESSION['user_id']]);
             $url = (isset($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off'?'https://':'http://') . ($_SERVER['HTTP_HOST']??'localhost') . dirname(dirname($_SERVER['SCRIPT_NAME'])) . '/api/ical?token=' . $token;
             echo json_encode(['success'=>true,'token'=>$token,'url'=>$url,'msg'=>'Kalender-Token generiert']);

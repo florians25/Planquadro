@@ -82,6 +82,35 @@ $_bp = bp();
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Einsatzplanung<?php echo isset($pageTitle) ? ' – '.e($pageTitle) : ''; ?></title>
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/style.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/style.css'); ?>">
+<meta name="csrf-token" content="<?php echo csrfToken(); ?>">
+<script>
+/* CSRF: jede zustandsändernde Anfrage an den eigenen Server trägt das
+   Session-Token im Header X-CSRF-Token (geprüft in includes/auth.php). */
+(function(){
+  var T=document.querySelector('meta[name="csrf-token"]').content;
+  window.EP_CSRF=T;
+  var of=window.fetch;
+  window.fetch=function(input,init){
+    init=init||{};
+    var m=(init.method||(input&&input.method)||'GET').toUpperCase();
+    var url=typeof input==='string'?input:(input&&input.url)||'';
+    var same=!/^[a-z]+:\/\//i.test(url)||url.indexOf(location.origin)===0;
+    if(same&&m!=='GET'&&m!=='HEAD'){
+      var h=new Headers(init.headers||(typeof input!=='string'&&input.headers)||{});
+      if(!h.has('X-CSRF-Token'))h.set('X-CSRF-Token',T);
+      init.headers=h;
+    }
+    return of.call(this,input,init);
+  };
+  if(navigator.sendBeacon){
+    var ob=navigator.sendBeacon.bind(navigator);
+    navigator.sendBeacon=function(url,data){
+      if(typeof data==='string'&&data.charAt(0)==='{'){try{var o=JSON.parse(data);o._token=T;data=JSON.stringify(o);}catch(e){}}
+      return ob(url,data);
+    };
+  }
+})();
+</script>
 </head>
 <body data-uid="<?php echo $_cu['id']??0; ?>" data-csrf="<?php echo csrfToken(); ?>">
 <div id="appLoader"><div class="loader-dots"><span></span><span></span><span></span></div><div class="loader-text">Einsatzplanung</div></div>

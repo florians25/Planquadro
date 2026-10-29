@@ -1,16 +1,25 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    ini_set('session.cookie_httponly', '1');
-    ini_set('session.cookie_samesite', 'Strict');
-    ini_set('session.use_strict_mode', '1');
-    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-        ini_set('session.cookie_secure', '1');
-    }
-    session_start();
-}
+require_once __DIR__ . '/../../app/lib/Security.php';
+opsStartSession();
 require_once __DIR__ . '/../../app/config/database.php';
 
+/* Jeder zustandsändernde Request (POST/PUT/PATCH/DELETE) an Seiten und APIs
+   braucht ein gültiges CSRF-Token. app.js/header.php senden es automatisch
+   als Header X-CSRF-Token mit. */
+opsEnforceCsrf();
+
 function isLoggedIn(): bool { return isset($_SESSION['user_id']) && empty($_SESSION['must_change_password']); }
+
+/* Für AJAX-Handler: statt Umleitung eine JSON-Antwort 401. Gilt auch,
+   solange ein Passwortwechsel erzwungen ist. */
+function requireLoginJson(): void {
+    if (!isLoggedIn()) {
+        http_response_code(401);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success'=>false,'error'=>'Nicht angemeldet']);
+        exit;
+    }
+}
 
 function requireLogin(): void {
     if (!isset($_SESSION['user_id'])) { header('Location: ' . bp() . './'); exit; }
@@ -154,6 +163,9 @@ function allPermissions(): array {
         'view_gesamtplan_details' => 'Gesamtplan Details sehen',
         'approve_requests' => 'Anträge genehmigen',
         'view_all_employees' => 'Alle Mitarbeiter sehen (sonst nur eigenes Team)',
+        /* Bisher geprüft, aber nicht pflegbar (Befund X-03) */
+        'manage_absences' => 'Abwesenheiten erfassen (Modul Abwesenheiten)',
+        'use_planning_assistant' => 'Planungsassistent nutzen',
     ];
 }
 
@@ -208,10 +220,7 @@ function showAccessDenied($msg = 'Sie haben keine Berechtigung, diese Seite aufz
     exit;
 }
 
-function csrfToken(): string {
-    if (empty($_SESSION["csrf_token"])) $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
-    return $_SESSION["csrf_token"];
-}
+function csrfToken(): string { return opsCsrfToken(); }
 function verifyCsrf($token): bool { return hash_equals(csrfToken(), $token ?? ""); }
 
 function bp(): string {

@@ -90,7 +90,7 @@ function validateUserId(int $uid): bool {
 function logSuspicious(string $reason): void {
     try {
         $uid = $_SESSION['user_id'] ?? 0;
-        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $ip = opsClientIp();
         $uri = $_SERVER['REQUEST_URI'] ?? '';
         getDB()->prepare('INSERT INTO audit_log(user_id,action,details,ip_address) VALUES(?,?,?,?)')
                ->execute([$uid ?: null, 'suspicious', mb_substr("$reason | URI: $uri", 0, 500), $ip]);

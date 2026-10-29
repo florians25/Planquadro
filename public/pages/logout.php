@@ -1,1 +1,3 @@
-<?php session_start(); $_SESSION=[]; session_destroy(); header('Location: ./'); exit;
+<?php
+/* Alias: /pages/logout.php verhält sich wie /logout */
+require __DIR__ . "/../logout.php";

@@ -116,7 +116,7 @@ echo '<td class="cy';
 if($we) echo ' we'; if($td) echo ' td'; if($hlc) echo ' '.$hlc; if($f) echo ' xb';
 if($entryBlocked||$exitBlocked) echo ' cell-unavailable';
 echo '"';
-if($bg) echo ' style="background:'.$bg.($we?' !important':'').';color:'.($fg?:' #fff').'"';
+if($bg) echo ' style="background:'.e($bg).($we?' !important':'').';color:'.e($fg?:'#fff').'"';
 $cellTitle=($entryBlocked||$exitBlocked)?'Person nicht verfügbar':((int)date('j',strtotime($d)).'. '.monthName((int)date('m',strtotime($d))).($label?' – '.$label:''));
 echo ' title="'.e($cellTitle).'"';
 echo '>'.$label.'</td>';}}?>

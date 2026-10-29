@@ -155,7 +155,7 @@ data-u="<?php echo $u['id'];?>" data-d="<?php echo $d;?>" data-t="<?php echo $ct
 <?php if($metaByName):?> data-remark-by="<?php echo e($metaByName);?>"<?php endif;?>
 <?php if($metaAtFmt):?> data-remark-at="<?php echo e($metaAtFmt);?>"<?php endif;?>
 <?php if($isVacLock):?> data-vaclock="1"<?php endif;?>
-<?php if($bg):?> style="background:<?php echo $bg;?><?php if($we) echo ' !important';?>;color:<?php echo $fg;?>"<?php endif;?>><?php echo e($cc);?></td>
+<?php if($bg):?> style="background:<?php echo e($bg);?><?php if($we) echo ' !important';?>;color:<?php echo e($fg);?>"<?php endif;?>><?php echo e($cc);?></td>
 <?php endforeach;?>
 </tr><?php endforeach; endforeach;?>
 </tbody></table></div>
