@@ -11,6 +11,9 @@ final class Client
     private string $jar;
     public ?string $csrf = null;
     public bool $sendCsrf = true;
+    /** Basis-URL (Standard: Haupt-Testserver) und optionaler Host-Header */
+    public ?string $base = null;
+    public ?string $host = null;
 
     public function __construct()
     {
@@ -59,7 +62,8 @@ final class Client
     public function request(string $method, string $path, ?string $body, array $headers = []): Response
     {
         if ($this->sendCsrf && $this->csrf && $method !== 'GET') $headers[] = 'X-CSRF-Token: ' . $this->csrf;
-        $ch = curl_init(TestEnv::baseUrl() . $path);
+        if ($this->host) $headers[] = 'Host: ' . $this->host;
+        $ch = curl_init(($this->base ?? TestEnv::baseUrl()) . $path);
         curl_setopt_array($ch, [
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_RETURNTRANSFER => true,

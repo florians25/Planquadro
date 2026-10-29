@@ -5,7 +5,8 @@
  * In dieser Datei stehen KEINE Zugangsdaten. Sie werden in dieser Reihenfolge
  * gelesen (erste gefundene Quelle gewinnt):
  *   1. Umgebungsvariablen  OPSPILOT_DB_HOST, OPSPILOT_DB_PORT, OPSPILOT_DB_NAME,
- *                          OPSPILOT_DB_USER, OPSPILOT_DB_PASS
+ *                          OPSPILOT_DB_USER, OPSPILOT_DB_PASS (jeweils auch als
+ *                          *_FILE für Docker-Secrets)
  *      (Docker/Compose, systemd, SetEnv im Webserver, Hosting-Panel)
  *   2. app/config/secrets.php  (Vorlage: secrets.sample.php, nie committen)
  *   3. Legacy-Variablen der Vorversion  CCKOE_DB_HOST/NAME/USER/PASS
@@ -15,14 +16,16 @@
  * erreichbar.
  */
 
+require_once __DIR__ . '/../lib/Tenancy.php';
+
 $__secrets = [];
 if (is_readable(__DIR__ . '/secrets.php')) {
     $__secrets = require __DIR__ . '/secrets.php';
     if (!is_array($__secrets)) $__secrets = [];
 }
 $__cfg = function (string $env, string $key, string $fallback = '') use ($__secrets): string {
-    $v = getenv('OPSPILOT_' . $env);
-    if ($v !== false && $v !== '') return $v;
+    $v = opsEnv('OPSPILOT_' . $env);   /* inkl. *_FILE (Docker-Secrets) */
+    if ($v !== '') return $v;
     if (isset($__secrets[$key]) && $__secrets[$key] !== '') return (string)$__secrets[$key];
     $v = getenv('CCKOE_' . $env);
     if ($v !== false && $v !== '') return $v;
@@ -44,7 +47,8 @@ function getDB(): PDO
     static $pdo = null;
     if ($pdo === null) {
         try {
-            $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', DB_HOST, (int)DB_PORT, DB_NAME, DB_CHARSET);
+            /* Datenbank des aktuellen Mandanten (selfhosted: DB_NAME) */
+            $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', DB_HOST, (int)DB_PORT, opsTenantDbName(), DB_CHARSET);
             $pdo = new PDO($dsn, DB_USER, DB_PASS, [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

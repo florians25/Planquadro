@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../app/lib/Security.php';
-opsStartSession();
 require_once __DIR__ . '/../app/config/database.php';
+opsStartSession();
 if (isset($_SESSION['user_id']) && empty($_SESSION['must_change_password'])) { header('Location: dashboard'); exit; }
 
 $err = ''; $showChange = !empty($_SESSION['must_change_password']); $pwExpired = !empty($_SESSION['pw_expired']);

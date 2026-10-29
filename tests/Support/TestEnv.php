@@ -115,6 +115,47 @@ final class TestEnv
         $db->exec("INSERT INTO app_settings(setting_key,setting_value) VALUES('approval_system_enabled','1') ON DUPLICATE KEY UPDATE setting_value='1'");
     }
 
+    /** Startet einen weiteren Testserver mit eigener Umgebung (z. B. SaaS-Modus). */
+    public static function startExtraServer(array $envOverrides): string
+    {
+        return self::spawnServer(self::env() + ['PHP_CLI_SERVER_WORKERS' => '2'], $envOverrides);
+    }
+
+    private static array $extra = [];
+
+    private static function spawnServer(array $env, array $over): string
+    {
+        $sock = stream_socket_server('tcp://127.0.0.1:0');
+        $port = (int)substr(strrchr(stream_socket_get_name($sock, false), ':'), 1);
+        fclose($sock);
+        $log = sys_get_temp_dir() . '/opspilot-test-server-' . $port . '.log';
+        $cmd = [PHP_BINARY, '-d', 'display_errors=stderr', '-S', "127.0.0.1:$port", '-t', self::$root . '/public', self::$root . '/tests/router.php'];
+        $proc = proc_open($cmd, [0 => ['file', '/dev/null', 'r'], 1 => ['file', $log, 'a'], 2 => ['file', $log, 'a']], $pipes, self::$root, array_merge($env, $over));
+        self::$extra[] = $proc;
+        for ($i = 0; $i < 100; $i++) { $fp = @fsockopen('127.0.0.1', $port, $e1, $e2, 0.1); if ($fp) { fclose($fp); break; } usleep(50000); }
+        static $registered = false;
+        if (!$registered) {
+            $registered = true;
+            register_shutdown_function(function () { foreach (self::$extra as $p) if (is_resource($p)) { proc_terminate($p); proc_close($p); } });
+        }
+        return "http://127.0.0.1:$port";
+    }
+
+    /** Root-Verbindung ohne Datenbank (zum Anlegen weiterer Test-DBs). */
+    public static function rootPdo(): PDO
+    {
+        $c = self::$db;
+        return new PDO("mysql:host={$c['host']};port={$c['port']};charset=utf8mb4", $c['user'], $c['pass'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+    }
+
+    /** CLI-Skript mit Umgebung ausführen; liefert [exitcode, output]. */
+    public static function runCli(array $args, array $envOverrides = []): array
+    {
+        $p = proc_open(array_merge([PHP_BINARY], $args), [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, self::$root, array_merge(self::env(), $envOverrides));
+        $out = stream_get_contents($pipes[1]) . stream_get_contents($pipes[2]);
+        return [proc_close($p), $out];
+    }
+
     private static function startServer(): void
     {
         $sock = stream_socket_server('tcp://127.0.0.1:0');

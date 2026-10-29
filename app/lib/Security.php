@@ -16,6 +16,8 @@ function opsStartSession(): void
     ini_set('session.use_only_cookies', '1');
     $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
           || (getenv('OPSPILOT_FORCE_SECURE_COOKIES') === '1');
+    /* Je Mandant eigener Cookie-Name – zusätzlich zur Bindung in opsBindSessionToTenant() */
+    if (function_exists('opsCurrentTenant') && opsMode() === 'saas') session_name('OPSID_' . preg_replace('/[^a-z0-9]/', '', opsCurrentTenant()['slug']));
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
@@ -24,6 +26,7 @@ function opsStartSession(): void
         'samesite' => 'Strict',
     ]);
     session_start();
+    if (function_exists('opsBindSessionToTenant')) opsBindSessionToTenant();
 }
 
 /**

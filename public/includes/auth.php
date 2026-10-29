@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../app/lib/Security.php';
-opsStartSession();
 require_once __DIR__ . '/../../app/config/database.php';
+opsStartSession();
 
 /* Jeder zustandsändernde Request (POST/PUT/PATCH/DELETE) an Seiten und APIs
    braucht ein gültiges CSRF-Token. app.js/header.php senden es automatisch

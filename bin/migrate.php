@@ -9,6 +9,11 @@
  *                                              bis einschließlich dieser Altversion als
  *                                              migriert, ohne SQL auszuführen
  *
+ * Optionen (SaaS, OPSPILOT_MODE=saas):
+ *   --tenant=<slug>     Datenbank dieses Mandanten
+ *   --all-tenants       nacheinander alle aktiven Mandanten (bricht beim ersten Fehler ab)
+ *   --platform          Plattform-Datenbank (migrations/platform/*.sql)
+ *
  * Quellen in dieser Reihenfolge:
  *   1. database.sql                    Basisschema – nur bei leerer Datenbank
  *   2. migrations/migrate_v*.sql       Alt-Migrationen (Einsatzplanung bis v6.9.0),
@@ -25,12 +30,33 @@
 
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 
+/* Optionen vor dem Laden der Konfiguration auswerten (Mandant wählt die DB) */
+$opts = []; $args = [];
+foreach (array_slice($argv, 1) as $a) {
+    if (preg_match('/^--([a-z-]+)(?:=(.*))?$/', $a, $m)) $opts[$m[1]] = $m[2] ?? true; else $args[] = $a;
+}
+if (!empty($opts['tenant'])) putenv('OPSPILOT_TENANT=' . $opts['tenant']);
+
 require_once __DIR__ . '/../app/config/database.php';
 require_once __DIR__ . '/../app/lib/SqlSplitter.php';
 
 $root = dirname(__DIR__);
-$cmd  = $argv[1] ?? 'status';
-$db   = getDB();
+$cmd  = $args[0] ?? 'status';
+$platform = !empty($opts['platform']);
+
+if (!empty($opts['all-tenants'])) {
+    $tenants = opsPlatformDB()->query("SELECT slug FROM tenants WHERE status <> 'deleted' ORDER BY id")->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($tenants as $slug) {
+        fwrite(STDOUT, "== Mandant $slug\n");
+        $cmdline = array_merge([PHP_BINARY, __FILE__], $args, ['--tenant=' . $slug]);
+        $p = proc_open($cmdline, [1 => STDOUT, 2 => STDERR], $pipes);
+        $rc = proc_close($p);
+        if ($rc !== 0) { fwrite(STDERR, "Abbruch bei Mandant $slug (Exit $rc)\n"); exit($rc); }
+    }
+    exit(0);
+}
+
+$db   = $platform ? opsPlatformDB() : getDB();
 /* Textprotokoll: CREATE PROCEDURE & Co. sind als Prepared Statement nicht erlaubt. */
 $db->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
 $db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
@@ -66,7 +92,14 @@ function ensureVersionTable(PDO $db): void {
 }
 
 /** Alle Migrationen in Ausführungsreihenfolge: [version => [kind, path]] */
-function allMigrations(string $root): array {
+function allMigrations(string $root, bool $platform = false): array {
+    if ($platform) {
+        $list = [];
+        $files = glob($root . '/migrations/platform/*.sql') ?: [];
+        sort($files, SORT_STRING);
+        foreach ($files as $f) $list['pf_' . basename($f, '.sql')] = ['opspilot', $f];
+        return $list;
+    }
     $list = ['0000_base' => ['base', $root . '/database.sql']];
     $legacy = glob($root . '/migrations/migrate_v*.sql') ?: [];
     usort($legacy, function ($a, $b) { return strnatcmp(basename($a), basename($b)); });
@@ -136,7 +169,7 @@ function runFile(PDO $db, string $version, string $kind, string $path): void {
     out(sprintf('  angewendet: %-40s %d Statements%s', $version, $n, $skipped ? " ($skipped bereits vorhanden)" : ''));
 }
 
-$all = allMigrations($root);
+$all = allMigrations($root, $platform);
 
 switch ($cmd) {
 case 'status':
@@ -155,7 +188,8 @@ case 'status':
     exit(0);
 
 case 'baseline':
-    $upTo = $argv[2] ?? '';
+    $upTo = $args[1] ?? '';
+    if ($platform) fail('baseline gilt nur für Mandanten-Datenbanken.');
     if (!preg_match('/^v\d+(_\d+)*$/', $upTo)) fail('Aufruf: php bin/migrate.php baseline v6_9_0');
     if (!tableExists($db, 'users')) fail('Leere Datenbank – "baseline" ist nur für bestehende Installationen. Stattdessen "up" verwenden.');
     ensureVersionTable($db);
@@ -177,7 +211,7 @@ case 'baseline':
     exit(0);
 
 case 'up':
-    $fresh = !tableExists($db, 'users');
+    $fresh = $platform || !tableExists($db, 'users');
     if (!$fresh && !tableExists($db, 'schema_migrations')) {
         fail("Bestehende Installation ohne Versionstabelle erkannt.\n"
            . "Die Alt-Migrationen dürfen NICHT erneut laufen (sie setzen u. a. Rollenrechte zurück).\n"

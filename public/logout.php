@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../app/lib/Security.php';
+require_once __DIR__ . '/../app/config/database.php';
 opsStartSession();
 $_SESSION = [];
 if (ini_get('session.use_cookies')) {
