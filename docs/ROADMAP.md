@@ -227,6 +227,15 @@ Monats- und Gesamtplan (Mehrwort-Suche, „Meine Mitarbeiter“, Trefferzahl, Zu
 aller Filter). Große Pläne gemessen (300/600 Mitarbeitende, `DESIGN_SYSTEM.md`):
 Scrollen flüssig, daher **kein virtuelles Scrollen** (würde Druck, Browsersuche, Tastatur,
 Live-Aktualisierung umbauen); stattdessen verzögerte Suche und sparsamere Filter.
+Planungshilfen ✅ (`DESIGN_SYSTEM.md`, Abschnitt Planungshilfen): Abdeckungszeile mit
+Soll-Besetzung je Bereich/Wochentag (Migration 0009), Zell-Details mit Änderungsverlauf,
+Legende als Schnellfilter, Rückgängig/Wiederholen (Strg+Z/Y) und „Woche kopieren“ über
+`save_bulk` mit Revisionen, Ansicht je Benutzer (Dichte, Fadenkreuz, Wochentrenner),
+gruppierte Werkzeugleiste mit Bereichssuche, Schnellwahl und Tastenkürzeln, umbrechende
+Plan-/Filterleiste ohne Überlauf (768–1920 px), Dashboard nach Rolle mit „Heute zu tun“.
+Offen dazu: Rückgängig hinterlässt bei vorher veröffentlichten Zellen einen inhaltsgleichen
+Entwurf (fachlich ohne Wirkung, zählt aber als Änderung); Woche kopieren > 500 Einträge in
+Teilen; Mobile-App: Pull-to-Refresh, Wochenübersicht, Kollegen-Suche.
 Offen: Inline-Handler entfernen / CSP ohne `unsafe-inline` (S-21, S-22), Verschieben per
 Langdruck auf Touch-Geräten, Verschieben mehrerer Zellen auf einmal.
 

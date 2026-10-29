@@ -378,6 +378,7 @@ $rn=roleName($eu['role']); $rc=$eu['role'];
 </div>
 </div></div>
 
+<?php $pqPlusPage = 'monatsplanung'; require __DIR__.'/../includes/planning_plus.php'; /* Planungshilfen (planning-plus.js) */ ?>
 <?php require_once __DIR__.'/../includes/legend.php'; ?>
 <script>var PY=<?php echo $y;?>,PM=<?php echo $m;?>;
 var CAN_INTERNAL=<?php echo $canInternal?'true':'false';?>;

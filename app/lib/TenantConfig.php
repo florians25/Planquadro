@@ -43,12 +43,17 @@ const TENANT_CONFIG_DEFAULTS = [
         'hidden' => [],
     ],
     'dashboard' => [
-        'widgets' => ['announcements','kpis','week','wots','requests','publication','absent_today','distribution'],
+        'widgets' => ['announcements','kpis','planning','week','wots','requests','publication','absent_today','distribution'],
     ],
     'planning' => [
         'cross_team_planning'   => false,   /* epa_cross_team */
         'concurrent_editing'    => true,    /* allow_concurrent_edit */
         'show_absent_dashboard' => true,    /* dashboard_show_absent */
+        /* Planungshilfen der Matrix (alle additiv, je Benutzer zusätzlich unter „Ansicht“ abschaltbar) */
+        'coverage_row'          => true,    /* Abdeckungszeile unter dem Raster, Soll-Besetzung */
+        'cell_history'          => true,    /* Entwurf/Änderungen beim Überfahren einer Zelle */
+        'period_copy'           => true,    /* Woche/Zeitraum kopieren */
+        'undo'                  => true,    /* Rückgängig/Wiederholen eigener Speichervorgänge */
     ],
     'security' => [
         'oidc' => [
@@ -79,7 +84,7 @@ const TENANT_CONFIG_LEGACY_KEYS = [
 ];
 
 const DASHBOARD_WIDGETS = [
-    'announcements' => 'Meldungen', 'kpis' => 'Kennzahlen', 'week' => 'Heute & diese Woche',
+    'announcements' => 'Meldungen', 'kpis' => 'Kennzahlen', 'planning' => 'Planungs-Kennzahlen (nur Planer)', 'week' => 'Heute & diese Woche',
     'wots' => 'WOTs des Monats', 'requests' => 'Änderungsanträge', 'publication' => 'Planstatus',
     'absent_today' => 'Heute abwesend & Feiertage', 'distribution' => 'Einsatzverteilung',
 ];

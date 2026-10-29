@@ -1,11 +1,11 @@
 <div class="legend no-print">
 <div class="leg-sec"><div class="leg-h">Kunden-Einsätze</div><div class="leg-row">
 <?php foreach(planAreas('kunde') as $p): ?>
-<span class="leg-i"><span class="leg-c" style="background:<?php echo e($p['color']);?>;color:<?php echo e($p['fg_color']);?>"><?php echo e($p['short_code']);?></span><span class="leg-n"><?php echo e($p['name']);?></span></span>
+<span class="leg-i" data-area="<?php echo (int)$p['id'];?>"><span class="leg-c" style="background:<?php echo e($p['color']);?>;color:<?php echo e($p['fg_color']);?>"><?php echo e($p['short_code']);?></span><span class="leg-n"><?php echo e($p['name']);?></span></span>
 <?php endforeach; ?></div></div>
 <div class="leg-sec"><div class="leg-h">Allgemein</div><div class="leg-row">
 <?php foreach(planAreas('allgemein') as $p): ?>
-<span class="leg-i"><span class="leg-c" style="background:<?php echo e($p['color']);?>;color:<?php echo e($p['fg_color']);?>"><?php echo e($p['short_code']);?></span><span class="leg-n"><?php echo e($p['name']);?></span></span>
+<span class="leg-i" data-area="<?php echo (int)$p['id'];?>"><span class="leg-c" style="background:<?php echo e($p['color']);?>;color:<?php echo e($p['fg_color']);?>"><?php echo e($p['short_code']);?></span><span class="leg-n"><?php echo e($p['name']);?></span></span>
 <?php endforeach; ?></div></div>
 <div class="leg-sec"><div class="leg-h">Abwesenheit</div><div class="leg-row">
 <?php if(canSeeDetails()): ?>

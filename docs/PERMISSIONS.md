@@ -131,6 +131,8 @@ Die API v1 (`docs/API.md`) nutzt exakt dieselben Funktionen (`hasPerm`, `canEdit
 | | list, pending_count, pending_map, dashboard_stats, my_requests | angemeldet, Scope-gefiltert bzw. eigene |
 | `api/save_wots` | list/add/update/delete | `plan_edit` (kein Scope) |
 | `api/save_month_data` | Stunden/Erl. | `plan_edit` (kein Scope) |
+| `api/planning_plus` (7.0.0-dev) | cell_info (Entwurf, Änderungsverlauf einer Zelle) | `plan_edit` + `canEditUser`; Urlaub/Krank nur mit `canSeeAbsenceDetails`, interne Einträge nur mit `plan_view_internal` |
+| | targets / targets_save (Soll-Besetzung) | `plan_edit` / `manage_config` |
 | `api/backup` | create/list/download/restore/delete/setup_cron/get_key | `manage_settings`; `cron_backup` per Schlüssel ohne Login |
 | `api/announcements` | active | **ohne Login** |
 | | list/create/update/delete/toggle | `manage_settings` |

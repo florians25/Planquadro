@@ -111,6 +111,32 @@ nichts ändert.
 - Große Pläne mit 300 und 600 Mitarbeitenden gemessen: Scrollen flüssig (60 fps); die
   Suche reagiert verzögert statt bei jedem Tastendruck. Kein virtuelles Scrollen
   (Begründung in `docs/DESIGN_SYSTEM.md`).
+- **Planungshilfen in der Monatsplanung** (alle zusätzlich, Raster und bisherige Bedienung
+  unverändert; unter *Organisation → Planungsregeln* bzw. *Ansicht* abschaltbar):
+  - **Abdeckungszeile** unter dem Plan: eingeplante Personen je Tag, aufklappbar je
+    Einsatzbereich; optionale **Soll-Besetzung** je Bereich und Wochentag mit dezenter
+    Markierung bei Unterbesetzung (Migration `0009_staffing_targets`).
+  - **Details beim Überfahren**: voller Bereichsname, Kunde und Standort, Entwurf von wem
+    und seit wann, letzte Änderungen der Zelle – ohne vertrauliche Abwesenheitsarten.
+  - **Legende als Schnellfilter**: Bereich anklicken hebt ihn im Plan hervor.
+  - **Rückgängig/Wiederholen** der eigenen Speichervorgänge (Strg+Z/Strg+Y), mit
+    Revisionsprüfung und dem bekannten Konfliktdialog.
+  - **Woche kopieren** („Vorwoche übernehmen“, Wochenmuster auf einen Zeitraum) mit
+    Vorschau und Konfliktprüfung.
+  - **Ansicht** je Benutzer: Zeilenhöhe kompakt/standard/komfort, Fadenkreuz,
+    Wochentrenner.
+- **Werkzeugleiste neu geordnet**: Einsatz · Abwesenheit · Bearbeiten · Sichtbarkeit,
+  klare Anzeige „Aktiv: … · Esc beendet“, Bereichssuche, zuletzt genutzte Bereiche als
+  Schnellwahl (Tasten 1–5), Tastenkürzel für alle Werkzeuge (Übersicht mit „?“),
+  Werkzeug optional über den Monatswechsel behalten. Alle Werkzeuge bleiben erhalten;
+  die bisherige Anordnung ist unter *Ansicht* wählbar.
+- **Plan- und Filterleiste** brechen sauber um (Monatsnavigation zentral, Filter links,
+  Aktionen rechts, seltene Aktionen unter „Mehr“): bei 768–1920 px ragt nichts mehr
+  aus dem Bild, auch im Gesamt- und Jahresplan.
+- **Dashboard** nach Rolle geordnet: Planer sehen zuerst „Heute zu tun“ (offene Anträge →
+  prüfen, unveröffentlichte Entwürfe → veröffentlichen, Unterbesetzung, unverplante
+  Tage, nächster Monat), Mitarbeitende zuerst ihre Woche; „Heute“ im Kopf. Alle
+  bisherigen Widgets bleiben und sind weiter abschaltbar (neues Widget „Planungs-Kennzahlen“).
 
 ### Mobile-Apps (Phase 6)
 - iOS-, Android- und Web-App (`mobile/`, Capacitor): persönlicher Plan, Team,
@@ -126,7 +152,8 @@ nichts ändert.
   OWASP-ZAP-Baseline.
 
 ### Hinweis zum Update
-`php bin/migrate.php up` spielt die Migrationen 0004 (Stammdaten) und 0005 (API/Push) ein.
+`php bin/migrate.php up` spielt die Migrationen 0004 (Stammdaten), 0005 (API/Push) und
+0009 (Soll-Besetzung) ein.
 Neue Umgebungsvariablen sind optional (`docs/ARCHITECTURE.md`, `docs/API.md`).
 
 ## Planquadro 7.0.0-dev – Phase 2 „Stabilisierung“ (unveröffentlicht)

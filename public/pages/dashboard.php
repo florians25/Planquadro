@@ -65,6 +65,13 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
   <div class="phl">
     <h1><?php echo e($u['first_name'].' '.$u['last_name']); ?></h1>
     <span class="muted" style="font-size:.82rem"><?php echo e(roleName($u['role'])); ?> | KW <?php echo $cwk; ?>, <?php echo wdShort($today); ?> <?php echo date('d.',strtotime($today)).monthName($m).' '.$y; ?></span>
+    <div class="pq-today" aria-label="Heute">
+      <span class="pq-today-lbl">Heute</span>
+      <?php if (isset($holsAll[$today]) && $holsAll[$today]['holiday_type'] === 'feiertag'): ?><span class="pq-chip pq-chip-hol"><?php echo e($holsAll[$today]['name']); ?></span>
+      <?php elseif ($todayAbs): ?><span class="pq-chip" style="background:<?php echo e(absenceColor($todayAbs['absence_type'])); ?>;color:<?php echo e(absenceFg($todayAbs['absence_type'])); ?>"><?php echo e(absenceLabel($todayAbs['absence_type'])); ?></span> <span><?php echo e(absenceName($todayAbs['absence_type'])); ?></span>
+      <?php elseif ($todayAsgn): ?><span class="pq-chip" style="background:<?php echo e($todayAsgn['color']); ?>;color:<?php echo e($todayAsgn['fg_color'] ?? '#fff'); ?>"><?php echo e($todayAsgn['short_code']); ?></span> <span><?php echo e($todayAsgn['name'] ?? ''); ?></span>
+      <?php else: ?><span class="muted">Kein veröffentlichter Einsatz</span><?php endif; ?>
+    </div>
   </div>
   <div class="phr">
     <?php if (canEdit()): ?>
@@ -75,12 +82,15 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
   </div>
 </div>
 
+<?php /* Reihenfolge je Rolle (planning-plus.css): Planer zuerst ihre Aufgaben, Mitarbeitende zuerst ihre Woche */ ?>
+<div class="pq-dash <?php echo canEdit() ? 'pq-dash-planner' : 'pq-dash-staff'; ?>">
 <!-- Announcements -->
-<div id="dashAnnouncements"<?php if (!opsWidget('announcements')) echo ' hidden'; ?>></div>
+<div id="dashAnnouncements" class="pq-ds-ann"<?php if (!opsWidget('announcements')) echo ' hidden'; ?>></div>
+<?php require __DIR__ . '/../includes/dashboard_planning.php'; /* Planer: Heute zu tun */ ?>
 
 <!-- KPI Row -->
 <?php if (opsWidget('kpis')): ?>
-<div class="g" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.65rem;margin-bottom:1rem">
+<div class="g pq-ds-kpis" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.65rem;margin-bottom:1rem">
   <?php if ($see): ?>
   <div class="card" style="padding:.75rem 1rem">
     <div style="font-size:.68rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.04em">Team</div>
@@ -116,7 +126,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 
 <!-- Today highlight + Week -->
 <?php if (opsWidget('week')): ?>
-<div class="card" style="margin-bottom:1rem">
+<div class="card pq-ds-week" style="margin-bottom:1rem">
   <div class="ch" style="display:flex;justify-content:space-between;align-items:center">
     <span>Meine Woche – KW <?php echo $cwk; ?>
       <span class="muted" style="font-size:.72rem;font-weight:400"><?php echo date('d.m.',strtotime($sow)).' – '.date('d.m.',strtotime($eow)); ?></span>
@@ -203,7 +213,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 
 <!-- WOTs directly under week (if any) -->
 <?php if (!empty($wots) && opsWidget('wots') && opsModule('wots')): ?>
-<div class="card" style="margin-bottom:1rem;border-left:3px solid #d97706">
+<div class="card pq-ds-wots" style="margin-bottom:1rem;border-left:3px solid #d97706">
   <div class="ch" style="display:flex;justify-content:space-between;align-items:center">
     <span>WOTs – <?php echo monthName($m).' '.$y; ?>
       <span class="muted" style="font-size:.7rem;font-weight:400"><?php echo count($wots); ?> Einsatz<?php echo count($wots)!==1?'e':''; ?></span>
@@ -228,7 +238,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 
 <!-- Antraege (if approval system active) -->
 <?php if(getSetting('approval_system_enabled','0')==='1' && opsWidget('requests')): ?>
-<div class="card mb" id="dashApprovalCard" style="display:none;border-left:3px solid var(--p)">
+<div class="card mb pq-ds-req" id="dashApprovalCard" style="display:none;border-left:3px solid var(--p)">
 <div class="ch">Änderungsanträge</div>
 <div class="cb">
 <div class="dash-approval-grid" id="dashApprovalGrid"></div>
@@ -255,7 +265,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 <?php endif; ?>
 
 <!-- Two-column grid: Status + Team OR Abwesend + Feiertage -->
-<div class="g dash-two" style="margin-bottom:1rem">
+<div class="g dash-two pq-ds-more" style="margin-bottom:1rem">
   <!-- Publication Status -->
   <?php if (canEdit() && opsWidget('publication')): ?>
   <div class="card">
@@ -388,6 +398,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
   </div>
   <?php endif; /* distribution */ ?>
 </div>
+</div><!-- /.pq-dash -->
 
 <script>
 (function(){

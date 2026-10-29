@@ -829,6 +829,7 @@ function initRemarkTooltip() {
     var draftSvg = '<svg viewBox="0 0 20 20" fill="currentColor" style="width:10px;height:10px;vertical-align:middle;margin-right:3px;color:#fbbf24"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>';
 
     var hoverTimer = null;
+    window.pqShowCellTip = function(c) { showCellTip(c); };
     document.addEventListener('mouseover', function(e) {
         var c = e.target.closest('.pe-c');
         if (!c) { clearTimeout(hoverTimer); tip.style.display = 'none'; return; }
@@ -911,6 +912,8 @@ function initRemarkTooltip() {
             parts.push('<div class="ep-tip-meta">' + metaParts.join(' \u00b7 ') + '</div>');
         }
 
+        /* Einhängepunkt für Planungshilfen (planning-plus.js: Bereich, Entwurf, Verlauf) */
+        if (typeof window.pqTipExtra === 'function') { try { window.pqTipExtra(c, parts); } catch (x) {} }
         if (parts.length === 0) { tip.style.display = 'none'; return; }
 
         tip.innerHTML = parts.join('');
@@ -962,6 +965,8 @@ function saveBulk(changes, showToast, opts) {
         if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(function(d){if(!d)return;if(d.success){
         applyRevs(d.revs);
+        /* Einhängepunkt für Planungshilfen (planning-plus.js: Rückgängig/Wiederholen) */
+        try{document.dispatchEvent(new CustomEvent('pq:bulk-saved',{detail:{changes:changes,revs:d.revs||{},internal:!!(isInternal||opts.is_internal),opts:opts}}));}catch(x){}
         if(showToast)toast(d.count+' Zelle(n) gespeichert','success');
         if(d.overwritten>0) toast(d.overwritten+' Änderung(en) anderer überschrieben','warning');
         if(d.vac_blocked>0) toast(d.vac_blocked+' Zelle(n) übersprungen (genehmigter Urlaub gesperrt)','warning');

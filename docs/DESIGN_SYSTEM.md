@@ -138,6 +138,34 @@ unverändert.
 - Neue Interaktionen verwenden keine Inline-Handler (Vorbereitung für eine CSP ohne
   `unsafe-inline`).
 
+## Planungshilfen (`planning-plus.js`, `planning-plus.css`)
+
+Ergänzungen der Planungsmatrix – das Raster (Zeilen = Mitarbeitende, Spalten = Tage,
+farbige Kürzel-Zellen) und alle bisherigen Bedienwege bleiben unverändert. Alles liegt
+in eigenen Dateien; Einhängepunkte in bestehenden Dateien sind einzelne Zeilen
+(`header.php`/`footer.php` laden die Dateien, `includes/planning_plus.php` liefert die
+Konfiguration als `data-cfg` ohne Inline-Skript, `app.js` meldet `pq:bulk-saved` und
+ruft `window.pqTipExtra` im Zell-Tooltip auf). Keine Inline-Handler.
+
+| Element | Beschreibung | Abschaltbar |
+|---|---|---|
+| **Planleiste** | Raster aus drei Bereichen: Monatsnavigation zentral oben, Filter links, Aktionen rechts; bricht unter 1280 px in drei Zeilen um. Seltene Aktionen (Erfassen, Dauereinsatz, Woche kopieren, Drucken) liegen im Menü **Mehr**. Geprüft bei 768/1024/1280/1440/1920 px: nichts ragt hinaus, kein waagerechtes Scrollen der Seite. | – (reine Darstellung) |
+| **Ansicht** (Menü in der Planleiste) | Zeilenhöhe Kompakt (22 px) / Standard (30 px) / Komfort (38 px), Abdeckungszeile, Aufschlüsselung je Bereich, Wochentrenner (Linie vor Montag), Fadenkreuz (Zeile + Tag), Details beim Überfahren, gruppierte Werkzeugleiste, Werkzeug beim Monatswechsel behalten. Je Browser gespeichert (`localStorage` `pq-plus-view`), „Standard wiederherstellen“. | Benutzer |
+| **Werkzeugleiste** | Gruppen *Einsatz · Abwesenheit · Bearbeiten · Sichtbarkeit*, darunter eine Statuszeile: **„Aktiv: ‹Werkzeug› · Esc beendet“**, „Werkzeug ablegen“, Rückgängig/Wiederholen, Tastenkürzel. Einsatzbereich über ein Suchfeld (Kürzel oder Name, Pfeiltasten, Eingabe; ARIA-Combobox) statt der langen Auswahlliste – die bisherige `select#toolArea` bleibt als Datenquelle erhalten. **Zuletzt genutzt**: bis zu fünf Bereiche als Farbchips (Tasten 1–5). Aktive Werkzeuge tragen `aria-pressed`. | Benutzer („Werkzeugleiste gruppiert“) |
+| **Tastenkürzel** | Ohne Strg/Alt, nicht in Eingabefeldern: K/Umschalt+K/H Krank Attest/ohne/½, U/Umschalt+U/Umschalt+H Urlaub gen./beantr./½, G Gleitzeit, O Offen, S Sperren, L Löschen, M Bemerkung, I Int. Bemerkung, V Veröffentlichen-Schalter, B Bereich suchen, 1–5 zuletzt genutzt, Esc Werkzeug ablegen, ? Übersicht. Bestehende Kürzel (/, Pfeile, Eingabe, Entf, Strg+X/C/V) unverändert. | – |
+| **Abdeckungszeile** | `tfoot` unter dem Raster: eingeplante Personen je Tag (alle Zeilen des Plans), am unteren Rand fixiert. ▸ klappt die Zeilen je Bereich auf (`n` bzw. `n/Soll`). Unterbesetzung: Fläche `--pq-under-bg`, Schrift `--pq-under-tx`, Unterstrich (nicht nur Farbe). Tooltip nennt Tag, Anzahl und fehlende Bereiche. Wird bei jeder Zelländerung (auch live) neu berechnet. Druck: ohne Bedienknöpfe. | Mandant (`planning.coverage_row`) + Benutzer |
+| **Soll-Besetzung** | Knopf „Soll“ in der Abdeckungszeile (Recht *Bereiche/Feiertage/Stammdaten pflegen*): Tabelle Bereiche × Mo–So. Tabelle `plan_area_targets` (Migration 0009). | leer = keine Vorgabe |
+| **Zell-Details** | Im bekannten Tooltip zusätzlich: Kürzel, voller Bereichsname, Kunde/Standort (Stammdaten); in der Monatsplanung „Entwurf (…) von … seit …“ und die letzten drei Änderungen aus `plan_change_log` (`api/planning_plus` `cell_info`, nach Revision zwischengespeichert). Abwesenheitsarten ohne Detailrecht als „Abwesend“, interne Einträge nur mit „Interne Einträge sehen“. | Mandant (`planning.cell_history`) + Benutzer |
+| **Legende als Schnellfilter** | Einsatzbereiche in der Legende sind Schaltflächen (`role=button`, `aria-pressed`, Tastatur): andere Zellen werden auf 22 % abgeblendet, Treffer mit Rahmen `--pq-hl-ring`; erneut klicken oder Esc hebt auf. Ansage der Anzahl. | – |
+| **Rückgängig / Wiederholen** | Strg+Z / Strg+Y (Umschalt+Strg+Z) bzw. Knöpfe: macht die eigenen Speichervorgänge dieser Sitzung (Werkzeug, Drag-and-drop, Strg+V, Erfassen, Dauereinsatz, Woche kopieren) rückgängig. Gespeichert wird über `saveBulk()` mit der Revision nach dem eigenen Speichern – hat jemand die Zelle inzwischen geändert, erscheint der bekannte Konfliktdialog. Stapel je Browser-Tab (`sessionStorage`, 30 Schritte), überlebt das Neuladen. In Texteingaben bleibt das Rückgängig des Browsers. | Mandant (`planning.undo`) |
+| **Woche kopieren** | Menü *Mehr*: Quellwoche (Mo–So) → Zielzeitraum, wochentagsgenau („Vorwoche → diese Woche“, „Woche → Rest des Monats“). Für die aktuell gefilterten Zeilen; Einsätze, optional Gleitzeit/Gesperrt/Offen, optional leere Werktage leeren; nie Urlaub/Krankheit/„A“; Wochenende nur bei Freigabe, Feiertage und Ein-/Austritt beachtet. Vorschau, dann die bekannte Konfliktprüfung (`planWithConflictCheck`). Höchstens 500 Einträge je Vorgang. | Mandant (`planning.period_copy`) |
+| **Dashboard** | Reihenfolge nach Rolle über CSS-`order` (keine Inhalte verschoben): Planer *Meldungen → „Heute zu tun“ → Meine Woche → Anträge → Kennzahlen …*, Mitarbeitende *Meldungen → Meine Woche → Anträge → WOTs → Kennzahlen …*. Im Kopf „Heute: ‹Einsatz›“. „Heute zu tun“ (`.pq-task`): offene Anträge → *Prüfen*, Entwurf ‹Monat› unveröffentlicht → *Ansehen/Veröffentlichen*, Unterbesetzung (Soll), unverplante Arbeitstage (14 Tage), nächster Monat ab dem 15. noch nicht veröffentlicht; sonst „Alles erledigt“. | Widget `planning` (Organisation → Dashboard) |
+| **Druck** | Name der Organisation im Druckkopf. | – |
+
+Tokens (hell/dunkel): `--pq-week-line`, `--pq-cross`, `--pq-hl-ring`, `--pq-under-bg`,
+`--pq-under-tx`, `--pq-cov-bg`, `--pq-pop-sh`. Getestet: `tests/js/planning-plus.test.mjs`
+(reine Logik), `tests/Integration/PlanningPlusTest.php` (Rechte, Vertraulichkeit, Regeln).
+
 ## Mobil
 
 - Bestehende Mobilansicht (Dashboard, Mein Plan, Profil, Anträge) unverändert.

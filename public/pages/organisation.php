@@ -84,6 +84,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                 'cross_team_planning'   => !empty($_POST['cross_team_planning']),
                 'concurrent_editing'    => !empty($_POST['concurrent_editing']),
                 'show_absent_dashboard' => !empty($_POST['show_absent_dashboard']),
+                'coverage_row'          => !empty($_POST['coverage_row']),
+                'cell_history'          => !empty($_POST['cell_history']),
+                'period_copy'           => !empty($_POST['period_copy']),
+                'undo'                  => !empty($_POST['undo']),
             ]]);
             orgAudit('tenant_config', 'planning rules');
             echo json_encode(['success' => true, 'msg' => 'Planungsregeln gespeichert.']); exit;
@@ -230,6 +234,12 @@ $redirectUri = oidcRedirectUri();
       <label class="org-check"><input type="checkbox" name="concurrent_editing" value="1" <?php if ($cfg['planning']['concurrent_editing']) echo 'checked'; ?>> Gleichzeitiges Bearbeiten erlauben (Konflikte werden erkannt und angezeigt)</label>
       <label class="org-check"><input type="checkbox" name="cross_team_planning" value="1" <?php if ($cfg['planning']['cross_team_planning']) echo 'checked'; ?>> Teamleiter dürfen im Assistenten teamübergreifend planen</label>
       <label class="org-check"><input type="checkbox" name="show_absent_dashboard" value="1" <?php if ($cfg['planning']['show_absent_dashboard']) echo 'checked'; ?>> „Heute abwesend“ im Dashboard anzeigen</label>
+      <fieldset class="org-fieldset"><legend>Planungshilfen der Monatsplanung</legend>
+      <label class="org-check"><input type="checkbox" name="coverage_row" value="1" <?php if ($cfg['planning']['coverage_row']) echo 'checked'; ?>> Abdeckungszeile unter dem Raster (eingeplante Personen je Tag und Bereich, Soll-Besetzung)</label>
+      <label class="org-check"><input type="checkbox" name="cell_history" value="1" <?php if ($cfg['planning']['cell_history']) echo 'checked'; ?>> Beim Überfahren einer Zelle: Bereich, Entwurf und letzte Änderungen anzeigen</label>
+      <label class="org-check"><input type="checkbox" name="period_copy" value="1" <?php if ($cfg['planning']['period_copy']) echo 'checked'; ?>> Woche bzw. Zeitraum kopieren („Vorwoche übernehmen“)</label>
+      <label class="org-check"><input type="checkbox" name="undo" value="1" <?php if ($cfg['planning']['undo']) echo 'checked'; ?>> Rückgängig/Wiederholen der eigenen Speichervorgänge (Strg+Z / Strg+Y)</label>
+      </fieldset>
       <p class="muted" style="font-size:.78rem">Einsatzcodes pflegen Sie unter <a href="planbereiche">Bereiche</a>, Kunden, Standorte und Qualifikationen unter <a href="stammdaten">Stammdaten</a>, weitere Assistenten-Regeln unter <a href="einstellungen">Einstellungen</a>.</p>
       <button class="btn btn-primary" type="submit">Regeln speichern</button>
     </form>

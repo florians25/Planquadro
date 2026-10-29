@@ -160,6 +160,7 @@ data-u="<?php echo $u['id'];?>" data-d="<?php echo $d;?>" data-t="<?php echo $ct
 <?php endforeach;?>
 </tr><?php endforeach; endforeach;?>
 </tbody></table></div>
+<?php $pqPlusPage = 'gesamtplan'; require __DIR__.'/../includes/planning_plus.php'; /* Planungshilfen (planning-plus.js) */ ?>
 <?php require_once __DIR__.'/../includes/legend.php'; ?>
 
 <?php if($showPending): ?>

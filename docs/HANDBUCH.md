@@ -48,9 +48,12 @@ stehen in [INSTALLATION.md](INSTALLATION.md), das Anpassen an die eigene Firma i
 
 ![Dashboard](screenshots/web-dashboard.png)
 
-- **Dashboard:** Kennzahlen (Team, Resturlaub, Krank-/Gleitzeittage), Ihre Woche und die
-  nächste, Planstatus der Monate, „Heute abwesend“, Mitteilungen. Welche Kacheln erscheinen,
-  legt die Administration fest.
+- **Dashboard:** Planer sehen zuerst **Heute zu tun** – offene Anträge (→ Prüfen),
+  unveröffentlichte Entwürfe (→ Veröffentlichen), Unterbesetzung, unverplante Arbeitstage
+  der nächsten 14 Tage, den noch nicht veröffentlichten Folgemonat – oder „Alles erledigt“.
+  Danach folgen die eigene Woche, Anträge und Kennzahlen (Team, Resturlaub, Krank-/
+  Gleitzeittage), Planstatus, „Heute abwesend“, Mitteilungen. Mitarbeitende sehen zuerst
+  ihre Woche. Welche Kacheln erscheinen, legt die Administration fest.
 - **Mein Plan:** Ihre Einsätze und Abwesenheiten als Liste bzw. Kalender.
 - **Kalender-Abo:** Im Profil finden Sie einen persönlichen iCal-Link für Outlook, Google
   oder Apple Kalender. Behandeln Sie ihn wie ein Passwort; er lässt sich neu erzeugen.
@@ -58,6 +61,23 @@ stehen in [INSTALLATION.md](INSTALLATION.md), das Anpassen an die eigene Firma i
 ## 4. Planen in der Monatsplanung
 
 ![Monatsplanung](screenshots/web-monatsplanung.png)
+
+### Plan- und Werkzeugleiste
+- **Planleiste:** Monatsnavigation zentral; links Filter, rechts Aktionen. *Erfassen*,
+  *Dauereinsatz*, *Woche kopieren* und *Drucken* liegen im Menü **Mehr**, persönliche
+  Einstellungen unter **Ansicht**.
+- **Werkzeugleiste** in Gruppen: **Einsatz · Abwesenheit · Bearbeiten · Sichtbarkeit**. Die
+  Statuszeile zeigt das aktive Werkzeug („Aktiv: Urlaub genehmigt · Esc beendet“), dazu
+  *Werkzeug ablegen*, Rückgängig/Wiederholen und die Kürzel-Übersicht.
+- **Bereichssuche:** Feld anklicken oder **B** drücken, Kürzel oder Namen tippen, mit den
+  Pfeiltasten wählen, Eingabe übernimmt. **Zuletzt genutzt:** bis zu fünf Bereiche als
+  Farbchips, auch über die Tasten **1–5**.
+- **Tastenkürzel** (nicht in Eingabefeldern): **K** Krank mit Attest, **Umschalt+K** Krank
+  ohne Attest, **H** Krank ½ Tag, **U** Urlaub genehmigt, **Umschalt+U** Urlaub beantragt,
+  **Umschalt+H** Urlaub ½ Tag, **G** Gleitzeit, **O** Offen, **S** Sperren, **L** Löschen,
+  **M** Bemerkung, **I** interne Bemerkung, **V** Veröffentlichen umschalten, **Esc** Werkzeug
+  ablegen, **?** alle Kürzel.
+- Wer die bisherige Anordnung bevorzugt: *Ansicht → Werkzeugleiste gruppiert* ausschalten.
 
 ### Werkzeug wählen und Felder setzen
 1. In der Werkzeugleiste einen **Einsatzbereich** (Auswahl „Bereich“) oder eine
@@ -77,6 +97,26 @@ Krankmeldung, fremde Bearbeitung …). **Esc** bricht ab.
 Mit den Pfeiltasten durch das Raster, **Enter**/**Leertaste** setzt das gewählte Werkzeug,
 **Entf** löscht, **Strg+X / Strg+C / Strg+V** schneiden aus, kopieren, fügen ein,
 **/** springt in die Suche.
+
+### Rückgängig, Woche kopieren
+- **Strg+Z / Strg+Y** (oder die Knöpfe in der Statuszeile) machen eigene Speichervorgänge
+  rückgängig bzw. wiederholen sie – bis zu 30 Schritte, auch nach dem Neuladen. Hat jemand
+  die Zelle inzwischen geändert, erscheint der Konfliktdialog.
+- **Mehr → Woche kopieren:** Quellwoche und Zielzeitraum wählen (Schnellwahl „Vorwoche →
+  diese Woche“, „Woche → Rest des Monats“). Kopiert wird für die gefilterten Personen;
+  Urlaub und Krankheit nie. Erst Vorschau, dann Konfliktprüfung.
+
+### Abdeckung und Soll-Besetzung
+Unter dem Plan zeigt die **Abdeckungszeile** je Tag, wie viele Personen eingeplant sind; ▸
+schlüsselt nach Bereichen auf. Mit einer **Soll-Besetzung** je Bereich und Wochentag
+(Recht „Bereiche pflegen“) erscheinen unterbesetzte Tage orange. Beim **Überfahren** eines
+Feldes zeigt Planquadro Bereich, Kunde, Standort, Entwurfsstand und die letzten Änderungen;
+ein Klick in die **Legende** hebt einen Bereich im Plan hervor.
+
+### Ansicht
+*Ansicht* in der Planleiste: Zeilenhöhe (Kompakt/Standard/Komfort), Abdeckungszeile,
+Aufschlüsselung, Wochentrenner, Fadenkreuz, Details beim Überfahren, gruppierte
+Werkzeugleiste, Werkzeug beim Monatswechsel behalten. Gilt je Browser.
 
 ### Gleichzeitig planen
 Mehrere Planer können gleichzeitig arbeiten. Hat jemand ein Feld geändert, seit Sie es
