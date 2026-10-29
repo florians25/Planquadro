@@ -4,8 +4,11 @@ title = "OpsPilot gitleaks config"
 useDefault = true
 
 [allowlist]
-description = "Testdaten und Beispielwerte"
+description = "Testdaten mit Dummy-Zugangsdaten (keine echten Geheimnisse)"
 paths = [
-  '''tests/Support/TestEnv\.php''',
+  '''^tests/''',
+  '''^mobile/tests/''',
+  '''^mobile/src/api/fixtures/''',
   '''composer\.lock''',
+  '''package-lock\.json''',
 ]
