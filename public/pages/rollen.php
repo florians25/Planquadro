@@ -165,7 +165,7 @@ foreach ($roles as $rKey => $rName) { $permData[$rKey] = allPermsForRole($rKey);
 $permGroups = [
     'Planung' => ['icon'=>'M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z','perms'=>['plan_view','plan_edit','plan_publish_own','plan_publish_all','plan_publish_year','plan_view_internal','view_erl_column','unlock_vacation']],
     'Verwaltung' => ['icon'=>'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z','perms'=>['manage_users','delete_users','manage_settings','manage_roles']],
-    'Sonstiges' => ['icon'=>'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z','perms'=>['view_gesamtplan_details','approve_requests','view_all_employees','manage_absences','use_planning_assistant']],
+    'Sonstiges' => ['icon'=>'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z','perms'=>['view_gesamtplan_details','approve_requests','view_all_employees','manage_absences','use_planning_assistant','view_absence_details_all']],
 ];
 $permDescriptions = [
     'plan_view'=>'Monats- und Gesamtplan einsehen','plan_edit'=>'Einträge im Monatsplan bearbeiten',
@@ -177,6 +177,7 @@ $permDescriptions = [
     'view_gesamtplan_details'=>'Details im Gesamtplan einsehen','approve_requests'=>'Änderungsanträge genehmigen/ablehnen',
     'manage_absences'=>'Modul Abwesenheiten: Urlaub, Krankheit und Sperrtage über Zeiträume erfassen',
     'use_planning_assistant'=>'Planungsassistent öffnen (auch ohne „Plan bearbeiten“)',
+    'view_absence_details_all'=>'Art und Bemerkung von Krankheit und Urlaub bei ALLEN Mitarbeitern sehen (sonst nur bei unterstellten). Gesundheitsdaten – nur sehr gezielt vergeben.',
     'view_all_employees'=>'Alle Mitarbeiter in der Planung sehen. Ohne dieses Recht sieht der Benutzer nur Mitarbeiter, bei denen er als Vorgesetzter eingetragen ist.',
 ];
 $csrf = csrfToken();

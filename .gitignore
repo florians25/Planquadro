@@ -32,3 +32,6 @@ Thumbs.db
 *.log
 .idea/
 .vscode/
+
+# Lokale Werkzeug-Arbeitsverzeichnisse
+.claude/

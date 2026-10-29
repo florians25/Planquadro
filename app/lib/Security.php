@@ -26,6 +26,38 @@ function opsStartSession(): void
     session_start();
 }
 
+/**
+ * Leerlauf-Timeout aus der Einstellung session_timeout_minutes (0 = aus).
+ * Die Einstellung existierte bis v6.9.0, wurde aber nie durchgesetzt.
+ */
+function opsEnforceSessionTimeout(): void
+{
+    if (empty($_SESSION['user_id']) || !function_exists('getDB')) return;
+    $now = time();
+    $last = (int)($_SESSION['last_activity'] ?? $now);
+    $limit = $_SESSION['timeout_min'] ?? null;
+    if ($limit === null || ($now - (int)($_SESSION['timeout_checked'] ?? 0)) > 300) {
+        $limit = 480;
+        try {
+            $s = getDB()->prepare("SELECT setting_value FROM app_settings WHERE setting_key='session_timeout_minutes'");
+            $s->execute();
+            $v = $s->fetchColumn();
+            if ($v !== false && $v !== '') $limit = (int)$v;
+        } catch (Throwable $e) {}
+        $_SESSION['timeout_min'] = $limit;
+        $_SESSION['timeout_checked'] = $now;
+    }
+    if ($limit > 0 && ($now - $last) > $limit * 60) {
+        $_SESSION = [];
+        session_regenerate_id(true);
+        $_SESSION['session_expired'] = 1;
+        return;
+    }
+    /* Polling (Live-Status) zählt nicht als Aktivität */
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    if (strpos($uri, 'live_status') === false && strpos($uri, 'notifications') === false) $_SESSION['last_activity'] = $now;
+}
+
 /** Session-gebundenes CSRF-Token (32 Byte, hex). */
 function opsCsrfToken(): string
 {

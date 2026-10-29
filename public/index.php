@@ -115,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $csrfOk && !isset($_POST['change_pw
                     opsRegenerateSession();
                     $_SESSION['user_id'] = $row['id'];
                     $_SESSION['login_time'] = time();
+                    $_SESSION['last_activity'] = time();
                     if ($row['must_change_password'] ?? 0) {
                         $_SESSION['must_change_password'] = true;
                         $showChange = true;
@@ -210,6 +211,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <p class="sub"><?php echo $showChange ? ($pwExpired ? 'Passwort abgelaufen' : 'Neues Passwort vergeben') : 'Willkommen zurück'; ?></p>
     </div>
     <?php if(!empty($_GET['logged_out'])): ?><div class="alert alert-s" id="logoutMsg"><svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>Sie wurden erfolgreich abgemeldet.</div><?php endif; ?>
+    <?php if(!empty($_SESSION['session_expired']) && !$err): unset($_SESSION['session_expired']); ?><div class="alert alert-w">Ihre Sitzung ist wegen Inaktivität abgelaufen. Bitte erneut anmelden.</div><?php endif; ?>
     <?php if($err): ?><div class="alert alert-e"><?php echo htmlspecialchars($err); ?></div><?php endif; ?>
     <?php if($showChange): ?>
     <form method="POST" autocomplete="off">

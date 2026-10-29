@@ -194,8 +194,14 @@ function canSeeAbsenceDetails($employeeId): bool {
     if (!$u) return false;
     if ((int)$u['id'] === (int)$employeeId) return true;   // Mitarbeiter selbst
     if ($u['role'] === 'admin') return true;               // Administrator (ggf.)
+    /* Ausdrücklich erteiltes Recht (z. B. Personalabteilung) */
+    if (hasPerm('view_absence_details_all')) return true;
+    /* Vorgesetzte: nur für tatsächlich unterstellte Mitarbeiter (direkt,
+       transitiv oder per Vertretung). Die Planungsfreigabe "darf alle
+       planen" (view_all_employees) öffnet KEINE Gesundheitsdaten mehr
+       (Entscheidung zu Befund S-18). */
     if (in_array($u['role'], ['manager','teamleiter'], true)) {
-        return canEditUser($employeeId);                   // nur eigenes Team
+        return in_array((int)$employeeId, array_map('intval', supervisedIdSet()), true);
     }
     return false;
 }

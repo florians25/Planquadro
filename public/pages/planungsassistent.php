@@ -18,6 +18,7 @@
  */
 
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../../app/lib/PlanCells.php';
 requireLogin();
 
 $db  = getDB();
@@ -1167,6 +1168,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                         }
                     }
 
+                    /* Zelle sperren; Entwürfe anderer Planer nicht stillschweigend
+                       überschreiben (Optimistic Concurrency, wie api/save_bulk). */
+                    $cell = planCellLoad($db, [[$uid, $date]], true)[planCellKey($uid, $date)];
+                    if ($cell['draft'] && (int)$cell['draft']['created_by'] !== $ME && !$forced
+                        && (int)($cell['draft']['planning_run_id'] ?? 0) === 0) {
+                        $skipped[] = $allowed[$uid]['name'] . ' am ' . date('d.m.', strtotime($date)) . ': offener Entwurf eines anderen Planers';
+                        continue;
+                    }
+                    planChangeLog($db, $uid, $date, 'assistant_apply', planCellSnapshot($cell),
+                        ['draft' => ['action' => 'set', 'type' => 'assignment', 'value' => (string)$cfg['area_id'], 'by' => $ME], 'run_id' => $runId], $ME, 'assistant');
                     $ins->execute([
                         $uid, $date, (int)date('Y', strtotime($date)), (int)date('n', strtotime($date)),
                         (string)$cfg['area_id'],
@@ -1191,7 +1202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                        . ' – ' . $written . ' Entwürfe für '
                        . ($ctx['areas'][$cfg['area_id']]['short_code'] ?? '?')
                        . ' (' . $cfg['start'] . ' bis ' . $cfg['end'] . '): ' . $cfg['title'],
-                       $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '',
+                       opsClientIp(),
                    ]);
             } catch (Exception $e) { /* Protokoll ist optional */ }
 
@@ -1212,8 +1223,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             if ((int)$row['created_by'] !== $ME && !hasPerm('manage_settings')) {
                 echo json_encode(['success' => false, 'error' => 'Nur der Ersteller kann diese Übernahme zurücknehmen.']); exit;
             }
+            $db->beginTransaction();
+            $rows = $db->prepare('SELECT user_id, plan_date FROM plan_drafts WHERE planning_run_id = ? FOR UPDATE');
+            $rows->execute([$runId]);
+            foreach ($rows->fetchAll() as $r) {
+                planChangeLog($db, (int)$r['user_id'], $r['plan_date'], 'assistant_undo', ['run_id' => $runId], null, $ME, 'assistant');
+            }
             $del = $db->prepare('DELETE FROM plan_drafts WHERE planning_run_id = ?');
             $del->execute([$runId]);
+            $db->commit();
             $db->prepare("UPDATE planning_runs SET status='verworfen' WHERE id = ?")->execute([$runId]);
             echo json_encode(['success' => true, 'msg' => $del->rowCount() . ' Entwürfe zurückgenommen.']);
             exit;

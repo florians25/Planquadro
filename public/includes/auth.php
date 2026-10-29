@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../app/config/database.php';
    braucht ein gültiges CSRF-Token. app.js/header.php senden es automatisch
    als Header X-CSRF-Token mit. */
 opsEnforceCsrf();
+opsEnforceSessionTimeout();
 
 function isLoggedIn(): bool { return isset($_SESSION['user_id']) && empty($_SESSION['must_change_password']); }
 
@@ -165,6 +166,7 @@ function allPermissions(): array {
         'view_all_employees' => 'Alle Mitarbeiter sehen (sonst nur eigenes Team)',
         /* Bisher geprüft, aber nicht pflegbar (Befund X-03) */
         'manage_absences' => 'Abwesenheiten erfassen (Modul Abwesenheiten)',
+        'view_absence_details_all' => 'Krankheits-/Urlaubsdetails aller Mitarbeiter sehen',
         'use_planning_assistant' => 'Planungsassistent nutzen',
     ];
 }

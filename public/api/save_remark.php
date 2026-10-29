@@ -2,6 +2,7 @@
 require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/functions.php';
 require_once __DIR__.'/../includes/security.php';
+require_once __DIR__.'/../../app/lib/PlanCells.php';
 header('Content-Type: application/json; charset=utf-8');
 apiRateLimit(60);
 if(!canEdit()){http_response_code(403);echo json_encode(['error'=>'Keine Berechtigung']);exit;}
@@ -76,12 +77,34 @@ function upsertRemarkDraft($db, $uid, $date, $remark, $internalRemark, $by, $edi
        ->execute([$uid,$date,$yr,$mo,$changeType,$changeValue,$newPublic,$newInternal,$isInternalEntry,$by]);
 }
 
+/**
+ * Bemerkung transaktional speichern: Zelle sperren, optional Revision prüfen
+ * (Optimistic Concurrency wie in save_bulk), protokollieren.
+ * @return array{ok:bool, rev?:string, conflict?:array}
+ */
+function saveRemarkLocked($db, $uid, $date, $remark, $intRemark, $by, $editPublic, $editInternal, $rev = null) {
+    return opsTransaction($db, function ($db) use ($uid, $date, $remark, $intRemark, $by, $editPublic, $editInternal, $rev) {
+        $k = planCellKey($uid, $date);
+        $st = planCellLoad($db, [[$uid, $date]], true)[$k];
+        if ($rev !== null && !hash_equals(planCellRev($db, $st), (string)$rev)
+            && !($st['draft'] && (int)$st['draft']['created_by'] === (int)$by)) {
+            $db->rollBack();
+            return ['ok' => false, 'conflict' => ['user_id' => $uid, 'iso' => $date, 'rev' => planCellRev($db, $st)]];
+        }
+        upsertRemarkDraft($db, $uid, $date, $remark, $intRemark, $by, $editPublic, $editInternal);
+        $after = planCellLoad($db, [[$uid, $date]])[$k];
+        if (planCellRev($db, $after) === planCellRev($db, $st)) return ['ok' => true, 'rev' => planCellRev($db, $st)];
+        planChangeLog($db, $uid, $date, 'remark', planCellSnapshot($st), planCellSnapshot($after) + ['public' => $editPublic ? 1 : 0, 'internal' => $editInternal ? 1 : 0], (int)$by);
+        return ['ok' => true, 'rev' => planCellRev($db, $after)];
+    });
+}
+
 /* Bulk mode */
 $items = $input['items'] ?? null;
 if ($items) {
     $saved = 0;
     foreach ($items as $item) {
-        $uid=(int)($item['user_id']??0);$date=$item['date']??'';
+        $uid=(int)($item['user_id']??0);$date=cleanDate($item['date']??'');
         if(!$uid||!$date) continue;
         if(!canEditUser($uid)) continue; /* Vorgesetzten-Scope */
         $editPublic   = array_key_exists('remarks', $item);
@@ -89,15 +112,15 @@ if ($items) {
         if(!$editPublic && !$editInternal) continue;
         $remark   = trim((string)($item['remarks']??''));
         $intRemark= trim((string)($item['internal_remark']??''));
-        upsertRemarkDraft($db, $uid, $date, $remark, $intRemark, $by, $editPublic, $editInternal);
-        $saved++;
+        $r = saveRemarkLocked($db, $uid, $date, $remark, $intRemark, $by, $editPublic, $editInternal, $item['rev'] ?? null);
+        if ($r['ok']) $saved++;
     }
     echo json_encode(['success'=>true,'msg'=>$saved.' Bemerkung(en) gespeichert']);
     exit;
 }
 
 /* Single mode */
-$uid=(int)($input['user_id']??0);$date=$input['date']??'';
+$uid=(int)($input['user_id']??0);$date=cleanDate($input['date']??'');
 if(!$uid||!$date){echo json_encode(['success'=>false,'error'=>'User/Datum fehlt']);exit;}
 if(!canEditUser($uid)){http_response_code(403);echo json_encode(['success'=>false,'error'=>'Keine Berechtigung für diesen Mitarbeiter']);exit;}
 
@@ -107,11 +130,16 @@ if(!$editPublic && !$editInternal){echo json_encode(['success'=>false,'error'=>'
 
 $remark   = trim((string)($input['remarks']??''));
 $intRemark= trim((string)($input['internal_remark']??''));
-upsertRemarkDraft($db, $uid, $date, $remark, $intRemark, $by, $editPublic, $editInternal);
+$res = saveRemarkLocked($db, $uid, $date, $remark, $intRemark, $by, $editPublic, $editInternal, $input['rev'] ?? null);
+if (!$res['ok']) {
+    http_response_code(409);
+    echo json_encode(['success'=>false,'error'=>'conflict','msg'=>'Die Zelle wurde inzwischen von jemand anderem geändert. Bitte neu laden.','conflicts'=>[$res['conflict']]]);
+    exit;
+}
 
 if($editInternal && !$editPublic){
     $msg = $intRemark ? 'Interne Bemerkung gespeichert' : 'Interne Bemerkung entfernt';
 } else {
     $msg = $remark ? 'Bemerkung gespeichert' : 'Bemerkung entfernt';
 }
-echo json_encode(['success'=>true,'msg'=>$msg,'by'=>$by,'at'=>date('d.m.Y H:i')]);
+echo json_encode(['success'=>true,'msg'=>$msg,'by'=>$by,'at'=>date('d.m.Y H:i'),'rev'=>$res['rev']]);

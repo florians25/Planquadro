@@ -607,14 +607,14 @@ function saveRemark(cell, txt) {
     if (epBlockedOffline()) return;
     fetch(getApiBase() + 'api/save_remark', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ user_id: parseInt(cell.dataset.u), date: cell.dataset.d, remarks: txt })
-    }).then(function(r) { return r.json(); })
+        body: JSON.stringify({ user_id: parseInt(cell.dataset.u), date: cell.dataset.d, remarks: txt, rev: cell.dataset.r || '0' })
+    }).then(function(r) { return r.json(); }).then(function(d) { if (d && d.rev) cell.dataset.r = d.rev; if (d && d.error === 'conflict' && typeof liveCellRefresh === 'function') liveCellRefresh(true); return d; })
     .then(function(d) {
         if (d.success) {
             cell.dataset.remark = txt;
             if (txt) { cell.classList.add('has-remark','has-pub-remark'); toast('Bemerkung gespeichert', 'success'); }
             else { cell.classList.remove('has-pub-remark'); if(!cell.dataset.intRemark) cell.classList.remove('has-remark'); toast('Bemerkung entfernt', 'info'); }
-        } else toast('Fehler', 'error');
+        } else toast(d.msg || d.error || 'Fehler', 'error');
     }).catch(function(e) { toast(e.message, 'error'); });
 }
 
@@ -622,8 +622,8 @@ function saveInternalRemark(cell, txt) {
     if (epBlockedOffline()) return;
     fetch(getApiBase() + 'api/save_remark', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ user_id: parseInt(cell.dataset.u), date: cell.dataset.d, internal_remark: txt })
-    }).then(function(r) { return r.json(); })
+        body: JSON.stringify({ user_id: parseInt(cell.dataset.u), date: cell.dataset.d, internal_remark: txt, rev: cell.dataset.r || '0' })
+    }).then(function(r) { return r.json(); }).then(function(d) { if (d && d.rev) cell.dataset.r = d.rev; if (d && d.error === 'conflict' && typeof liveCellRefresh === 'function') liveCellRefresh(true); return d; })
     .then(function(d) {
         if (d.success) {
             cell.dataset.intRemark = txt;
@@ -631,7 +631,7 @@ function saveInternalRemark(cell, txt) {
             if (txt || cell.dataset.remark) cell.classList.add('has-remark');
             else cell.classList.remove('has-remark');
             toast(txt ? 'Interne Bemerkung gespeichert' : 'Interne Bemerkung entfernt', 'success');
-        } else toast('Fehler', 'error');
+        } else toast(d.msg || d.error || 'Fehler', 'error');
     }).catch(function(e) { toast(e.message, 'error'); });
 }
 
