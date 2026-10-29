@@ -15,10 +15,10 @@ RewriteCond %{THE_REQUEST} /([a-z_]+)\.php\s [NC]
 RewriteCond %1 !^index$
 RewriteRule ^ /%1 [R=301,L]
 
-# Root-level files: /logout -> /logout.php, /install -> /install.php
+# Root-level files: /logout, /install, /oidc -> *.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(logout|install)$ $1.php [L,QSA]
+RewriteRule ^(logout|install|oidc)$ $1.php [L,QSA]
 
 # Clean URLs: /dashboard -> /pages/dashboard.php
 RewriteCond %{REQUEST_FILENAME} !-f

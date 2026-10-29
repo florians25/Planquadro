@@ -2,6 +2,11 @@
 require_once __DIR__ . '/../app/lib/Security.php';
 require_once __DIR__ . '/../app/config/database.php';
 opsStartSession();
+require_once __DIR__ . '/../app/lib/TenantConfig.php';
+require_once __DIR__ . '/../app/lib/Oidc.php';
+$oidcOn = oidcEnabled();
+$pwAllowed = oidcPasswordLoginAllowed();
+$brandName = (string)tcfg('branding.name', 'OpsPilot');
 if (isset($_SESSION['user_id']) && empty($_SESSION['must_change_password'])) { header('Location: dashboard'); exit; }
 
 $err = ''; $showChange = !empty($_SESSION['must_change_password']); $pwExpired = !empty($_SESSION['pw_expired']);
@@ -109,7 +114,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $csrfOk && !isset($_POST['change_pw
             try {
                 $s = getDB()->prepare('SELECT * FROM users WHERE username=? AND active=1');
                 $s->execute([$u]); $row = $s->fetch();
-                if ($row && password_verify($p, $row['password_hash'])) {
+                if ($row && password_verify($p, $row['password_hash']) && !$pwAllowed && $row['role'] !== 'admin') {
+                    /* Nur SSO erlaubt – Administratoren behalten den Passwort-Zugang als Notfallweg */
+                    $err = 'Bitte melden Sie sich über Ihr Firmenkonto an.';
+                } elseif ($row && password_verify($p, $row['password_hash'])) {
                     logAttempt($u, true);
                     logAudit($row['id'], 'login_success', 'Login from ' . getClientIP());
                     opsRegenerateSession();
@@ -152,7 +160,7 @@ if ($reqUpper) $pwReqs[] = 'Ein Großbuchstabe';
 if ($reqNum) $pwReqs[] = 'Eine Zahl';
 if ($reqSpec) $pwReqs[] = 'Ein Sonderzeichen';
 ?><!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>OpsPilot Einsatzplanung – Login</title>
+<title><?php echo htmlspecialchars($brandName); ?> – Login</title>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;font-size:14px;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f172a;color:#111827;overflow:hidden}
@@ -200,6 +208,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .sec-info{font-size:.68rem;color:#9ca3af;text-align:center;margin-top:.65rem;display:flex;align-items:center;justify-content:center;gap:.3rem}
 .sec-info svg{width:12px;height:12px}
 </style>
+<style><?php echo opsBrandCss(); ?>.btn-p{background:var(--p)!important;color:var(--p-on)!important}.logo{background:var(--p)!important}</style>
 </head>
 <body>
 <div class="deco d1"></div><div class="deco d2"></div><div class="deco d3"></div><div class="deco d4"></div><div class="deco d5"></div><div class="deco d6"></div><div class="deco d7"></div>
@@ -207,11 +216,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="lb">
     <div class="lh">
       <div class="logo"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="28" height="28"><rect x="3" y="6" width="26" height="23" rx="3" stroke="#fff" stroke-width="2"/><path d="M3 12h26" stroke="#fff" stroke-width="2"/><path d="M9 3v5M23 3v5" stroke="#fff" stroke-width="2" stroke-linecap="round"/><rect x="7" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="14" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="21" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="7" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="14" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="21" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".3"/></svg></div>
-      <h1>OpsPilot Einsatzplanung</h1>
+      <h1><?php echo htmlspecialchars($brandName); ?></h1>
       <p class="sub"><?php echo $showChange ? ($pwExpired ? 'Passwort abgelaufen' : 'Neues Passwort vergeben') : 'Willkommen zurück'; ?></p>
     </div>
     <?php if(!empty($_GET['logged_out'])): ?><div class="alert alert-s" id="logoutMsg"><svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>Sie wurden erfolgreich abgemeldet.</div><?php endif; ?>
     <?php if(!empty($_SESSION['session_expired']) && !$err): unset($_SESSION['session_expired']); ?><div class="alert alert-w">Ihre Sitzung ist wegen Inaktivität abgelaufen. Bitte erneut anmelden.</div><?php endif; ?>
+    <?php if(!empty($_SESSION['oidc_error'])): ?><div class="alert alert-e"><?php echo htmlspecialchars($_SESSION['oidc_error']); unset($_SESSION['oidc_error']); ?></div><?php endif; ?>
     <?php if($err): ?><div class="alert alert-e"><?php echo htmlspecialchars($err); ?></div><?php endif; ?>
     <?php if($showChange): ?>
     <form method="POST" autocomplete="off">
@@ -224,6 +234,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="fg"><label>Passwort wiederholen</label><input type="password" name="new_password2" required minlength="<?php echo $minLen;?>" placeholder="Nochmal eingeben"></div>
       <button type="submit" class="btn btn-p">Passwort setzen</button>
     </form>
+    <?php else: ?>
+    <?php if($oidcOn): ?>
+    <a class="btn btn-p" href="oidc?start=1" style="text-decoration:none;margin-bottom:.85rem"><?php echo htmlspecialchars(oidcConfig()['label'] ?? 'Mit Firmenkonto anmelden'); ?></a>
+    <?php if($pwAllowed): ?><div class="sec-info" style="margin:0 0 .85rem">oder mit Benutzername und Passwort</div><?php endif; ?>
+    <?php endif; ?>
+    <?php if(!$pwAllowed && empty($_GET['password'])): ?>
+    <div class="sec-info"><a href="?password=1" style="color:#6b7280">Notfall-Anmeldung für Administratoren</a></div>
     <?php else: ?>
     <form method="POST" autocomplete="off" id="loginForm">
       <input type="hidden" name="_token" value="<?php echo opsCsrfToken(); ?>">
@@ -249,8 +266,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       </div>
     </form>
     <?php endif; ?>
+    <?php endif; ?>
   </div>
-  <div class="lf">OpsPilot Einsatzplanung · v6.7.0</div>
+  <div class="lf"><?php echo htmlspecialchars($brandName); ?> · OpsPilot</div>
 </div>
 <script>
 /* Prevent double-submit */

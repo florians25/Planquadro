@@ -116,20 +116,20 @@ final class TestEnv
     }
 
     /** Startet einen weiteren Testserver mit eigener Umgebung (z. B. SaaS-Modus). */
-    public static function startExtraServer(array $envOverrides): string
+    public static function startExtraServer(array $envOverrides, ?string $router = null): string
     {
-        return self::spawnServer(self::env() + ['PHP_CLI_SERVER_WORKERS' => '2'], $envOverrides);
+        return self::spawnServer(self::env() + ['PHP_CLI_SERVER_WORKERS' => '2'], $envOverrides, $router);
     }
 
     private static array $extra = [];
 
-    private static function spawnServer(array $env, array $over): string
+    private static function spawnServer(array $env, array $over, ?string $router = null): string
     {
         $sock = stream_socket_server('tcp://127.0.0.1:0');
         $port = (int)substr(strrchr(stream_socket_get_name($sock, false), ':'), 1);
         fclose($sock);
         $log = sys_get_temp_dir() . '/opspilot-test-server-' . $port . '.log';
-        $cmd = [PHP_BINARY, '-d', 'display_errors=stderr', '-S', "127.0.0.1:$port", '-t', self::$root . '/public', self::$root . '/tests/router.php'];
+        $cmd = [PHP_BINARY, '-d', 'display_errors=stderr', '-S', "127.0.0.1:$port", '-t', self::$root . '/public', $router ?? self::$root . '/tests/router.php'];
         $proc = proc_open($cmd, [0 => ['file', '/dev/null', 'r'], 1 => ['file', $log, 'a'], 2 => ['file', $log, 'a']], $pipes, self::$root, array_merge($env, $over));
         self::$extra[] = $proc;
         for ($i = 0; $i < 100; $i++) { $fp = @fsockopen('127.0.0.1', $port, $e1, $e2, 0.1); if ($fp) { fclose($fp); break; } usleep(50000); }

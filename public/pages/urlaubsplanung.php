@@ -2,6 +2,7 @@
 $pageTitle='Urlaubsplanung';
 require_once __DIR__.'/../includes/functions.php';
 requireLogin();
+requireModule('vacation');
 if(!hasRole('admin','manager','teamleiter')){showAccessDenied('Urlaubs- und Krankheitsübersichten sind vertraulich und nur für Teamleiter, Manager und Administratoren zugänglich.');}
 require_once __DIR__.'/../includes/header.php';
 $y=isset($_GET['year'])?(int)$_GET['year']:(int)date('Y'); $users=planningUsers();

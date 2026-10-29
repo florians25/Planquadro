@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../../app/lib/TenantConfig.php';
 
 function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 function flash($t, $m) { $_SESSION['flash'] = ['type'=>$t,'msg'=>$m]; }

@@ -1,6 +1,7 @@
 <?php
 $pageTitle='Jahresübersicht';
 require_once __DIR__.'/../includes/header.php';
+requireModule('annual');
 $y=isset($_GET['year'])?(int)$_GET['year']:(int)date('Y');
 $users=planningUsers(); $see=canSeeDetails(); $hols=holidays($y);
 $cu=currentUser();

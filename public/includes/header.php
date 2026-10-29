@@ -80,9 +80,10 @@ $_bp = bp();
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Einsatzplanung<?php echo isset($pageTitle) ? ' – '.e($pageTitle) : ''; ?></title>
+<title><?php echo e(tcfg('branding.name','OpsPilot')); ?><?php echo isset($pageTitle) ? ' – '.e($pageTitle) : ''; ?></title>
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/style.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/style.css'); ?>">
 <meta name="csrf-token" content="<?php echo csrfToken(); ?>">
+<style><?php echo opsBrandCss(); ?></style>
 <script>
 /* CSRF: jede zustandsändernde Anfrage an den eigenen Server trägt das
    Session-Token im Header X-CSRF-Token (geprüft in includes/auth.php). */
@@ -113,78 +114,81 @@ $_bp = bp();
 </script>
 </head>
 <body data-uid="<?php echo $_cu['id']??0; ?>" data-csrf="<?php echo csrfToken(); ?>">
-<div id="appLoader"><div class="loader-dots"><span></span><span></span><span></span></div><div class="loader-text">Einsatzplanung</div></div>
+<div id="appLoader"><div class="loader-dots"><span></span><span></span><span></span></div><div class="loader-text"><?php echo e(tcfg('branding.name','OpsPilot')); ?></div></div>
 <div id="toasts" class="toast-wrap"></div>
 <nav class="nav">
-  <a href="<?php echo $_bp; ?>dashboard" class="nav-brand"><span class="nav-brand-icon"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect x="3" y="6" width="26" height="23" rx="3" stroke="#fff" stroke-width="2.5"/><path d="M3 12h26" stroke="#fff" stroke-width="2.5"/><path d="M9 3v5M23 3v5" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><rect x="7" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="14" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="21" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="7" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="14" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="21" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".3"/></svg></span></a>
+  <a href="<?php echo $_bp; ?>dashboard" class="nav-brand" aria-label="<?php echo e(tcfg('branding.name','OpsPilot')); ?> – Dashboard"><?php if (tcfg('branding.logo')): ?><img src="<?php echo $_bp; ?>api/branding?logo=1" alt="" class="nav-brand-logo"><?php else: ?><span class="nav-brand-icon"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect x="3" y="6" width="26" height="23" rx="3" stroke="#fff" stroke-width="2.5"/><path d="M3 12h26" stroke="#fff" stroke-width="2.5"/><path d="M9 3v5M23 3v5" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><rect x="7" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="14" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="21" y="15.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="7" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".5"/><rect x="14" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".9"/><rect x="21" y="21.5" width="4" height="3" rx=".8" fill="#fff" opacity=".3"/></svg></span><?php endif; ?></a>
   <div class="nav-links" id="navLinks">
-    <a href="<?php echo $_bp; ?>dashboard" class="nav-link mob-ok<?php echo $_pg==='dashboard'?' active':''; ?>" title="Dashboard">
+    <?php if (opsNavVisible('dashboard')): ?><a style="order:<?php echo opsNavOrder('dashboard'); ?>" href="<?php echo $_bp; ?>dashboard" class="nav-link mob-ok<?php echo $_pg==='dashboard'?' active':''; ?>" title="Dashboard">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
-      <span>Dashboard</span></a>
-    <a href="<?php echo $_bp; ?>mein_plan" class="nav-link mob-ok<?php echo $_pg==='mein_plan'?' active':''; ?>" title="Mein Plan">
+      <span>Dashboard</span></a><?php endif; ?>
+    <?php if (opsNavVisible('mein_plan')): ?><a style="order:<?php echo opsNavOrder('mein_plan'); ?>" href="<?php echo $_bp; ?>mein_plan" class="nav-link mob-ok<?php echo $_pg==='mein_plan'?' active':''; ?>" title="Mein Plan">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
-      <span>Mein Plan</span></a>
-    <span class="nav-div"></span>
-    <a href="<?php echo $_bp; ?>gesamtplan" class="nav-link desk-only<?php echo $_pg==='gesamtplan'?' active':''; ?>" title="Gesamtplan">
+      <span>Mein Plan</span></a><?php endif; ?>
+    <span class="nav-div" style="order:<?php echo opsNavOrder('gesamtplan'); ?>"></span>
+    <?php if (opsNavVisible('gesamtplan')): ?><a style="order:<?php echo opsNavOrder('gesamtplan'); ?>" href="<?php echo $_bp; ?>gesamtplan" class="nav-link desk-only<?php echo $_pg==='gesamtplan'?' active':''; ?>" title="Gesamtplan">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"/></svg>
-      <span>Gesamtplan</span></a>
+      <span>Gesamtplan</span></a><?php endif; ?>
     <?php if (canEdit()): ?>
-    <a href="<?php echo $_bp; ?>monatsplanung" class="nav-link<?php echo $_pg==='monatsplanung'?' active':''; ?>" title="Planung">
+    <?php if (opsNavVisible('monatsplanung')): ?><a style="order:<?php echo opsNavOrder('monatsplanung'); ?>" href="<?php echo $_bp; ?>monatsplanung" class="nav-link<?php echo $_pg==='monatsplanung'?' active':''; ?>" title="Planung">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
-      <span>Planung</span></a>
+      <span>Planung</span></a><?php endif; ?>
     <?php endif; ?>
     <?php if (canEdit() || hasPerm('use_planning_assistant')): ?>
-    <a href="<?php echo $_bp; ?>planungsassistent" class="nav-link nav-link-assistant<?php echo $_pg==='planungsassistent'?' active':''; ?>" title="Planungsassistent – komplexe Einsätze und Kundenprojekte">
+    <?php if (opsNavVisible('planungsassistent')): ?><a style="order:<?php echo opsNavOrder('planungsassistent'); ?>" href="<?php echo $_bp; ?>planungsassistent" class="nav-link nav-link-assistant<?php echo $_pg==='planungsassistent'?' active':''; ?>" title="Planungsassistent – komplexe Einsätze und Kundenprojekte">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm7.707 8.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-      <span>Assistent</span><span class="nav-beta">Beta</span></a>
+      <span>Assistent</span><span class="nav-beta">Beta</span></a><?php endif; ?>
     <?php endif; ?>
-    <a href="<?php echo $_bp; ?>jahresuebersicht" class="nav-link<?php echo $_pg==='jahresuebersicht'?' active':''; ?>" title="Jahresplan">
+    <?php if (opsNavVisible('jahresuebersicht')): ?><a style="order:<?php echo opsNavOrder('jahresuebersicht'); ?>" href="<?php echo $_bp; ?>jahresuebersicht" class="nav-link<?php echo $_pg==='jahresuebersicht'?' active':''; ?>" title="Jahresplan">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9v-1h5v2H5a1 1 0 01-1-1zm7 1h4a1 1 0 001-1v-1h-5v2zm0-4h5V8h-5v2zM9 8H4v2h5V8z" clip-rule="evenodd"/></svg>
-      <span>Jahresplan</span></a>
+      <span>Jahresplan</span></a><?php endif; ?>
     <?php if (hasRole('admin','manager','teamleiter')): ?>
-    <a href="<?php echo $_bp; ?>urlaubsplanung" class="nav-link<?php echo $_pg==='urlaubsplanung'?' active':''; ?>" title="Urlaub">
+    <?php if (opsNavVisible('urlaubsplanung')): ?><a style="order:<?php echo opsNavOrder('urlaubsplanung'); ?>" href="<?php echo $_bp; ?>urlaubsplanung" class="nav-link<?php echo $_pg==='urlaubsplanung'?' active':''; ?>" title="Urlaub">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clip-rule="evenodd"/></svg>
-      <span>Urlaub</span></a>
+      <span>Urlaub</span></a><?php endif; ?>
     <?php if (hasPerm('manage_absences') || canEdit()): ?>
-    <a href="<?php echo $_bp; ?>abwesenheiten" class="nav-link<?php echo $_pg==='abwesenheiten'?' active':''; ?>" title="Abwesenheiten erfassen">
+    <?php if (opsNavVisible('abwesenheiten')): ?><a style="order:<?php echo opsNavOrder('abwesenheiten'); ?>" href="<?php echo $_bp; ?>abwesenheiten" class="nav-link<?php echo $_pg==='abwesenheiten'?' active':''; ?>" title="Abwesenheiten erfassen">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm5.707 9.707a1 1 0 00-1.414-1.414L10 10.586l-.293-.293a1 1 0 00-1.414 1.414l.293.293-.293.293a1 1 0 101.414 1.414l.293-.293.293.293a1 1 0 001.414-1.414l-.293-.293.293-.293z" clip-rule="evenodd"/></svg>
-      <span>Abwesenheiten</span></a>
+      <span>Abwesenheiten</span></a><?php endif; ?>
     <?php endif; ?>
-    <a href="<?php echo $_bp; ?>vertretung" class="nav-link<?php echo $_pg==='vertretung'?' active':''; ?>" title="Vertretung">
+    <?php if (opsNavVisible('vertretung')): ?><a style="order:<?php echo opsNavOrder('vertretung'); ?>" href="<?php echo $_bp; ?>vertretung" class="nav-link<?php echo $_pg==='vertretung'?' active':''; ?>" title="Vertretung">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7 2a1 1 0 011 1v1h4V3a1 1 0 112 0v1h1a2 2 0 012 2v1H3V6a2 2 0 012-2h1V3a1 1 0 011-1zM3 9h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V9zm4.707 2.293a1 1 0 00-1.414 1.414L7.586 14l-1.293 1.293a1 1 0 101.414 1.414L9 15.414l1.293 1.293a1 1 0 001.414-1.414L10.414 14l1.293-1.293a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293z" clip-rule="evenodd"/></svg>
-      <span>Vertretung</span></a>
+      <span>Vertretung</span></a><?php endif; ?>
     <?php endif; ?>
     <?php if (canEdit()): ?>
-    <span class="nav-div"></span>
+    <span class="nav-div" style="order:<?php echo opsNavOrder('genehmigungen'); ?>"></span>
     <?php if (getSetting('approval_system_enabled','0')==='1' && hasPerm('approve_requests')): ?>
-    <a href="<?php echo $_bp; ?>genehmigungen" class="nav-link<?php echo $_pg==='genehmigungen'?' active':''; ?> nav-link-approval" title="Anträge">
+    <?php if (opsNavVisible('genehmigungen')): ?><a style="order:<?php echo opsNavOrder('genehmigungen'); ?>" href="<?php echo $_bp; ?>genehmigungen" class="nav-link<?php echo $_pg==='genehmigungen'?' active':''; ?> nav-link-approval" title="Anträge">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-      <span>Anträge</span><span class="approval-pill" id="approvalBadge" style="display:none">0</span></a>
+      <span>Anträge</span><span class="approval-pill" id="approvalBadge" style="display:none">0</span></a><?php endif; ?>
     <?php endif; ?>
     <?php if (canManageUsers()): ?>
-    <a href="<?php echo $_bp; ?>mitarbeiter" class="nav-link<?php echo $_pg==='mitarbeiter'?' active':''; ?>" title="Team">
+    <?php if (opsNavVisible('mitarbeiter')): ?><a style="order:<?php echo opsNavOrder('mitarbeiter'); ?>" href="<?php echo $_bp; ?>mitarbeiter" class="nav-link<?php echo $_pg==='mitarbeiter'?' active':''; ?>" title="Team">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
-      <span>Team</span></a>
+      <span>Team</span></a><?php endif; ?>
     <?php endif; ?>
     <?php if (canManageConfig()): ?>
-    <a href="<?php echo $_bp; ?>planbereiche" class="nav-link<?php echo $_pg==='planbereiche'?' active':''; ?>" title="Bereiche">
+    <?php if (opsNavVisible('planbereiche')): ?><a style="order:<?php echo opsNavOrder('planbereiche'); ?>" href="<?php echo $_bp; ?>planbereiche" class="nav-link<?php echo $_pg==='planbereiche'?' active':''; ?>" title="Bereiche">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-      <span>Bereiche</span></a>
-    <a href="<?php echo $_bp; ?>feiertage" class="nav-link<?php echo $_pg==='feiertage'?' active':''; ?>" title="Feiertage">
+      <span>Bereiche</span></a><?php endif; ?>
+    <?php if (opsNavVisible('stammdaten')): ?><a style="order:<?php echo opsNavOrder('stammdaten'); ?>" href="<?php echo $_bp; ?>stammdaten" class="nav-link<?php echo $_pg==='stammdaten'?' active':''; ?>" title="Stammdaten">
+      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zm11-1a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/></svg>
+      <span>Stammdaten</span></a><?php endif; ?>
+    <?php if (opsNavVisible('feiertage')): ?><a style="order:<?php echo opsNavOrder('feiertage'); ?>" href="<?php echo $_bp; ?>feiertage" class="nav-link<?php echo $_pg==='feiertage'?' active':''; ?>" title="Feiertage">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
-      <span>Feiertage</span></a>
+      <span>Feiertage</span></a><?php endif; ?>
     <?php endif; ?>
     <?php endif; ?>
     <?php if (hasPerm('manage_settings')): ?>
-    <span class="nav-div"></span>
-    <a href="<?php echo $_bp; ?>einstellungen" class="nav-link<?php echo $_pg==='einstellungen'?' active':''; ?>" title="Einstellungen">
+    <span class="nav-div" style="order:<?php echo opsNavOrder('einstellungen'); ?>"></span>
+    <?php if (opsNavVisible('einstellungen')): ?><a style="order:<?php echo opsNavOrder('einstellungen'); ?>" href="<?php echo $_bp; ?>einstellungen" class="nav-link<?php echo $_pg==='einstellungen'?' active':''; ?>" title="Einstellungen">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
-      <span>Einstellungen</span></a>
+      <span>Einstellungen</span></a><?php endif; ?>
     <?php endif; ?>
     <?php if (hasPerm('manage_roles')): ?>
-    <a href="<?php echo $_bp; ?>rollen" class="nav-link<?php echo $_pg==='rollen'?' active':''; ?>" title="Rollen & Rechte">
+    <?php if (opsNavVisible('rollen')): ?><a style="order:<?php echo opsNavOrder('rollen'); ?>" href="<?php echo $_bp; ?>rollen" class="nav-link<?php echo $_pg==='rollen'?' active':''; ?>" title="Rollen & Rechte">
       <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-      <span>Rollen</span></a>
+      <span>Rollen</span></a><?php endif; ?>
     <?php endif; ?>
   </div>
   <div class="nav-right">

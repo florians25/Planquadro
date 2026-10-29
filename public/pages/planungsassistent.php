@@ -20,6 +20,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../../app/lib/PlanCells.php';
 requireLogin();
+requireModule('assistant');
 
 $db  = getDB();
 $ME  = (int)($_SESSION['user_id'] ?? 0);

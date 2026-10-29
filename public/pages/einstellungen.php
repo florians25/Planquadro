@@ -141,7 +141,7 @@ $dbVer=$db->query('SELECT VERSION() as v')->fetch()['v']; $phpVer=phpversion();
 }
 </style>
 
-<div class="ph"><h1>Systemeinstellungen</h1><div class="phr"><button class="btn btn-primary" onclick="saveSettings()">Speichern</button></div></div>
+<div class="ph"><h1>Systemeinstellungen</h1><div class="phr"><a class="btn btn-outline" href="organisation">Organisation &amp; Branding</a> <button class="btn btn-primary" onclick="saveSettings()">Speichern</button></div></div>
 
 <div class="st-wrap">
 <!-- ===== SIDEBAR ===== -->

@@ -72,9 +72,10 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 </div>
 
 <!-- Announcements -->
-<div id="dashAnnouncements"></div>
+<div id="dashAnnouncements"<?php if (!opsWidget('announcements')) echo ' hidden'; ?>></div>
 
 <!-- KPI Row -->
+<?php if (opsWidget('kpis')): ?>
 <div class="g" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.65rem;margin-bottom:1rem">
   <?php if ($see): ?>
   <div class="card" style="padding:.75rem 1rem">
@@ -107,7 +108,10 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
   </div>
 </div>
 
+<?php endif; /* kpis */ ?>
+
 <!-- Today highlight + Week -->
+<?php if (opsWidget('week')): ?>
 <div class="card" style="margin-bottom:1rem">
   <div class="ch" style="display:flex;justify-content:space-between;align-items:center">
     <span>Meine Woche – KW <?php echo $cwk; ?>
@@ -191,8 +195,10 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
   </div>
 </div>
 
+<?php endif; /* week */ ?>
+
 <!-- WOTs directly under week (if any) -->
-<?php if (!empty($wots)): ?>
+<?php if (!empty($wots) && opsWidget('wots') && opsModule('wots')): ?>
 <div class="card" style="margin-bottom:1rem;border-left:3px solid #d97706">
   <div class="ch" style="display:flex;justify-content:space-between;align-items:center">
     <span>WOTs – <?php echo monthName($m).' '.$y; ?>
@@ -217,7 +223,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 <?php endif; ?>
 
 <!-- Antraege (if approval system active) -->
-<?php if(getSetting('approval_system_enabled','0')==='1'): ?>
+<?php if(getSetting('approval_system_enabled','0')==='1' && opsWidget('requests')): ?>
 <div class="card mb" id="dashApprovalCard" style="display:none;border-left:3px solid var(--p)">
 <div class="ch">Änderungsanträge</div>
 <div class="cb">
@@ -247,7 +253,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 <!-- Two-column grid: Status + Team OR Abwesend + Feiertage -->
 <div class="g dash-two" style="margin-bottom:1rem">
   <!-- Publication Status -->
-  <?php if (canEdit()): ?>
+  <?php if (canEdit() && opsWidget('publication')): ?>
   <div class="card">
     <div class="ch">Planstatus</div>
     <div class="cb">
@@ -285,7 +291,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
   <?php endif; ?>
 
   <!-- Heute Abwesend / Feiertage -->
-  <?php if ($showAbsent && $see): ?>
+  <?php if ($showAbsent && $see && opsWidget('absent_today')): ?>
   <div class="card">
     <div class="ch">
       Heute Abwesend
@@ -326,6 +332,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
   <?php endif; ?>
 
   <!-- Einsatzverteilung -->
+  <?php if (opsWidget('distribution')): ?>
   <div class="card">
     <?php if ($see && hasRole('manager','admin')): ?>
     <div class="ch">Einsatz-Verteilung – <?php echo monthName($m).' '.$y; ?>
@@ -375,6 +382,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
     </div>
     <?php endif; ?>
   </div>
+  <?php endif; /* distribution */ ?>
 </div>
 
 <script>

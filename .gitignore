@@ -35,3 +35,4 @@ Thumbs.db
 
 # Lokale Werkzeug-Arbeitsverzeichnisse
 .claude/
+app/storage/

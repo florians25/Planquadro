@@ -9,6 +9,11 @@ require_once __DIR__.'/../../app/config/database.php';
 /* Spalte cal_token wird per Migration angelegt (migrations/opspilot/0001) */
 try { $db = getDB(); } catch (Exception $e) { http_response_code(500); exit('Server error'); }
 
+/* Modul Kalender-Abo deaktiviert → wie unbekannt behandeln */
+require_once __DIR__.'/../../app/lib/Security.php';
+require_once __DIR__.'/../../app/lib/TenantConfig.php';
+if (!opsModule('ical')) { http_response_code(404); exit('Not Found'); }
+
 $token = trim($_GET['token'] ?? '');
 if (!$token || strlen($token) < 32) {
     http_response_code(403);

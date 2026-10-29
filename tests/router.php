@@ -25,7 +25,7 @@ if (preg_match('#^/(config|includes|backups)(/|$)#', $path)
 $target = null;
 if ($path === '/' || $path === '/index.php') {
     $target = '/index.php';
-} elseif (preg_match('#^/(logout|install)$#', $path, $m)) {
+} elseif (preg_match('#^/(logout|install|oidc)$#', $path, $m)) {
     $target = '/' . $m[1] . '.php';
 } elseif (preg_match('#^/api/([a-z0-9_]+)$#', $path, $m) && is_file($docRoot . '/api/' . $m[1] . '.php')) {
     $target = '/api/' . $m[1] . '.php';
