@@ -88,7 +88,7 @@ angezeigte Rechte auf 0 setzen).
 Ziel: Rollen und Rechte werden mandantenfähig, rollengebundene Prüfungen
 (`canManageUsers`, `canManageConfig`, …) werden echte Rechte.
 
-Umgesetzt mit Migration `0006_role_bound_permissions.sql` (Planquadro 7.0.0-dev).
+Umgesetzt mit Migration `0006_role_bound_permissions.sql` (Planquadro 7.0.0).
 
 1. **Backup**, dann **Snapshot vorher** – noch mit dem bisherigen Code-Stand:
    `php bin/permissions-snapshot.php > before.json` (im SaaS-Betrieb je Mandant mit

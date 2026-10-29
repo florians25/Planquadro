@@ -2,7 +2,11 @@
 
 *Copyright © 2026 Florian-Fynn Scheibel. Alle Rechte vorbehalten.*
 
-## Planquadro 7.0.0-dev – Phasen 3–7 „Plattform, Oberfläche, Apps, QS“ (unveröffentlicht)
+## Planquadro 7.0.0 (29.10.2026) – erste Version unter dem Namen Planquadro
+
+Zusammengefasst aus den Entwicklungsphasen 2–7. Release-Notes: `docs/releases/v7.0.0.md`.
+
+### Phasen 3–7: Plattform, Oberfläche, Apps, Qualität
 
 Alle bisherigen Funktionen, Daten, Rechte und Abläufe bleiben erhalten. Neue Funktionen
 sind optional oder standardmäßig so eingestellt, dass sich für bestehende Installationen
@@ -229,7 +233,7 @@ nichts ändert.
 0009 (Soll-Besetzung) ein.
 Neue Umgebungsvariablen sind optional (`docs/ARCHITECTURE.md`, `docs/API.md`).
 
-## Planquadro 7.0.0-dev – Phase 2 „Stabilisierung“ (unveröffentlicht)
+### Phase 2: Stabilisierung
 
 Basis ist Einsatzplanung v6.9.0. Alle Funktionen und Abläufe bleiben erhalten; die
 Änderungen beheben Fehler und sichern den Mehrbenutzerbetrieb ab. Details und Befund-IDs:

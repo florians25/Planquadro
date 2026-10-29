@@ -1,6 +1,6 @@
 # Berechtigungsmodell
 
-> **Stand Planquadro 7.0.0-dev:** Rechte stehen als Katalog im Code
+> **Stand Planquadro 7.0.0:** Rechte stehen als Katalog im Code
 > (`app/lib/Permissions.php`), sechs bisher rollengebundene Prüfungen sind Rechte
 > (Abschnitt 7, Migration 0006). Abschnitte 1–6 beschreiben den Ausgangszustand v6.9.0,
 > gegen den der Rechte-Snapshot (`tests/fixtures/permissions_snapshot.json`) geprüft wird;
@@ -131,7 +131,7 @@ Die API v1 (`docs/API.md`) nutzt exakt dieselben Funktionen (`hasPerm`, `canEdit
 | | list, pending_count, pending_map, dashboard_stats, my_requests | angemeldet, Scope-gefiltert bzw. eigene |
 | `api/save_wots` | list/add/update/delete | `plan_edit` (kein Scope) |
 | `api/save_month_data` | Stunden/Erl. | `plan_edit` (kein Scope) |
-| `api/planning_plus` (7.0.0-dev) | cell_info (Entwurf, Änderungsverlauf einer Zelle) | `plan_edit` + `canEditUser`; Urlaub/Krank nur mit `canSeeAbsenceDetails`, interne Einträge nur mit `plan_view_internal` |
+| `api/planning_plus` (7.0.0) | cell_info (Entwurf, Änderungsverlauf einer Zelle) | `plan_edit` + `canEditUser`; Urlaub/Krank nur mit `canSeeAbsenceDetails`, interne Einträge nur mit `plan_view_internal` |
 | | targets / targets_save (Soll-Besetzung) | `plan_edit` / `manage_config` |
 | `api/backup` | create/list/download/restore/delete/setup_cron/get_key | `manage_settings`; `cron_backup` per Schlüssel ohne Login |
 | `api/announcements` | active | **ohne Login** |
@@ -182,7 +182,7 @@ P-7 sind in Phase 2 behoben (Tests in `tests/Integration/SecurityTest.php` und
 | P-6 | Teamübergreifende Planung im Assistenten nur mit Freigabe | Manager immer, auch ohne `view_all_employees` | **offen – Entscheidung des Product Owners nötig** (siehe Roadmap) |
 | P-7 | Profil-Aktionen nur für angemeldete Benutzer | auch während erzwungenem Passwortwechsel | `requireLogin()` ergänzt |
 
-## 7. Rechte-Katalog und Migration 0006 (Planquadro 7.0.0-dev)
+## 7. Rechte-Katalog und Migration 0006 (Planquadro 7.0.0)
 
 ### 7.1 Katalog
 

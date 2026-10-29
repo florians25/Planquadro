@@ -7,7 +7,7 @@ use Planquadro\Tests\Support\Response;
 use Planquadro\Tests\Support\TestEnv;
 
 /**
- * Regressionstests zu den Befunden des Sicherheitsreviews (Planquadro 7.0.0-dev):
+ * Regressionstests zu den Befunden des Sicherheitsreviews (Planquadro 7.0.0):
  * SSO-Konfiguration nur für Admins, keine Abwesenheitsarten in der Konfliktvorschau,
  * Client-Secret nur an den festgelegten Issuer, App-Sitzungen nach Passwortwechsel,
  * PKCE-Pflicht, Plattform-Host.
