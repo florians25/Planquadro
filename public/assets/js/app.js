@@ -1158,6 +1158,7 @@ function showConflictResolver(allChanges, d, ctx){
     var items=[];
     (d.overwrites||[]).forEach(function(o){items.push({kind:'ow',uid:o.user_id,iso:o.iso,user:o.user,dateDisp:o.date,current:o.current,locked:false,defChecked:true});});
     (d.vac_locked||[]).forEach(function(o){items.push({kind:'vac',uid:o.user_id,iso:o.iso,user:o.user,dateDisp:o.date,current:'Genehmigter Urlaub',locked:!canUnlock,defChecked:false});});
+    (d.abs_locked||[]).forEach(function(o){items.push({kind:'abs',uid:o.user_id,iso:o.iso,user:o.user,dateDisp:o.date,current:'Abwesend',locked:!canUnlock,defChecked:false});});
     (d.sick_locked||[]).forEach(function(o){items.push({kind:'sick',uid:o.user_id,iso:o.iso,user:o.user,dateDisp:o.date,current:o.type||'Krank',locked:!canUnlock,defChecked:false});});
     var groups={}, order=[];
     items.forEach(function(it){ if(!groups[it.uid]){groups[it.uid]={user:it.user,rows:[]};order.push(it.uid);} groups[it.uid].rows.push(it); });
@@ -1182,7 +1183,7 @@ function showConflictResolver(allChanges, d, ctx){
     });
     H+='</div>';
     if(d.skipped>0) H+='<p class="cfx-skip">'+d.skipped+' Tag(e) werden automatisch übersprungen (Feiertage / außerhalb Beschäftigung).</p>';
-    if(!canUnlock && ((d.vac_locked&&d.vac_locked.length)||(d.sick_locked&&d.sick_locked.length))) H+='<p class="cfx-skip">Urlaubs-/Kranktage lassen sich ohne Berechtigung nicht überschreiben und bleiben erhalten.</p>';
+    if(!canUnlock && ((d.vac_locked&&d.vac_locked.length)||(d.sick_locked&&d.sick_locked.length)||(d.abs_locked&&d.abs_locked.length))) H+='<p class="cfx-skip">Urlaubs-/Kranktage lassen sich ohne Berechtigung nicht überschreiben und bleiben erhalten.</p>';
     H+='</div><div class="mf"><span class="cfx-count" id="cfxCount"></span><button class="btn btn-outline" onclick="cMod(\'conflictMod\')">Abbrechen</button><button class="btn btn-primary" id="cfxApply">Auswahl anlegen</button></div></div>';
     bg.innerHTML=H;
     document.body.appendChild(bg);
@@ -1225,7 +1226,7 @@ function cfxApply(){
     var conflictKeys={}, checkedKeys={}, forceVac=false, forceSick=false;
     document.querySelectorAll('#conflictMod .cfx-cb').forEach(function(cb){
         var k=cb.dataset.uid+'_'+cb.dataset.iso; conflictKeys[k]=true;
-        if(cb.checked){checkedKeys[k]=true; if(cb.dataset.kind==='vac')forceVac=true; if(cb.dataset.kind==='sick')forceSick=true;}
+        if(cb.checked){checkedKeys[k]=true; if(cb.dataset.kind==='vac')forceVac=true; if(cb.dataset.kind==='sick')forceSick=true; if(cb.dataset.kind==='abs'){forceVac=true;forceSick=true;}}
     });
     var final=all.filter(function(c){var k=c.user_id+'_'+c.date; if(conflictKeys[k])return !!checkedKeys[k]; return true;});
     var opts={}; if(forceVac)opts.force_vacation=1; if(forceSick)opts.force_sick=1;

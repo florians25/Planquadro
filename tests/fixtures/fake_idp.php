@@ -26,6 +26,8 @@ if ($path === '/.well-known/openid-configuration') {
     header('Location: ' . $_GET['redirect_uri'] . '?' . http_build_query(['code' => $code, 'state' => $_GET['state'] ?? '']));
     http_response_code(302);
 } elseif ($path === '/token') {
+    /* Für Tests: protokolliert, ob ein Client-Secret mitgeschickt wurde */
+    if (getenv('FAKE_IDP_LOG')) file_put_contents(getenv('FAKE_IDP_LOG'), 'token auth=' . ($_SERVER['HTTP_AUTHORIZATION'] ?? '-') . "\n", FILE_APPEND);
     $f = "$dir/" . preg_replace('/[^a-f0-9]/', '', $_POST['code'] ?? '') . '.json';
     $c = is_file($f) ? json_decode(file_get_contents($f), true) : null;
     @unlink($f);

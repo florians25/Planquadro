@@ -11,7 +11,8 @@ require_once __DIR__ . '/../../app/config/database.php';
 require_once __DIR__ . '/../../app/lib/Security.php';
 
 $host = strtolower(preg_replace('/:\d+$/', '', (string)($_SERVER['HTTP_HOST'] ?? '')));
-if (opsMode() !== 'saas' || (opsEnv('OPSPILOT_PLATFORM_HOST') !== '' && $host !== strtolower(opsEnv('OPSPILOT_PLATFORM_HOST')))) {
+/* Nur im SaaS-Modus und nur auf dem ausdrücklich konfigurierten Plattform-Host */
+if (opsMode() !== 'saas' || opsEnv('OPSPILOT_PLATFORM_HOST') === '' || $host !== strtolower(opsEnv('OPSPILOT_PLATFORM_HOST'))) {
     http_response_code(404); exit('Not Found');
 }
 
@@ -46,7 +47,7 @@ if ($post && ($_POST['action'] ?? '') === 'login') {
         $s = $pdb->prepare('SELECT * FROM platform_admins WHERE username=? AND active=1');
         $s->execute([trim((string)($_POST['username'] ?? ''))]);
         $a = $s->fetch();
-        if ($a && password_verify((string)($_POST['password'] ?? ''), $a['password_hash'])) {
+        if (password_verify((string)($_POST['password'] ?? ''), $a ? (string)$a['password_hash'] : opsDummyHash()) && $a) {
             session_regenerate_id(true);
             $_SESSION = ['pf_admin' => $a['username'], 'csrf_token' => bin2hex(random_bytes(32)), 'pf_at' => time()];
             $pdb->prepare('UPDATE platform_admins SET last_login=NOW() WHERE id=?')->execute([$a['id']]);

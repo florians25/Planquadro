@@ -18,7 +18,7 @@ $pam=planAreaMap();
 
 /* === Conflict Check Mode (batch-optimiert für große Datenbanken) === */
 if(!empty($input['check_conflicts'])){
-    $vacLocked=[];$sickLocked=[];$overwrites=[];$skipped=0;
+    $vacLocked=[];$sickLocked=[];$absLocked=[];$overwrites=[];$skipped=0;
     /* 1) gültige (uid,date)-Paare sammeln */
     $pairs=[]; $seen=[];
     foreach($input['changes'] as $c){
@@ -30,7 +30,7 @@ if(!empty($input['check_conflicts'])){
         $k=$uid.'|'.$date; if(isset($seen[$k]))continue; $seen[$k]=true;
         $pairs[]=[$uid,$date];
     }
-    if(empty($pairs)){echo json_encode(['success'=>true,'vac_locked'=>[],'sick_locked'=>[],'overwrites'=>[],'skipped'=>$skipped,'can_unlock'=>hasPerm('unlock_vacation')]);exit;}
+    if(empty($pairs)){echo json_encode(['success'=>true,'vac_locked'=>[],'sick_locked'=>[],'abs_locked'=>[],'overwrites'=>[],'skipped'=>$skipped,'can_unlock'=>hasPerm('unlock_vacation')]);exit;}
     /* 2) Bestehende Einträge in nur 3 Abfragen laden (statt 5 pro Zeile) */
     $ph=implode(',',array_fill(0,count($pairs),'(?,?)'));
     $flat=[]; foreach($pairs as $pr){$flat[]=$pr[0];$flat[]=$pr[1];}
@@ -47,13 +47,16 @@ if(!empty($input['check_conflicts'])){
     foreach($pairs as $pr){
         $uid=$pr[0];$date=$pr[1];$k=$uid.'|'.$date;$disp=date('d.m.',strtotime($date));
         $ab=$absM[$k]??null;
+        /* Ohne Detailrecht keine Abwesenheitsart preisgeben (Urlaub/Krank sind vertraulich) */
+        $see=canSeeAbsenceDetails($uid);
+        if($ab && !$see && in_array($ab['absence_type'],['urlaub_genehmigt','krank_halb','krank_ganz','krank_attest'],true)){$absLocked[]=['user_id'=>$uid,'iso'=>$date,'user'=>$userNames[$uid]??'#'.$uid,'date'=>$disp];continue;}
         if($ab && $ab['absence_type']==='urlaub_genehmigt'){$vacLocked[]=['user_id'=>$uid,'iso'=>$date,'user'=>$userNames[$uid]??'#'.$uid,'date'=>$disp];continue;}
         if($ab && in_array($ab['absence_type'],['krank_halb','krank_ganz','krank_attest'],true)){$sickLocked[]=['user_id'=>$uid,'iso'=>$date,'user'=>$userNames[$uid]??'#'.$uid,'date'=>$disp,'type'=>absenceName($ab['absence_type'])];continue;}
         if(isset($asg[$k])){$aName=isset($pam[(int)$asg[$k]['plan_area_id']])?$pam[(int)$asg[$k]['plan_area_id']]['short_code']:'?';$overwrites[]=['user_id'=>$uid,'iso'=>$date,'user'=>$userNames[$uid]??'','date'=>$disp,'current'=>$aName];}
-        elseif($ab){$overwrites[]=['user_id'=>$uid,'iso'=>$date,'user'=>$userNames[$uid]??'','date'=>$disp,'current'=>absenceName($ab['absence_type'])];}
-        elseif(isset($drf[$k])){$exD=$drf[$k];$dLabel='Entwurf';if($exD['change_type']==='assignment'&&isset($pam[(int)$exD['change_value']]))$dLabel=$pam[(int)$exD['change_value']]['short_code'].' (Entwurf)';elseif($exD['change_type']==='absence')$dLabel=absenceName($exD['change_value']).' (Entwurf)';$overwrites[]=['user_id'=>$uid,'iso'=>$date,'user'=>$userNames[$uid]??'','date'=>$disp,'current'=>$dLabel];}
+        elseif($ab){$overwrites[]=['user_id'=>$uid,'iso'=>$date,'user'=>$userNames[$uid]??'','date'=>$disp,'current'=>(!$see&&isConfidentialAbsence($ab['absence_type']))?'Abwesend':absenceName($ab['absence_type'])];}
+        elseif(isset($drf[$k])){$exD=$drf[$k];$dLabel='Entwurf';if($exD['change_type']==='assignment'&&isset($pam[(int)$exD['change_value']]))$dLabel=$pam[(int)$exD['change_value']]['short_code'].' (Entwurf)';elseif($exD['change_type']==='absence')$dLabel=((!$see&&isConfidentialAbsence($exD['change_value']))?'Abwesend':absenceName($exD['change_value'])).' (Entwurf)';$overwrites[]=['user_id'=>$uid,'iso'=>$date,'user'=>$userNames[$uid]??'','date'=>$disp,'current'=>$dLabel];}
     }
-    echo json_encode(['success'=>true,'vac_locked'=>$vacLocked,'sick_locked'=>$sickLocked,'overwrites'=>$overwrites,'skipped'=>$skipped,'can_unlock'=>hasPerm('unlock_vacation')]);
+    echo json_encode(['success'=>true,'vac_locked'=>$vacLocked,'sick_locked'=>$sickLocked,'abs_locked'=>$absLocked,'overwrites'=>$overwrites,'skipped'=>$skipped,'can_unlock'=>hasPerm('unlock_vacation')]);
     exit;
 }
 

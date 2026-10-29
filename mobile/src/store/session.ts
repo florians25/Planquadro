@@ -380,7 +380,7 @@ export class Session {
     }
     if (!this.api) this.buildClient();
     this.unlocked = true;
-    const t = await this.api!.oidcToken({ code, code_verifier: pkce.verifier, redirect_uri: pkce.redirectUri });
+    const t = await this.api!.oidcToken({ code, code_verifier: pkce.verifier, nonce: pkce.nonce, redirect_uri: pkce.redirectUri });
     await this.finishLogin(t);
   }
 

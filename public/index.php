@@ -80,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $csrfOk && isset($_POST['change_pw'
         $db = getDB();
         $db->prepare('UPDATE users SET password_hash=?, must_change_password=0, initial_password=NULL, password_changed_at=NOW() WHERE id=?')
            ->execute([password_hash($np, PASSWORD_DEFAULT), $_SESSION['user_id']]);
+        opsRevokeUserTokens($db, (int)$_SESSION['user_id']);
         unset($_SESSION['must_change_password'], $_SESSION['pw_expired'], $_SESSION['pw_expiry_checked']);
         logAudit($_SESSION['user_id'], 'password_changed', 'Password changed via login');
         header('Location: dashboard'); exit;
@@ -114,10 +115,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $csrfOk && !isset($_POST['change_pw
             try {
                 $s = getDB()->prepare('SELECT * FROM users WHERE username=? AND active=1');
                 $s->execute([$u]); $row = $s->fetch();
-                if ($row && password_verify($p, $row['password_hash']) && !$pwAllowed && $row['role'] !== 'admin') {
-                    /* Nur SSO erlaubt – Administratoren behalten den Passwort-Zugang als Notfallweg */
-                    $err = 'Bitte melden Sie sich über Ihr Firmenkonto an.';
-                } elseif ($row && password_verify($p, $row['password_hash'])) {
+                /* Gleiche Laufzeit für unbekannte Benutzer (kein Benutzernamen-Orakel) */
+                $pwOk = password_verify($p, $row ? (string)$row['password_hash'] : opsDummyHash()) && $row;
+                if (!$pwAllowed && (!$pwOk || $row['role'] !== 'admin')) {
+                    /* Nur SSO erlaubt – Administratoren behalten den Passwort-Zugang als Notfallweg.
+                       Einheitliche Meldung, damit sich nicht erkennen lässt, ob das Passwort stimmte. */
+                    logAttempt($u, false);
+                    logAudit(null, 'login_failed', "Password login refused (SSO only) for '$u' from " . getClientIP());
+                    $err = 'Anmeldung nicht möglich. Bitte melden Sie sich über Ihr Firmenkonto an.';
+                } elseif ($pwOk) {
                     logAttempt($u, true);
                     logAudit($row['id'], 'login_success', 'Login from ' . getClientIP());
                     opsRegenerateSession();

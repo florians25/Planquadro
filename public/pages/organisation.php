@@ -88,6 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             orgAudit('tenant_config', 'planning rules');
             echo json_encode(['success' => true, 'msg' => 'Planungsregeln gespeichert.']); exit;
         }
+        /* SSO legt fest, wer sich als wer anmelden darf – nur für Administratoren
+           (sonst könnte "Einstellungen verwalten" zur Admin-Übernahme führen). */
+        if (($act === 'save_oidc' || $act === 'test_oidc') && !isAdmin()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Die Anmeldung (SSO) können nur Administratoren einrichten.']); exit;
+        }
         if ($act === 'save_oidc') {
             $issuer = rtrim(trim((string)($_POST['issuer'] ?? '')), '/');
             $enabled = !empty($_POST['enabled']);
@@ -97,7 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             $patch = ['enabled' => $enabled, 'issuer' => $issuer, 'client_id' => trim((string)$_POST['client_id']),
                 'claim' => in_array($_POST['claim'] ?? '', ['preferred_username', 'email', 'upn', 'sub'], true) ? $_POST['claim'] : 'preferred_username',
                 'label' => mb_substr(trim((string)($_POST['label'] ?? '')), 0, 60) ?: 'Mit Firmenkonto anmelden',
-                'allow_password_login' => !empty($_POST['allow_password_login'])];
+                'allow_password_login' => !empty($_POST['allow_password_login']),
+                'allow_admin' => !empty($_POST['allow_admin'])];
             /* Leeres Secret-Feld = unverändert lassen (wird nie an den Browser zurückgegeben) */
             if (($_POST['client_secret'] ?? '') !== '') $patch['client_secret'] = (string)$_POST['client_secret'];
             if (!$patch['allow_password_login'] && !$enabled) $patch['allow_password_login'] = true;
@@ -209,6 +216,7 @@ $redirectUri = oidcRedirectUri();
   </div>
 </section>
 
+<?php if (isAdmin()): ?>
 <section class="card" aria-labelledby="orgSso">
   <div class="ch" id="orgSso">Anmeldung &amp; Single Sign-on (OIDC)</div>
   <div class="cb">
@@ -227,12 +235,14 @@ $redirectUri = oidcRedirectUri();
         <div class="fg"><label for="oLabel">Beschriftung</label><input id="oLabel" name="label" value="<?php echo e($oidc['label']); ?>"></div>
       </div>
       <label class="org-check"><input type="checkbox" name="allow_password_login" value="1" <?php if ($oidc['allow_password_login']) echo 'checked'; ?>> Anmeldung mit Passwort weiterhin erlauben</label>
+      <label class="org-check"><input type="checkbox" name="allow_admin" value="1" <?php if (!empty($oidc['allow_admin'])) echo 'checked'; ?>> Administratoren dürfen sich ebenfalls per SSO anmelden (Standard: nur Passwort als Notfallzugang)</label>
       <p class="muted" style="font-size:.78rem">Redirect-URI beim Identity-Provider eintragen: <code><?php echo e($redirectUri); ?></code> (Apps: <code>opspilot://auth</code>). Benutzer werden nicht automatisch angelegt – das Konto muss in OpsPilot existieren und aktiv sein.</p>
       <button class="btn btn-primary" type="submit">Anmeldung speichern</button>
       <button class="btn btn-outline" type="button" id="btnOidcTest">Verbindung testen</button>
     </form>
   </div>
 </section>
+<?php endif; ?>
 </div>
 
 <style>
@@ -260,7 +270,7 @@ $redirectUri = oidcRedirectUri();
   bind('fWidgets','save_widgets'); bind('fPlan','save_planning'); bind('fOidc','save_oidc');
   bind('fNav','save_navigation', function(fd){ document.querySelectorAll('#navList li').forEach(function(li){ fd.append('order[]', li.dataset.page); }); });
   var del=document.getElementById('btnLogoDel'); if(del) del.addEventListener('click', function(){ send(null,'remove_logo'); });
-  document.getElementById('btnOidcTest').addEventListener('click', function(){ send(null,'test_oidc'); });
+  var ot=document.getElementById('btnOidcTest'); if(ot) ot.addEventListener('click', function(){ send(null,'test_oidc'); });
   document.getElementById('navList').addEventListener('click', function(e){
     var b=e.target.closest('[data-move]'); if(!b) return;
     var li=b.closest('li'), dir=parseInt(b.dataset.move,10);

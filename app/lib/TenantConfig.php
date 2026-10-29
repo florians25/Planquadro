@@ -55,6 +55,7 @@ const TENANT_CONFIG_DEFAULTS = [
             'issuer'               => '',
             'client_id'            => '',
             'client_secret'        => '',   /* alternativ OPSPILOT_OIDC_CLIENT_SECRET */
+            'allow_admin'          => false, /* Admin-Konten per SSO (Standard: nur Passwort) */
             'claim'                => 'preferred_username',
             'label'                => 'Mit Firmenkonto anmelden',
             'allow_password_login' => true,

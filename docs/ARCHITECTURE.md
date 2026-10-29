@@ -217,7 +217,7 @@ Zentrale Konfiguration je Mandant in `app/lib/TenantConfig.php`, gespeichert als
 | `navigation` | Reihenfolge und ausgeblendete Einträge |
 | `dashboard` | aktive Widgets |
 | `planning` | gleichzeitiges Bearbeiten, teamübergreifende Planung, Anzeige „heute abwesend“ |
-| `security.oidc` | SSO-Konfiguration (Issuer, Client, Claim, Passwort-Login erlaubt) |
+| `security.oidc` | SSO-Konfiguration (Issuer, Client, Claim, Passwort-Login erlaubt, Admin per SSO erlaubt) – änderbar **nur durch Administratoren** |
 
 Bereits vorhandene Einstellungen (`company_name`, `approval_system_enabled`, `epa_cross_team`,
 `allow_concurrent_edit`, `dashboard_show_absent`) bleiben die **einzige** Quelle ihrer
@@ -252,6 +252,27 @@ Kunden, Standorte und Qualifikationen sind keine Konfiguration, sondern Stammdat
 | Änderungsprotokoll | `plan_change_log`: Zelle, Aktion (`draft_set`, `draft_clear`, `publish`, `overwrite`, …), alter/neuer Stand, Benutzer, Zeitpunkt, Quelle. |
 | Live-Aktualisierung | Umgesetzt: bestehendes Polling + Revisionen; Apps über `GET sync` und Push. Ziel: **Server-Sent Events** (`/api/v1/events`) aus einer Ereignis-Tabelle (Outbox) – funktioniert hinter jedem Reverse Proxy, ohne zusätzlichen Dienst; mit Redis Pub/Sub für mehrere App-Instanzen im SaaS. WebSockets sind nicht nötig, weil Schreibzugriffe ohnehin per HTTP laufen. |
 | Sichtbarkeit | Eigene/fremde Entwürfe bleiben markiert; Veröffentlichungsvorschau zeigt, was wessen Änderung ist. |
+
+Isolationsstufe: Die Konfliktprüfung hängt nicht an REPEATABLE READ. Revisionen
+werden innerhalb der Transaktion nach `SELECT … FOR UPDATE` gelesen (Sperrlesen
+liefert immer den neuesten bestätigten Stand), deshalb funktioniert sie unter
+REPEATABLE READ (MariaDB/MySQL-Standard) und READ COMMITTED gleichermaßen.
+
+#### SSO-Sicherheit (OIDC)
+
+- Konfiguration nur durch Administratoren; Administratorkonten melden sich standardmäßig
+  nur per Passwort an (Notfallzugang), SSO für Admins ist eine ausdrückliche Option.
+- `state`, `nonce` und PKCE liegen während des Logins in einem eigenen, per HMAC
+  gesicherten Cookie (`SameSite=Lax`, Pfad `/oidc`, 10 Minuten). Das Sitzungs-Cookie
+  bleibt `SameSite=Strict`; nach dem Rücksprung leitet eine HTML-Seite weiter, damit
+  der Browser die neue Sitzung mitsendet.
+- `OPSPILOT_OIDC_CLIENT_SECRET` gilt im SaaS-Modus nur zusammen mit
+  `OPSPILOT_OIDC_ISSUER` und nur für genau diesen Issuer. Im Self-Hosting gilt es für
+  jeden Issuer, sofern `OPSPILOT_OIDC_ISSUER` nicht gesetzt ist.
+- Im SaaS-Modus werden Identity-Provider in internen Netzen (Loopback, private und
+  Link-Local-Adressen, Cloud-Metadaten) abgelehnt; die geprüfte IP wird für die
+  Verbindung festgehalten (kein DNS-Rebinding). Ausnahme für eigene Betreiber-IdPs:
+  `OPSPILOT_OIDC_ALLOW_PRIVATE=1`.
 
 ### B.7 Betriebsmodelle
 

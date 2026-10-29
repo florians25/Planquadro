@@ -89,7 +89,9 @@ function opsCurrentTenant(): array
             $s->execute([$host]);
             $row = $s->fetch();
             /* Zentraler API-Host: Mandant per Header (nur /api/v1, nie für Cookie-Sessions) */
-            if (!$row && $host === strtolower(opsEnv('OPSPILOT_PLATFORM_HOST')) && strpos($_SERVER['REQUEST_URI'] ?? '', '/api/v1/') !== false) {
+            $platHost = strtolower(opsEnv('OPSPILOT_PLATFORM_HOST'));
+            $reqPath = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+            if (!$row && $platHost !== '' && $host === $platHost && strncmp($reqPath, '/api/v1/', 8) === 0) {
                 $slug = strtolower(trim((string)($_SERVER['HTTP_X_OPSPILOT_TENANT'] ?? '')));
             }
         }
@@ -112,7 +114,7 @@ function opsTenantAbort(int $code, string $msg): void
 {
     http_response_code($code);
     if (PHP_SAPI === 'cli') { fwrite(STDERR, $msg . "\n"); exit(1); }
-    $isApi = strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false;
+    $isApi = strncmp((string)parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH), '/api/', 5) === 0;
     if ($isApi) {
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['error' => ['code' => $code === 404 ? 'unknown_tenant' : 'tenant_unavailable', 'message' => $msg]]);

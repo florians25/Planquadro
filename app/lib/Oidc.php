@@ -4,7 +4,9 @@
  * --------------------------------------------------------------------------
  * Optionaler Login über einen Identity-Provider (Keycloak, Entra ID, Authentik,
  * Google Workspace …). Konfiguration in der TenantConfig (security.oidc), das
- * Client-Secret alternativ über OPSPILOT_OIDC_CLIENT_SECRET.
+ * Client-Secret alternativ über OPSPILOT_OIDC_CLIENT_SECRET – im SaaS-Modus nur,
+ * wenn OPSPILOT_OIDC_ISSUER denselben Issuer festlegt (sonst könnte ein Mandant
+ * das plattformweite Secret an einen eigenen Server schicken lassen).
  *
  * Sicherheit:
  *  - state (CSRF), nonce (Replay) und PKCE (S256) bei jedem Login
@@ -14,13 +16,19 @@
  *    OpsPilot-Benutzer (users.username) entsprechen
  */
 
+require_once __DIR__ . '/PlanCells.php';   /* opsAppKey() */
+
 class OidcException extends RuntimeException {}
 
 function oidcConfig(): array
 {
     $c = (array)tcfg('security.oidc', []);
     $env = opsEnv('OPSPILOT_OIDC_CLIENT_SECRET');
-    if ($env !== '') $c['client_secret'] = $env;
+    if ($env !== '') {
+        $pinned = rtrim(opsEnv('OPSPILOT_OIDC_ISSUER'), '/');
+        $issuer = rtrim((string)($c['issuer'] ?? ''), '/');
+        if (opsMode() !== 'saas' ? ($pinned === '' || $pinned === $issuer) : ($pinned !== '' && $pinned === $issuer)) $c['client_secret'] = $env;
+    }
     return $c;
 }
 
@@ -50,7 +58,17 @@ function oidcHttp(string $method, string $url, ?array $form = null, array $heade
     if (!preg_match('#^https://#', $url) && getenv('OPSPILOT_OIDC_ALLOW_HTTP') !== '1') throw new OidcException('Der Identity-Provider muss per HTTPS erreichbar sein.');
     $ch = curl_init($url);
     curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10, CURLOPT_CONNECTTIMEOUT => 5,
-        CURLOPT_FOLLOWLOCATION => false, CURLOPT_HTTPHEADER => array_merge(['Accept: application/json'], $headers)]);
+        CURLOPT_FOLLOWLOCATION => false, CURLOPT_HTTPHEADER => array_merge(['Accept: application/json'], $headers),
+        CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP, CURLOPT_MAXFILESIZE => 1048576]);
+    /* SSRF-Schutz: im SaaS-Modus keine internen Ziele; die geprüfte Adresse wird fest
+       vorgegeben, damit ein zweiter DNS-Lookup (Rebinding) nichts anderes liefert. */
+    if (oidcBlockPrivate()) {
+        $host = (string)parse_url($url, PHP_URL_HOST);
+        $port = (int)(parse_url($url, PHP_URL_PORT) ?: (str_starts_with($url, 'https://') ? 443 : 80));
+        $ip = oidcPublicIp($host);
+        if ($ip === null) { curl_close($ch); throw new OidcException('Der Identity-Provider ist nicht erreichbar oder liegt in einem internen Netz.'); }
+        curl_setopt($ch, CURLOPT_RESOLVE, [$host . ':' . $port . ':' . (str_contains($ip, ':') ? '[' . $ip . ']' : $ip)]);
+    }
     if ($method === 'POST') { curl_setopt($ch, CURLOPT_POST, true); curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($form ?? [])); }
     $body = curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
@@ -61,6 +79,27 @@ function oidcHttp(string $method, string $url, ?array $form = null, array $heade
     if (!is_array($json)) throw new OidcException('Ungültige Antwort des Identity-Providers (HTTP ' . $code . ').');
     if ($code >= 400) throw new OidcException('Identity-Provider meldet: ' . ($json['error_description'] ?? $json['error'] ?? ('HTTP ' . $code)));
     return $json;
+}
+
+function oidcBlockPrivate(): bool
+{
+    return opsMode() === 'saas' && getenv('OPSPILOT_OIDC_ALLOW_PRIVATE') !== '1';
+}
+
+/** Erste öffentliche Adresse des Hosts – null, wenn er (auch) intern auflöst */
+function oidcPublicIp(string $host): ?string
+{
+    $host = trim($host, '[]');
+    if ($host === '') return null;
+    $ips = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : array_merge(
+        gethostbynamel($host) ?: [],
+        array_column(@dns_get_record($host, DNS_AAAA) ?: [], 'ipv6'));
+    if (!$ips) return null;
+    foreach ($ips as $ip) {
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) return null;
+        if (preg_match('/^(::ffff:|64:ff9b::|fe80:|fc|fd)/i', $ip)) return null;
+    }
+    return $ips[0];
 }
 
 /** Discovery-Dokument, 1 h im Mandanten zwischengespeichert */
@@ -108,6 +147,8 @@ function oidcAuthorizeUrl(string $redirectUri, string $challenge, string $state,
 /** Code gegen Tokens tauschen und ID-Token prüfen → Claims */
 function oidcExchange(string $code, string $redirectUri, string $verifier, ?string $nonce): array
 {
+    /* PKCE und nonce sind Pflicht – auch für App-Logins über die API */
+    if (strlen($verifier) < 43 || $nonce === null || $nonce === '') throw new OidcException('PKCE-Verifier und nonce sind erforderlich.');
     $c = oidcConfig();
     $d = oidcDiscovery($c['issuer']);
     $form = ['grant_type' => 'authorization_code', 'code' => $code, 'redirect_uri' => $redirectUri, 'code_verifier' => $verifier, 'client_id' => $c['client_id']];
@@ -192,5 +233,40 @@ function oidcFindUser(array $claims): ?array
     if ($claim === 'email' && isset($claims['email_verified']) && $claims['email_verified'] === false) return null;
     $s = getDB()->prepare('SELECT * FROM users WHERE username = ? AND active = 1');
     $s->execute([$val]);
-    return $s->fetch() ?: null;
+    $u = $s->fetch() ?: null;
+    /* Administratoren melden sich standardmäßig nur per Passwort an (Notfallzugang);
+       ein kompromittierter oder falsch konfigurierter IdP erhält so keine Admin-Rechte. */
+    if ($u && $u['role'] === 'admin' && empty(oidcConfig()['allow_admin'])) return null;
+    return $u;
+}
+
+/* ---- Zwischenstand des Logins (state/nonce/PKCE) ----
+   Eigenes Cookie mit SameSite=Lax: Das Sitzungs-Cookie ist SameSite=Strict und
+   wird bei der Rückkehr vom Identity-Provider (seitenübergreifende Navigation)
+   vom Browser nicht mitgeschickt. Inhalt ist per HMAC gegen Manipulation gesichert. */
+function oidcPendingCookieName(): string
+{
+    return 'OPSOIDC' . (opsMode() === 'saas' && function_exists('opsCurrentTenant') ? '_' . preg_replace('/[^a-z0-9]/', '', opsCurrentTenant()['slug']) : '');
+}
+
+function oidcPendingSet(array $p): void
+{
+    $data = oidcB64u(json_encode($p));
+    $val = $data . '.' . oidcB64u(hash_hmac('sha256', 'oidc-pending|' . $data, opsAppKey(getDB()), true));
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || getenv('OPSPILOT_FORCE_SECURE_COOKIES') === '1';
+    setcookie(oidcPendingCookieName(), $val, ['expires' => time() + 600, 'path' => '/oidc', 'secure' => $https, 'httponly' => true, 'samesite' => 'Lax']);
+}
+
+/** Liest und verwirft den Zwischenstand (einmalig verwendbar) */
+function oidcPendingTake(): ?array
+{
+    $name = oidcPendingCookieName();
+    $val = (string)($_COOKIE[$name] ?? '');
+    if ($val !== '') setcookie($name, '', ['expires' => 1, 'path' => '/oidc', 'httponly' => true, 'samesite' => 'Lax']);
+    $parts = explode('.', $val);
+    if (count($parts) !== 2) return null;
+    $mac = oidcB64u(hash_hmac('sha256', 'oidc-pending|' . $parts[0], opsAppKey(getDB()), true));
+    if (!hash_equals($mac, $parts[1])) return null;
+    $p = json_decode(oidcB64uDecode($parts[0]), true);
+    return is_array($p) ? $p : null;
 }

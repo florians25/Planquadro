@@ -175,3 +175,25 @@ function opsValidDate($v): ?string
     if (!is_string($v) || !preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $v, $m)) return null;
     return checkdate((int)$m[2], (int)$m[3], (int)$m[1]) ? $v : null;
 }
+
+
+/**
+ * Widerruft alle App-Sitzungen (Refresh-Token-Familien) eines Benutzers –
+ * nach Passwortwechsel oder -reset. Fehlt die Tabelle (Migration 0005 noch
+ * nicht eingespielt), passiert nichts.
+ */
+function opsRevokeUserTokens(PDO $db, int $userId): void
+{
+    try {
+        $db->prepare('UPDATE api_refresh_tokens SET revoked_at=NOW() WHERE user_id=? AND revoked_at IS NULL')->execute([$userId]);
+    } catch (PDOException $e) {
+        if (($e->errorInfo[1] ?? 0) !== 1146) throw $e;
+    }
+}
+
+/** Fester Vergleichs-Hash, damit password_verify() auch für unbekannte Benutzer Zeit kostet */
+function opsDummyHash(): string
+{
+    static $h = null;
+    return $h ??= password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
+}

@@ -3,6 +3,7 @@ namespace OpsPilot\Tests\Integration;
 
 use OpsPilot\Tests\Support\Client;
 use OpsPilot\Tests\Support\IntegrationTestCase;
+use OpsPilot\Tests\Support\Response;
 use OpsPilot\Tests\Support\TestEnv;
 
 /** TenantConfig (Branding, Module, Navigation, Widgets), Stammdaten, OIDC. */
@@ -174,12 +175,20 @@ final class PlatformFeaturesTest extends IntegrationTestCase
         return [$c, $r];
     }
 
+    /** Ziel der Weiterleitung nach dem Callback (HTML-Refresh wegen SameSite=Strict, siehe oidc.php) */
+    private function oidcTarget(Response $r): ?string
+    {
+        if ($r->header('Location')) return $r->header('Location');
+        $ref = $r->header('Refresh');
+        return $ref && preg_match('/url=(.*)$/', $ref, $m) ? $m[1] : null;
+    }
+
     public function testOidcLoginMapsToExistingActiveUser(): void
     {
         $this->oidcSetup();
         $this->assertStringContainsString('Mit Testkonto', (new Client())->get('/')->body);
         [$c, $r] = $this->oidcLogin('ma1');
-        $this->assertSame('dashboard', $r->header('Location'));
+        $this->assertSame('dashboard', $this->oidcTarget($r));
         $this->assertStringContainsString('Ma1 Test', $c->get('/dashboard')->body);
     }
 
@@ -187,13 +196,13 @@ final class PlatformFeaturesTest extends IntegrationTestCase
     {
         $this->oidcSetup();
         [, $r] = $this->oidcLogin('gibtsnicht');
-        $this->assertSame('./', $r->header('Location'));
+        $this->assertSame('./', $this->oidcTarget($r));
         [$c, $r] = $this->oidcLogin('ma1', true);
-        $this->assertSame('./', $r->header('Location'), 'manipuliertes ID-Token');
+        $this->assertSame('./', $this->oidcTarget($r), 'manipuliertes ID-Token');
         $this->assertSame(302, $c->get('/dashboard')->status);
         /* Callback ohne vorherigen Start (fremder state) */
         $c2 = new Client(); $c2->base = self::$app;
-        $this->assertSame('./', $c2->get('/oidc?code=abc&state=def')->header('Location'));
+        $this->assertSame('./', $this->oidcTarget($c2->get('/oidc?code=abc&state=def')));
     }
 
     public function testPasswordLoginCanBeRestrictedToAdmins(): void
@@ -204,9 +213,12 @@ final class PlatformFeaturesTest extends IntegrationTestCase
         $c->get('/?password=1');
         $r = $c->login('ma1', TestEnv::PASSWORD);
         $this->assertStringContainsString('Bitte melden Sie sich über Ihr Firmenkonto an.', $r->body);
+        /* gleiche Antwort bei falschem Passwort (kein Orakel) */
+        $c3 = new Client(); $c3->base = self::$app; $c3->get('/?password=1');
+        $this->assertStringContainsString('Bitte melden Sie sich über Ihr Firmenkonto an.', $c3->login('ma1', 'falsch-falsch')->body);
         $c = new Client(); $c->base = self::$app;
         $c->get('/?password=1');
         $r = $c->login('admin', TestEnv::PASSWORD);
-        $this->assertSame('dashboard', $r->header('Location'), 'Notfallzugang für Administratoren');
+        $this->assertSame('dashboard', $this->oidcTarget($r), 'Notfallzugang für Administratoren');
     }
 }

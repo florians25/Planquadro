@@ -71,11 +71,21 @@ Branding für den Login-Bildschirm.
 Fehler: `401 invalid_credentials`, `403 account_locked`, `403 password_change_required`
 (Passwort muss zuerst im Web geändert werden).
 
+Ist nur die Anmeldung per Firmenkonto erlaubt, antwortet der Endpunkt für alle
+Nicht-Administratoren einheitlich mit `403 forbidden` – unabhängig davon, ob das
+Passwort stimmte.
+
 ### `POST auth/refresh`
-`{ "refresh_token": "…" }` → wie Login (neues Paar).
+`{ "refresh_token": "…" }` → wie Login (neues Paar). Die Familie behält ihr
+ursprüngliches Ablaufdatum (absolute Laufzeit 30 Tage ab Login, keine Verlängerung
+durch Rotation). Fehler: `401 invalid_token`, `401 token_expired`,
+`401 password_change_required`. Ein Passwortwechsel oder -reset widerruft alle
+App-Sitzungen des Benutzers.
 
 ### `POST auth/oidc/token` (nur wenn OIDC aktiv)
-`{ "code": "…", "code_verifier": "…", "redirect_uri": "opspilot://auth" }` → wie Login.
+`{ "code": "…", "code_verifier": "…", "nonce": "…", "redirect_uri": "opspilot://auth" }` → wie Login.
+`code_verifier` (PKCE, mind. 43 Zeichen) und `nonce` (aus der Autorisierungs-URL) sind Pflicht.
+Administratorkonten werden per SSO nur angemeldet, wenn die Organisation das ausdrücklich erlaubt.
 
 ## Geschützte Endpunkte (Bearer)
 

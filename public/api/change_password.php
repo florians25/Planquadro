@@ -12,5 +12,6 @@ if($new!==$new2){echo json_encode(['success'=>false,'error'=>'Passwörter stimme
 $db=getDB();$s=$db->prepare('SELECT password_hash FROM users WHERE id=?');$s->execute([$_SESSION['user_id']]);$u=$s->fetch();
 if(!$u||!password_verify($old,$u['password_hash'])){echo json_encode(['success'=>false,'error'=>'Aktuelles Passwort falsch']);exit;}
 $db->prepare('UPDATE users SET password_hash=?, password_changed_at=NOW() WHERE id=?')->execute([password_hash($new,PASSWORD_DEFAULT),$_SESSION['user_id']]);
+opsRevokeUserTokens($db,(int)$_SESSION['user_id']);
 unset($_SESSION['pw_expiry_checked']);
 echo json_encode(['success'=>true,'msg'=>'Passwort geändert']);

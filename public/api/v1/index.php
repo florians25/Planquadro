@@ -159,11 +159,13 @@ if ($path === 'auth/login' && $method === 'POST') {
     $s->execute([$user]);
     $u = $s->fetch();
     $log = $db->prepare('INSERT INTO login_attempts(username, ip_address, success) VALUES(?,?,?)');
-    if (!$u || !password_verify($pw, $u['password_hash'])) {
+    $pwOk = password_verify($pw, $u ? (string)$u['password_hash'] : opsDummyHash());
+    /* Nur SSO: einheitliche Antwort, unabhängig davon, ob das Passwort stimmte (Notfallzugang Admin) */
+    if (!oidcPasswordLoginAllowed() && (!$u || !$pwOk || $u['role'] !== 'admin')) { $log->execute([$user, $ip, 0]); apiError(403, 'forbidden', 'Bitte mit dem Firmenkonto anmelden.'); }
+    if (!$u || !$pwOk) {
         $log->execute([$user, $ip, 0]);
         apiError(401, 'invalid_credentials', 'Benutzername oder Passwort falsch.');
     }
-    if (!oidcPasswordLoginAllowed() && $u['role'] !== 'admin') apiError(403, 'forbidden', 'Bitte mit dem Firmenkonto anmelden.');
     if ((int)$u['must_change_password'] === 1) apiError(403, 'password_change_required', 'Bitte zuerst im Browser ein neues Passwort vergeben.');
     $days = (int)getSetting('password_expiry_days', '30');
     if ($days > 0 && !empty($u['password_changed_at']) && strtotime($u['password_changed_at']) < time() - $days * 86400) {

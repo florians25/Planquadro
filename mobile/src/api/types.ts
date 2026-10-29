@@ -114,6 +114,8 @@ export interface RefreshRequest {
 export interface OidcTokenRequest {
   code: string;
   code_verifier: string;
+  /** nonce aus der Autorisierungs-URL; der Server prüft sie im ID-Token */
+  nonce: string;
   redirect_uri: string;
 }
 

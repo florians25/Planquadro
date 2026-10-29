@@ -122,6 +122,8 @@ describe('PKCE / OIDC', () => {
     expect(u.searchParams.get('code_challenge_method')).toBe('S256');
     expect(u.searchParams.get('code_challenge')).toBe(await codeChallengeS256(session.verifier));
     expect(u.searchParams.get('state')).toBe(session.state);
+    expect(u.searchParams.get('nonce')).toBe(session.nonce);
+    expect(session.nonce.length).toBeGreaterThan(15);
     expect(parseAuthRedirect(`opspilot://auth?code=abc&state=${session.state}`)).toEqual({ code: 'abc', state: session.state, error: null });
     expect(parseAuthRedirect('opspilot://auth?error=access_denied&state=x').error).toBe('access_denied');
   });

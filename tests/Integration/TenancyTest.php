@@ -116,6 +116,9 @@ final class TenancyTest extends IntegrationTestCase
         $c = $this->client('api.opspilot.test');
         $r = $c->request('GET', '/', null, ['X-OpsPilot-Tenant: acme']);
         $this->assertSame(404, $r->status);
+        /* "/api/v1/" nur im Query-String macht keine API-Anfrage daraus */
+        $this->assertSame(404, $c->request('GET', '/?x=/api/v1/', null, ['X-OpsPilot-Tenant: acme'])->status);
+        $this->assertSame(404, $c->request('GET', '/mitarbeiter?x=/api/v1/', null, ['X-OpsPilot-Tenant: acme'])->status);
         /* Header auf einem Mandanten-Host kann den Mandanten nicht wechseln */
         $c = $this->client('beta.opspilot.test');
         $this->assertFalse($this->loginOk($c, 'shared', 'Acme-Passwort-1'));
@@ -160,6 +163,19 @@ final class TenancyTest extends IntegrationTestCase
         $this->assertTrue($this->loginOk($tc, 'shared', 'Acme-Passwort-1'));
         $tc->host = 'api.opspilot.test';
         $this->assertStringContainsString('name="password"', $tc->get('/platform/')->body);
+    }
+
+    public function testPlatformAdminNeedsConfiguredPlatformHost(): void
+    {
+        $env = self::$saasEnv; $env['OPSPILOT_PLATFORM_HOST'] = '';
+        $url = TestEnv::startExtraServer($env);
+        foreach (['api.opspilot.test', 'acme.opspilot.test', 'unbekannt.test'] as $h) {
+            $c = new Client(); $c->base = $url; $c->host = $h;
+            $this->assertSame(404, $c->get('/platform/')->status, $h);
+        }
+        /* ohne Plattform-Host gibt es auch kein Header-Routing für die API */
+        $c = new Client(); $c->base = $url; $c->host = '';
+        $this->assertSame(404, $c->request('GET', '/api/v1/config', null, ['X-OpsPilot-Tenant: acme'])->status);
     }
 
     public function testAdoptExistingInstallation(): void

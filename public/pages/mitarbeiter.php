@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
             if ($id>0) {
                 $db->prepare('UPDATE users SET username=?,first_name=?,last_name=?,role=?,vacation_days=?,os_level=?,weekend_allowed=?,training_profession=?,primary_area_id=?,exit_date=?,entry_date=?,updated_at=NOW() WHERE id=?')
                    ->execute([$d['username'],$d['first_name'],$d['last_name'],$d['role'],$d['vacation_days'],$d['os_level'],$d['weekend_allowed'],$d['training_profession'],$d['primary_area_id'],$d['exit_date'],$d['entry_date'],$id]);
-                if (!empty($_POST['password'])) $db->prepare('UPDATE users SET password_hash=? WHERE id=?')->execute([password_hash($_POST['password'],PASSWORD_DEFAULT),$id]);
+                if (!empty($_POST['password'])) { $db->prepare('UPDATE users SET password_hash=? WHERE id=?')->execute([password_hash($_POST['password'],PASSWORD_DEFAULT),$id]); opsRevokeUserTokens($db, (int)$id); }
                 // Vorgesetzte synchronisieren
                 $db->prepare('DELETE FROM user_supervisors WHERE user_id=?')->execute([$id]);
                 foreach ($supervisorIds as $sid) { if ($sid>0 && $sid!==$id) $db->prepare('INSERT IGNORE INTO user_supervisors(user_id,supervisor_id)VALUES(?,?)')->execute([$id,$sid]); }
@@ -138,6 +138,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && !empty($_SERVER['HTTP_X_REQUESTED_WIT
         if ($act==='reset_pw'){
             $uid=(int)($_POST['id']??0);$otp=strtoupper(bin2hex(random_bytes(5)));
             $db->prepare('UPDATE users SET password_hash=?,must_change_password=1,initial_password=NULL WHERE id=?')->execute([password_hash($otp,PASSWORD_DEFAULT),$uid]);
+            opsRevokeUserTokens($db, (int)$uid);
             $s=$db->prepare('SELECT first_name,last_name,username FROM users WHERE id=?');$s->execute([$uid]);$row=$s->fetch();
             echo json_encode(['success'=>true,'msg'=>'Einmalpasswort gesetzt.','otp'=>$otp,'user'=>$row]); exit;
         }

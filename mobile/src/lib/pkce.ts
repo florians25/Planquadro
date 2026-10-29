@@ -19,6 +19,7 @@ export async function codeChallengeS256(verifier: string): Promise<string> {
 
 export interface PkceSession {
   state: string;
+  nonce: string;
   verifier: string;
   redirectUri: string;
   createdAt: number;
@@ -31,6 +32,7 @@ export interface PkceSession {
 export async function buildAuthorizeUrl(authorizeUrl: string, redirectUri: string): Promise<{ url: string; session: PkceSession }> {
   const verifier = randomString(48);
   const state = randomString(16);
+  const nonce = randomString(16);
   const challenge = await codeChallengeS256(verifier);
   const url = new URL(authorizeUrl);
   const set = (k: string, v: string) => {
@@ -42,7 +44,8 @@ export async function buildAuthorizeUrl(authorizeUrl: string, redirectUri: strin
   url.searchParams.set('code_challenge', challenge);
   url.searchParams.set('code_challenge_method', 'S256');
   url.searchParams.set('state', state);
-  return { url: url.toString(), session: { state, verifier, redirectUri, createdAt: Date.now() } };
+  url.searchParams.set('nonce', nonce);
+  return { url: url.toString(), session: { state, nonce, verifier, redirectUri, createdAt: Date.now() } };
 }
 
 /** Liest `code`/`state`/`error` aus einer Redirect-URL (opspilot://auth?… oder https://…?…). */
