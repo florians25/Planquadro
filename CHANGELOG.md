@@ -84,6 +84,19 @@ nichts ändert.
   Kontrasten, sichtbarem Fokus, Skip-Link und zugänglichen Dialogen.
 - Planungsmatrix per Tastatur bedienbar; Filter „Nur Änderungen“ für Entwürfe.
 - Große Pläne laden deutlich schneller (Monatsplan im Test: 856 → 68 Abfragen).
+- **Drag-and-drop in der Monatsplanung** (Ergänzung, das Werkzeug bleibt wie es ist):
+  ohne gewähltes Werkzeug einen Eintrag auf eine andere Zelle ziehen = verschieben, mit
+  Strg/Alt = kopieren. Gesperrte Zellen (Feiertag, außerhalb der Beschäftigung,
+  genehmigter Urlaub/Krank, Wochenende ohne Freigabe) sind keine Ziele. Gespeichert wird
+  wie bisher mit Revisionsprüfung und Konfliktdialog. Per Tastatur: Strg+X / Strg+C,
+  Strg+V, Esc – mit Ansage für Screenreader.
+- **Einheitliche Filterleiste** in Monats- und Gesamtplan: Suche nach mehreren Wörtern
+  (Vor- und Nachname in beliebiger Reihenfolge), Taste „/“ springt in die Suche, Esc
+  leert sie; „Meine Mitarbeiter“ jetzt auch in der Monatsplanung; Trefferzahl
+  („12 von 300“); „Zurücksetzen“ hebt alle Filter einschließlich der Schalter auf.
+- Große Pläne mit 300 und 600 Mitarbeitenden gemessen: Scrollen flüssig (60 fps); die
+  Suche reagiert verzögert statt bei jedem Tastendruck. Kein virtuelles Scrollen
+  (Begründung in `docs/DESIGN_SYSTEM.md`).
 
 ### Mobile-Apps (Phase 6)
 - iOS-, Android- und Web-App (`mobile/`, Capacitor): persönlicher Plan, Team,

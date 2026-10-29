@@ -75,9 +75,34 @@ html.mob-force-desktop .mob-desk-only-warn { display: none !important; }
 /* Branding: Primärschaltflächen mit garantiertem Kontrast */
 .btn-primary { color: var(--p-on, #fff); }
 
+/* Nur für Screenreader sichtbar (Ansagen, Hinweise) */
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* Filterleiste: Trefferzahl */
+.filter-count { font-size: var(--font-xs, .72rem); color: var(--mu); white-space: nowrap; }
+.filter-count:empty { display: none; }
+#mineToggleBtn.active { background: var(--p); border-color: var(--p); color: var(--p-on, #fff); }
+
+/* Planungsmatrix: Drag & Drop (nur ohne gewähltes Werkzeug) */
+.pq-no-tool #planTbl .pe-c[data-t="assignment"], .pq-no-tool #planTbl .pe-c[data-t="absence"]:not([data-v=""]) { cursor: grab; }
+.pq-dnd-active, .pq-dnd-active * { cursor: grabbing !important; user-select: none; }
+.pq-dnd-active .ep-tip { display: none !important; }
+#planTbl .pe-c.dnd-src { opacity: .45; }
+#planTbl .pe-c.dnd-ok { outline: 3px solid var(--ok); outline-offset: -3px; position: relative; z-index: 3; }
+#planTbl .pe-c.dnd-deny { outline: 3px dashed var(--err); outline-offset: -3px; position: relative; z-index: 3; cursor: not-allowed !important; }
+#planTbl .pe-c.dnd-clip { outline: 2px dashed var(--focus); outline-offset: -2px; position: relative; z-index: 2; }
+.pq-dnd-ghost { position: fixed; z-index: 10001; pointer-events: none; display: flex; align-items: center; gap: .4rem; padding: .25rem .5rem; border-radius: var(--r, 6px); background: var(--card); color: var(--tx); border: 1px solid var(--bd2, var(--bd)); box-shadow: 0 6px 18px rgba(0, 0, 0, .18); font-size: var(--font-xs, .72rem); max-width: 320px; }
+.pq-dnd-chip { min-width: 26px; padding: .1rem .35rem; border-radius: 4px; font-weight: 700; text-align: center; }
+.pq-dnd-mode { font-weight: 600; }
+.pq-dnd-ghost.is-copy .pq-dnd-mode::before { content: "+ "; }
+.pq-dnd-why { color: var(--err); }
+.pq-dnd-why:empty { display: none; }
+
 @media print {
   html[data-theme="dark"] { --bg: #fff; --card: #fff; --tx: #000; --tx2: #111; --mu: #444; --bd: #ccc; }
   .skip-link { display: none; }
+  .pq-dnd-ghost, .filter-count { display: none !important; }
+  #planTbl .pe-c.dnd-clip, #planTbl .pe-c.dnd-src { outline: none !important; opacity: 1 !important; }
 }
 
 /* >>> generated dark mode (tools/gen-dark-css.py) >>> */

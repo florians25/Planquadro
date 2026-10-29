@@ -17,6 +17,9 @@ $canErl = hasPerm('view_erl_column');
 $showWots = opsModule('wots'); /* Modul WOTs, Stunden, Erl.-Spalte */
 $canInternal = hasPerm('plan_view_internal');
 $canPublishAll = hasPerm('plan_publish_all');
+/* Filter „Meine Mitarbeiter“ wie im Gesamtplan */
+$showMineToggle = hasRole('manager','teamleiter');
+$myIds = $showMineToggle ? array_flip(supervisedIdSet()) : [];
 
 /* Revision je Zelle (Versionsprüfung beim Speichern, siehe app/lib/PlanCells.php) */
 require_once __DIR__ . '/../../app/lib/PlanCells.php';
@@ -52,15 +55,15 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 <div class="plan-bar no-print">
 <div class="plan-bar-top">
 <div class="plan-bar-filters">
-<input type="text" id="filterName" class="inp-filter" placeholder="Suchen..." oninput="applyFilters()">
-<select id="filterRole" class="sel" onchange="applyFilters()">
+<input type="text" id="filterName" class="inp-filter" placeholder="Suchen..." aria-label="Mitarbeitende suchen (Taste /)" title="Mitarbeitende suchen – Taste „/“ springt hierher, Esc leert" autocomplete="off">
+<select id="filterRole" class="sel" onchange="applyFilters()" aria-label="Nach Rolle filtern">
 <option value="">Alle Rollen</option>
 <option value="techniker">Techniker</option><option value="teamleiter">Teamleiter</option>
 <option value="verwaltung_r">Verwaltung</option><option value="lager">Lager</option>
 <option value="azubis">Alle Azubis</option>
 <option value="azubi_1">Azubi 1. LJ</option><option value="azubi_2">Azubi 2. LJ</option><option value="azubi_3">Azubi 3. LJ</option>
 </select>
-<select id="filterArea" class="sel" onchange="applyFilters()">
+<select id="filterArea" class="sel" onchange="applyFilters()" aria-label="Nach Einsatzbereich filtern">
 <option value="">Alle Bereiche</option>
 <optgroup label="Kunden"><?php foreach(planAreas('kunde') as $fp):?><option value="<?php echo $fp['id'];?>"><?php echo e($fp['short_code'].' - '.$fp['name']);?></option><?php endforeach;?></optgroup>
 <optgroup label="Allgemein"><?php foreach(planAreas('allgemein') as $fp):?><option value="<?php echo $fp['id'];?>"><?php echo e($fp['short_code'].' - '.$fp['name']);?></option><?php endforeach;?></optgroup>
@@ -69,8 +72,10 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h8a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h4a1 1 0 110 2H4a1 1 0 01-1-1z"/></svg>
 <span id="sortToggleLabel">Standard</span>
 </button>
+<?php if($showMineToggle):?><button type="button" class="btn btn-sm btn-outline gp-mine-btn" id="mineToggleBtn" data-pq-filter="mine" aria-pressed="false" title="Nur meine Mitarbeiter anzeigen"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" style="vertical-align:-2px" aria-hidden="true"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg> Meine Mitarbeiter</button><?php endif;?>
 <button type="button" class="btn btn-xs btn-outline" id="draftsOnlyBtn" aria-pressed="false" onclick="toggleDraftsOnly(this)" title="Nur Mitarbeiter mit unveröffentlichten Änderungen anzeigen">Nur Änderungen</button>
-<button class="btn-reset" id="filterResetBtn" onclick="resetFilters()" style="display:none" title="Filter zurücksetzen">✕</button>
+<button class="btn-reset" id="filterResetBtn" onclick="resetFilters()" style="display:none" title="Filter zurücksetzen" aria-label="Filter zurücksetzen">✕</button>
+<span class="filter-count" id="filterCount" aria-live="polite"></span>
 </div>
 <div class="plan-bar-nav">
 <a href="?year=<?php echo $py;?>&month=<?php echo $pm;?>" class="btn btn-outline">&laquo; <?php echo monthName($pm);?></a>
@@ -228,7 +233,7 @@ if ($u['role']==='verwaltung') $roleFilter='verwaltung_r';
 $osLevel = $u['os_level'] ?? '';
 $absSee = canSeeAbsenceDetails($u['id']);
 ?>
-<tr data-user="<?php echo $u['id'];?>" data-we="<?php echo $weOk;?>" class="plan-row <?php if($weOk) echo 'we-allowed';?>" data-name="<?php echo e(mb_strtolower($u['last_name'].' '.$u['first_name']));?>" data-role="<?php echo e($roleFilter);?>" data-realrole="<?php echo e($u['role']);?>" data-areas="<?php echo e($areasStr);?>" data-entry="<?php echo e($u['entry_date']??'');?>" data-exit="<?php echo e($u['exit_date']??'');?>" data-group="<?php echo e($gn);?>">
+<tr data-user="<?php echo $u['id'];?>" data-we="<?php echo $weOk;?>" class="plan-row <?php if($weOk) echo 'we-allowed';?>" data-name="<?php echo e(mb_strtolower($u['last_name'].' '.$u['first_name']));?>" data-role="<?php echo e($roleFilter);?>" data-realrole="<?php echo e($u['role']);?>" data-areas="<?php echo e($areasStr);?>" data-entry="<?php echo e($u['entry_date']??'');?>" data-exit="<?php echo e($u['exit_date']??'');?>" data-mine="<?php echo isset($myIds[$u['id']])?1:0;?>" data-group="<?php echo e($gn);?>">
 <td class="sc cn"><?php echo e($u['last_name'].', '.$u['first_name']);?><?php if(isset($lockedUsers[$u['id']])):?><span class="user-locked-badge" title="Konto temporär gesperrt"><svg viewBox="0 0 20 20" fill="currentColor" style="width:11px;height:11px"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></span><?php endif;?><?php if($u['role']==='teamleiter'):?><span class="role-tag role-tag-tl">TL</span><?php elseif($u['role']==='manager'):?><span class="role-tag role-tag-ma">MA</span><?php endif;?><?php if($weOk):?><span class="we-badge" title="Wochenendarbeit">WE</span><?php endif;?><span class="row-lock-badge" id="lockBadge_<?php echo $u['id'];?>" style="display:none"></span></td>
 <td class="sc ca"><?php if($priArea):?><span class="ts" style="background:<?php echo e($priArea['color']);?>;color:<?php echo e($priArea['fg_color']);?>"><?php echo e($priArea['short_code']);?></span><?php endif;?><?php if($osLevel):?><span class="ts os-badge"><?php echo e($osLevel);?></span><?php endif;?><?php if(!empty($u['training_profession'])):?><span class="ts tp-badge"><?php echo e($u['training_profession']);?></span><?php endif;?></td>
 <?php if($see):?><td class="sc cr-start <?php echo ($absSee&&vacLeftAtStart($u['id'],$y,$m)<0)?'txt-d':'';?>"><?php echo $absSee?number_format(vacLeftAtStart($u['id'],$y,$m),1,',',''):'·';?></td><?php endif;?>

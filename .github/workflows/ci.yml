@@ -79,7 +79,7 @@ jobs:
         with:
           node-version: "22"
       - name: JS-Tests
-        run: node --test tests/js/escape.test.mjs
+        run: node --test tests/js/*.test.mjs
       - name: Server-Log bei Fehlern
         if: failure()
         run: cat /tmp/planquadro-test-server.log || true

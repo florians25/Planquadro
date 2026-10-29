@@ -214,9 +214,15 @@ Offen (bewusst verschoben, kein Funktionsverlust):
 
 Umgesetzt: Designsystem mit Tokens und Dark Mode (`docs/DESIGN_SYSTEM.md`), Kontraste,
 Fokus, Skip-Link, Dialog-ARIA, Tastaturbedienung der Matrix, Filter „Nur Änderungen“,
-Leistung großer Pläne (Beispiel Monatsplan: 856 → 68 Abfragen, 293 → 54 ms).
-Offen: Inline-Handler entfernen / CSP ohne `unsafe-inline` (S-21, S-22), virtuelles Scrollen,
-Drag-and-Drop.
+Leistung großer Pläne (Beispiel Monatsplan: 856 → 68 Abfragen, 293 → 54 ms),
+Drag-and-Drop als Ergänzung zum Werkzeug (Verschieben/Kopieren, Tastatur Strg+X/C/V,
+gleicher Speicherweg mit Revisionen und Konfliktdialog), einheitliche Filterleiste in
+Monats- und Gesamtplan (Mehrwort-Suche, „Meine Mitarbeiter“, Trefferzahl, Zurücksetzen
+aller Filter). Große Pläne gemessen (300/600 Mitarbeitende, `DESIGN_SYSTEM.md`):
+Scrollen flüssig, daher **kein virtuelles Scrollen** (würde Druck, Browsersuche, Tastatur,
+Live-Aktualisierung umbauen); stattdessen verzögerte Suche und sparsamere Filter.
+Offen: Inline-Handler entfernen / CSP ohne `unsafe-inline` (S-21, S-22), Verschieben per
+Langdruck auf Touch-Geräten, Verschieben mehrerer Zellen auf einmal.
 
 
 - Planquadro-Designsystem (Design Tokens als CSS-Variablen, Light/Dark, Mandantenfarben).

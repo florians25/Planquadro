@@ -23,15 +23,15 @@ $showPending = $approvalEnabled;
 <div class="plan-bar no-print">
 <div class="plan-bar-top">
 <div class="plan-bar-filters" id="gpFilters">
-<input type="text" id="filterName" class="inp-filter" placeholder="Suchen..." oninput="applyFilters()">
-<select id="filterRole" class="sel" onchange="applyFilters()">
+<input type="text" id="filterName" class="inp-filter" placeholder="Suchen..." aria-label="Mitarbeitende suchen (Taste /)" title="Mitarbeitende suchen – Taste „/“ springt hierher, Esc leert" autocomplete="off">
+<select id="filterRole" class="sel" onchange="applyFilters()" aria-label="Nach Rolle filtern">
 <option value="">Alle Rollen</option>
 <option value="techniker">Techniker</option><option value="teamleiter">Teamleiter</option>
 <option value="verwaltung_r">Verwaltung</option><option value="lager">Lager</option>
 <option value="azubis">Alle Azubis</option>
 <option value="azubi_1">Azubi 1. LJ</option><option value="azubi_2">Azubi 2. LJ</option><option value="azubi_3">Azubi 3. LJ</option>
 </select>
-<select id="filterArea" class="sel" onchange="applyFilters()">
+<select id="filterArea" class="sel" onchange="applyFilters()" aria-label="Nach Einsatzbereich filtern">
 <option value="">Alle Bereiche</option>
 <optgroup label="Kunden"><?php foreach(planAreas('kunde') as $fp):?><option value="<?php echo $fp['id'];?>"><?php echo e($fp['short_code'].' - '.$fp['name']);?></option><?php endforeach;?></optgroup>
 <optgroup label="Allgemein"><?php foreach(planAreas('allgemein') as $fp):?><option value="<?php echo $fp['id'];?>"><?php echo e($fp['short_code'].' - '.$fp['name']);?></option><?php endforeach;?></optgroup>
@@ -40,8 +40,9 @@ $showPending = $approvalEnabled;
 <svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h8a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h4a1 1 0 110 2H4a1 1 0 01-1-1z"/></svg>
 <span id="sortToggleLabel">Standard</span>
 </button>
-<button class="btn-reset" id="filterResetBtn" onclick="resetFilters()" style="display:none" title="Filter zurücksetzen">&times;</button>
-<?php if($showMineToggle):?><button class="btn btn-sm btn-outline gp-mine-btn" id="mineToggleBtn" onclick="toggleMine()" title="Nur meine Mitarbeiter anzeigen"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" style="vertical-align:-2px"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg> Meine Mitarbeiter</button><?php endif;?>
+<?php if($showMineToggle):?><button type="button" class="btn btn-sm btn-outline gp-mine-btn" id="mineToggleBtn" data-pq-filter="mine" aria-pressed="false" title="Nur meine Mitarbeiter anzeigen"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" style="vertical-align:-2px" aria-hidden="true"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg> Meine Mitarbeiter</button><?php endif;?>
+<button class="btn-reset" id="filterResetBtn" onclick="resetFilters()" style="display:none" title="Filter zurücksetzen" aria-label="Filter zurücksetzen">&times;</button>
+<span class="filter-count" id="filterCount" aria-live="polite"></span>
 </div>
 <div class="plan-bar-nav">
 <a href="?year=<?php echo $py;?>&month=<?php echo $pm;?>" class="btn btn-outline">&laquo; <?php echo monthName($pm);?></a>

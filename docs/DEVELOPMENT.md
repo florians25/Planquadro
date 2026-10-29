@@ -55,7 +55,7 @@ vendor/bin/phpunit --testsuite unit
 PQ_TEST_DB_USER=root PQ_TEST_DB_PASS=… vendor/bin/phpunit
 
 # JS
-node --test tests/js/escape.test.mjs
+node --test tests/js/*.test.mjs
 ```
 
 Integrationstests starten den eingebauten PHP-Server mit 4 Workern, melden sich als

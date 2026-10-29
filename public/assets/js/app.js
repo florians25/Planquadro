@@ -233,40 +233,52 @@ function applySort(mode, skipSave) {
 }
 
 /* ============================================================
-   ADVANCED FILTER (name + role + area)
+   ADVANCED FILTER (name + role + area + Schalter)
+   Monats- und Gesamtplan teilen dieselbe Filterleiste: Suche, Rolle,
+   Bereich, Sortierung, „Meine Mitarbeiter“, „Nur Änderungen“, Zurücksetzen.
+   Die Zuordnung einer Zeile entscheidet pqFilterMatch() (reine Logik).
    ============================================================ */
+function pqFilterQuery() {
+    return {
+        name: ((document.getElementById('filterName') || {}).value || '').toLowerCase().trim(),
+        role: (document.getElementById('filterRole') || {}).value || '',
+        area: (document.getElementById('filterArea') || {}).value || '',
+        mine: !!window.gpMineOnly,
+        drafts: !!window.planDraftsOnly
+    };
+}
+function pqFilterActive(q) { return !!(q.name || q.role || q.area || q.mine || q.drafts); }
 function applyFilters() {
-    var nameQ = (document.getElementById('filterName') || {}).value || '';
-    var roleQ = (document.getElementById('filterRole') || {}).value || '';
-    var areaQ = (document.getElementById('filterArea') || {}).value || '';
-    nameQ = nameQ.toLowerCase().trim();
+    var q = pqFilterQuery();
     saveFilterState();
     updatePrintFilter();
     updateFilterResetBtn();
     var tbl = document.getElementById('planTbl') || document.getElementById('gpTbl');
     if (!tbl) return;
+    var visibleGroups = {}, shown = 0, total = 0;
     tbl.querySelectorAll('.plan-row').forEach(function(r) {
-        var name = r.getAttribute('data-name') || '';
-        var role = r.getAttribute('data-role') || '';
-        var areas = r.getAttribute('data-areas') || '';
-        var show = true;
-        if (nameQ && name.indexOf(nameQ) === -1) show = false;
-        if (roleQ) {
-            if (roleQ === 'azubis') {
-                if (role !== 'azubi_1' && role !== 'azubi_2' && role !== 'azubi_3') show = false;
-            } else if (role !== roleQ) show = false;
-        }
-        if (areaQ && areas.indexOf(',' + areaQ + ',') === -1) show = false;
-        if (window.gpMineOnly && r.getAttribute('data-mine') !== '1') show = false;
-        if (window.planDraftsOnly && !r.querySelector('.draft-mine, .draft-other')) show = false;
-        r.style.display = show ? '' : 'none';
+        var show = pqFilterMatch({
+            name: r.getAttribute('data-name') || '',
+            role: r.getAttribute('data-role') || '',
+            areas: r.getAttribute('data-areas') || '',
+            mine: r.getAttribute('data-mine') === '1',
+            drafts: q.drafts ? !!r.querySelector('.draft-mine, .draft-other') : false
+        }, q);
+        var want = show ? '' : 'none';
+        if (r.style.display !== want) r.style.display = want; /* unveränderte Zeilen nicht anfassen (kein Neuaufbau) */
+        total++;
+        if (show) { shown++; visibleGroups[r.getAttribute('data-group') || ''] = true; }
     });
     /* Hide group headers with no visible rows */
     tbl.querySelectorAll('.gr[data-group]').forEach(function(gr) {
-        var gn = gr.getAttribute('data-group');
-        var hasVisible = tbl.querySelector('.plan-row[data-group="' + gn + '"]:not([style*="display: none"])');
-        gr.style.display = hasVisible ? '' : 'none';
+        var want = visibleGroups[gr.getAttribute('data-group')] ? '' : 'none';
+        if (gr.style.display !== want) gr.style.display = want;
     });
+    var cnt = document.getElementById('filterCount');
+    if (cnt) {
+        var txt = pqFilterActive(q) ? shown + ' von ' + total + ' Mitarbeitenden' : '';
+        if (cnt.textContent !== txt) cnt.textContent = txt;
+    }
 }
 /* Filter: nur Mitarbeiter mit unveröffentlichten Änderungen */
 function toggleDraftsOnly(btn) {
@@ -277,7 +289,7 @@ function toggleDraftsOnly(btn) {
 function toggleMine() {
     window.gpMineOnly = !window.gpMineOnly;
     var btn = document.getElementById('mineToggleBtn');
-    if (btn) btn.classList.toggle('active', window.gpMineOnly);
+    if (btn) { btn.classList.toggle('active', window.gpMineOnly); btn.setAttribute('aria-pressed', window.gpMineOnly ? 'true' : 'false'); }
     applyFilters();
 }
 function filterPlan(q) {
@@ -301,16 +313,37 @@ function resetFilters() {
     var fn = document.getElementById('filterName'), fr = document.getElementById('filterRole'), fa = document.getElementById('filterArea');
     if (fn) fn.value = ''; if (fr) fr.value = ''; if (fa) fa.value = '';
     try { localStorage.removeItem('ep_filters'); } catch(e) {}
+    /* Schalter gehören ebenfalls zum Filter */
+    if (window.gpMineOnly) toggleMine();
+    if (window.planDraftsOnly) toggleDraftsOnly(document.getElementById('draftsOnlyBtn'));
     applyFilters();
 }
 function updateFilterResetBtn() {
     var btn = document.getElementById('filterResetBtn');
     if (!btn) return;
-    var fn = (document.getElementById('filterName')||{}).value || '';
-    var fr = (document.getElementById('filterRole')||{}).value || '';
-    var fa = (document.getElementById('filterArea')||{}).value || '';
-    btn.style.display = (fn || fr || fa) ? '' : 'none';
+    btn.style.display = pqFilterActive(pqFilterQuery()) ? '' : 'none';
 }
+/* Filterleiste: Suche verzögert (große Pläne), Esc leert die Suche, „/“ springt
+   in die Suche, „Meine Mitarbeiter“ per data-pq-filter (ohne Inline-Handler). */
+document.addEventListener('DOMContentLoaded', function() {
+    var f = document.getElementById('filterName');
+    if (f && (document.getElementById('planTbl') || document.getElementById('gpTbl'))) {
+        var t = null;
+        f.addEventListener('input', function() { clearTimeout(t); t = setTimeout(applyFilters, 120); });
+        f.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && f.value) { e.preventDefault(); f.value = ''; clearTimeout(t); applyFilters(); }
+            else if (e.key === 'Enter') { e.preventDefault(); clearTimeout(t); applyFilters(); }
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+            var a = document.activeElement, tag = a ? a.tagName : '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (a && a.isContentEditable)) return;
+            if (document.querySelector('.modal-bg.open')) return;
+            e.preventDefault(); f.focus(); f.select();
+        });
+    }
+    document.querySelectorAll('[data-pq-filter="mine"]').forEach(function(b) { b.addEventListener('click', toggleMine); });
+});
 
 /* ============================================================
    PLAN EDITING
@@ -332,6 +365,7 @@ function setToolStatus() {
     var st = document.getElementById('toolSt'); if (!st) return;
     var dBtn = document.getElementById('toolDeselect');
     st.style.color = ''; /* Reset color from remark mode */
+    if (document.body) document.body.classList.toggle('pq-no-tool', !currentTool); /* Drag & Drop nur ohne Werkzeug */
     if (!currentTool) { st.textContent = 'Werkzeug w\u00e4hlen'; st.className = 'muted'; if(dBtn) dBtn.style.display='none'; return; }
     if(dBtn) dBtn.style.display='';
     if (currentTool.type === 'clear') { st.innerHTML = '<b>L\u00f6schen</b> aktiv'; st.className = 'txt-d'; }
@@ -427,7 +461,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (window.isOffline) { return; }
         var c = e.target.closest('.pe-c'); if (!c || c.dataset.bl === '1') return;
         if (!document.getElementById('planTbl')) return;
-        if (!currentTool) { toast('Bitte zuerst ein Werkzeug w\u00e4hlen', 'info'); return; }
+        /* Ohne Werkzeug: Eintrag per Drag & Drop verschieben/kopieren (Ergänzung, siehe MATRIX: DRAG & DROP) */
+        if (!currentTool) { if (typeof pqDndPointerDown === 'function' && pqDndPointerDown(e, c)) return; toast('Bitte zuerst ein Werkzeug w\u00e4hlen', 'info'); return; }
         if (isEditLocked) { toast('Bearbeitung gesperrt – anderer Benutzer aktiv', 'warning'); return; }
         /* Check row lock (another user is editing this person) */
         var row = c.closest('.plan-row');
@@ -491,6 +526,8 @@ document.addEventListener('DOMContentLoaded', function() {
         tbl.addEventListener('focusin', function(e) { var c = e.target.closest('.pe-c'); if (c) c.setAttribute('aria-label', label(c)); });
         tbl.addEventListener('keydown', function(e) {
             var c = e.target.closest('.pe-c'); if (!c) return;
+            /* Strg+X / Strg+C / Strg+V / Esc: Ausschneiden, Kopieren, Einfügen (Tastatur-Alternative zu Drag & Drop) */
+            if (typeof pqDndKey === 'function' && pqDndKey(e, c)) return;
             var row = c.closest('.plan-row'), rc = Array.prototype.slice.call(row.querySelectorAll('.pe-c')), i = rc.indexOf(c);
             var rows = visibleRows(), ri = rows.indexOf(row), t = null;
             switch (e.key) {
@@ -908,6 +945,7 @@ function saveBulk(changes, showToast, opts) {
     if (epBlockedOffline()) return;
     opts = opts || {};
     var isInternal = document.getElementById('toolInternal') ? document.getElementById('toolInternal').checked : false;
+    if (opts.internal !== undefined) isInternal = !!opts.internal; /* Drag & Drop: Sichtbarkeit des Eintrags beibehalten */
     changes = changes.map(function(c) {
         if (c.rev === undefined) { var r = cellRev(c.user_id, c.date); if (r !== null) c.rev = r; }
         return c;
@@ -1738,4 +1776,292 @@ function publishYear(y){if(epBlockedOffline())return;
     else initAll();
     /* falls die Tabelle dynamisch nachgeladen/aktualisiert wird */
     window.addEventListener('load', initAll);
+})();
+
+/* ============================================================
+   FILTER: reine Logik (ohne DOM) – getestet in tests/js/matrix.test.mjs
+   ============================================================ */
+/* PQ-FILTER-LOGIC-BEGIN */
+/* r: {name, role, areas, mine, drafts}  q: {name, role, area, mine, drafts}
+   Suche: alle Wörter müssen im Namen vorkommen („max mü“ findet „müller max“). */
+function pqFilterMatch(r, q) {
+    if (q.name) {
+        var words = q.name.split(/\s+/);
+        for (var i = 0; i < words.length; i++) if (words[i] && r.name.indexOf(words[i]) === -1) return false;
+    }
+    if (q.role) {
+        if (q.role === 'azubis') { if (r.role !== 'azubi_1' && r.role !== 'azubi_2' && r.role !== 'azubi_3') return false; }
+        else if (r.role !== q.role) return false;
+    }
+    if (q.area && (r.areas || '').indexOf(',' + q.area + ',') === -1) return false;
+    if (q.mine && !r.mine) return false;
+    if (q.drafts && !r.drafts) return false;
+    return true;
+}
+/* PQ-FILTER-LOGIC-END */
+
+/* ============================================================
+   MATRIX: DRAG & DROP (Ergänzung zum Werkzeug-Klick, nicht Ersatz)
+   Nur ohne gewähltes Werkzeug: Eintrag ziehen = verschieben, mit Strg/Alt
+   (Mac: ⌘/⌥) = kopieren. Tastatur: Strg+X / Strg+C auf der Quelle, Strg+V
+   auf dem Ziel, Esc bricht ab. Gespeichert wird über saveBulk() – also mit
+   Revisionen (rev) und dem bestehenden 409-Konfliktdialog.
+   ============================================================ */
+/* PQ-DND-LOGIC-BEGIN */
+/* Zellzustand s: {u, d, t, v, bl, unavail, webl, vaclock, rowLocked} */
+var pqDnd = {
+    SICK: ['krank_halb', 'krank_ganz', 'krank_attest'],
+    isEntry: function(s) { return !!s && (s.t === 'assignment' || s.t === 'absence') && !!s.v; },
+    /* Genehmigter (veröffentlichter) Urlaub und Krankmeldungen sind ohne Entsperren nicht änderbar */
+    isProtected: function(s) { return !!s && s.t === 'absence' && (!!s.vaclock || pqDnd.SICK.indexOf(s.v) !== -1); },
+    /* '' = in Ordnung, sonst lesbarer Grund */
+    checkSource: function(s, copy) {
+        if (!s) return 'Kein Eintrag';
+        if (s.t === 'absence' && !s.v) return 'Abwesenheit ohne Detailrecht – nicht verschiebbar';
+        if (!pqDnd.isEntry(s)) return 'Kein Eintrag zum Verschieben';
+        if (s.bl || s.unavail) return 'Person nicht verfügbar bzw. Feiertag';
+        if (s.rowLocked) return 'Diese Person wird gerade von einem anderen Benutzer bearbeitet';
+        if (!copy && pqDnd.isProtected(s)) return 'Genehmigter Urlaub bzw. Krankmeldung lässt sich nicht verschieben – mit Strg kopieren oder zuerst entsperren';
+        return '';
+    },
+    checkTarget: function(src, t) {
+        if (!t) return 'Kein Ziel';
+        if (src && String(src.u) === String(t.u) && src.d === t.d) return 'same';
+        if (t.bl || t.unavail) return 'Person nicht verfügbar bzw. Feiertag';
+        if (t.webl) return 'Wochenendarbeit nicht freigeschaltet';
+        if (t.rowLocked) return 'Diese Person wird gerade von einem anderen Benutzer bearbeitet';
+        if (t.t === 'absence' && !t.v) return 'Ziel ist eine Abwesenheit – nicht überschreibbar';
+        if (pqDnd.isProtected(t)) return 'Ziel ist genehmigter Urlaub bzw. Krankmeldung – nicht überschreibbar';
+        return '';
+    },
+    /* Änderungen für save_bulk: Ziel setzen, bei Verschieben Quelle leeren */
+    changes: function(src, t, copy) {
+        var type = (src.t === 'absence' && src.v === 'gesperrt') ? 'locked' : src.t;
+        var out = [{ user_id: parseInt(t.u, 10), date: t.d, type: type, value: src.v }];
+        if (!copy) out.push({ user_id: parseInt(src.u, 10), date: src.d, type: 'clear', value: '' });
+        return out;
+    },
+    isCopy: function(ev) { return !!(ev && (ev.ctrlKey || ev.altKey || ev.metaKey)); },
+    fmtDate: function(d) { return d ? String(d).split('-').reverse().join('.') : ''; },
+    /* Ansage für Screenreader: „K1 von Muster, Max (03.11.2026) nach Beispiel, Eva (04.11.2026) verschoben.“ */
+    describe: function(code, src, srcName, t, tName, copy) {
+        return (code || 'Eintrag') + ' von ' + srcName + ' (' + pqDnd.fmtDate(src.d) + ') nach ' + tName + ' (' + pqDnd.fmtDate(t.d) + ') ' + (copy ? 'kopiert.' : 'verschoben.');
+    }
+};
+/* PQ-DND-LOGIC-END */
+
+(function initMatrixDnd() {
+    var tbl = null, live = null, pend = null, drag = null, clip = null, lastMove = null, scrollTimer = null;
+
+    function cellState(c) {
+        var row = c.closest('.plan-row');
+        return {
+            u: c.dataset.u, d: c.dataset.d, t: c.dataset.t || '', v: c.dataset.v || '',
+            bl: c.dataset.bl === '1', unavail: c.classList.contains('cell-unavailable'), webl: c.dataset.webl === '1',
+            vaclock: c.dataset.vaclock === '1', rowLocked: !!(row && row.classList.contains('row-locked-by-other')),
+            internal: c.classList.contains('cell-internal'),
+            draftBy: c.classList.contains('draft-other') ? (c.dataset.draftBy || 'Unbekannt') : ''
+        };
+    }
+    function personName(c) {
+        var row = c.closest('.plan-row'), n = row ? row.querySelector('.cn') : null;
+        return n && n.firstChild ? String(n.firstChild.nodeValue || n.textContent || '').trim() : '';
+    }
+    /* Kürzel und Farben: aus der Werkzeugleiste bzw. absTypes, sonst aus der Quellzelle */
+    function look(s, c) {
+        if (s.t === 'assignment') {
+            var o = document.querySelector('#toolArea option[value="' + String(s.v).replace(/[^0-9]/g, '') + '"]');
+            if (o && o.dataset.k) return { code: o.dataset.k, bg: o.dataset.c, fg: o.dataset.f };
+        } else if (typeof absTypes !== 'undefined' && absTypes[s.v]) {
+            var a = absTypes[s.v]; return { code: a.code, bg: a.color, fg: a.fg };
+        }
+        return { code: (c.textContent || '').trim(), bg: c.style.getPropertyValue('background'), fg: c.style.color };
+    }
+    function setBg(c, color) {
+        c.style.removeProperty('background');
+        if (color) { if (c.dataset.we === '1') c.style.setProperty('background', color, 'important'); else c.style.background = color; }
+    }
+    function cellLabel(c) {
+        var s = cellState(c), txt = (c.textContent || '').trim();
+        var extra = c.classList.contains('draft-other') ? ', Entwurf von ' + (c.dataset.draftBy || 'anderen') : (c.classList.contains('draft-mine') ? ', eigener Entwurf' : '');
+        return personName(c) + ', ' + pqDnd.fmtDate(s.d) + ': ' + (txt || 'leer') + extra;
+    }
+    function say(msg) {
+        if (!live) return;
+        live.textContent = '';
+        setTimeout(function() { live.textContent = msg; }, 30);
+    }
+
+    /* Verschieben/Kopieren ausführen. Rückgabe true, wenn gestartet. */
+    function perform(srcCell, tgtCell, copy) {
+        if (epBlockedOffline()) return false;
+        if (typeof isEditLocked !== 'undefined' && isEditLocked) { toast('Bearbeitung gesperrt – anderer Benutzer aktiv', 'warning'); return false; }
+        var s = cellState(srcCell), t = cellState(tgtCell);
+        var err = pqDnd.checkSource(s, copy) || pqDnd.checkTarget(s, t);
+        if (err === 'same') return false;
+        if (err) { toast(err, 'warning'); say(err); return false; }
+        var others = [];
+        [t, copy ? null : s].forEach(function(x) { if (x && x.draftBy && others.indexOf(x.draftBy) === -1) others.push(x.draftBy); });
+        var go = function() { apply(srcCell, tgtCell, s, t, copy); };
+        if (others.length) epConfirm('Betroffene Zelle(n) enthalten unveröffentlichte Entwürfe von: ' + others.join(', ') + '\n\nTrotzdem überschreiben?', go);
+        else go();
+        return true;
+    }
+    function apply(srcCell, tgtCell, s, t, copy) {
+        var lk = look(s, srcCell);
+        var changes = pqDnd.changes(s, t, copy);
+        /* Ziel sofort darstellen (wie beim Werkzeug); der Server bestätigt bzw. die
+           Live-Aktualisierung stellt bei Konflikt den tatsächlichen Stand her. */
+        tgtCell.classList.remove('has-remark', 'has-pub-remark', 'has-int-remark', 'cell-locked', 'draft-mine', 'draft-other', 'cell-internal');
+        setBg(tgtCell, lk.bg); tgtCell.style.color = lk.fg || ''; tgtCell.textContent = lk.code || '';
+        tgtCell.dataset.t = s.t; tgtCell.dataset.v = s.v;
+        if (s.v === 'gesperrt') tgtCell.classList.add('cell-locked');
+        if (s.internal) tgtCell.classList.add('cell-internal');
+        tgtCell.classList.add('draft-mine');
+        if (!copy) {
+            srcCell.classList.remove('has-remark', 'has-pub-remark', 'has-int-remark', 'cell-locked', 'draft-other', 'cell-internal');
+            setBg(srcCell, ''); srcCell.style.color = ''; srcCell.textContent = '';
+            srcCell.dataset.t = ''; srcCell.dataset.v = '';
+            srcCell.classList.add('draft-mine');
+        }
+        if (typeof flashCell === 'function') { flashCell(tgtCell); if (!copy) flashCell(srcCell); }
+        if (typeof lockRow === 'function') lockRow(parseInt(t.u, 10));
+        saveBulk(changes, false, { internal: s.internal });
+        say(pqDnd.describe(lk.code, s, personName(srcCell), t, personName(tgtCell), copy));
+        tgtCell.setAttribute('aria-label', cellLabel(tgtCell));
+        if (!copy) srcCell.setAttribute('aria-label', cellLabel(srcCell));
+    }
+
+    /* ---------- Maus ---------- */
+    window.pqDndPointerDown = function(e, c) {
+        if (!tbl || !tbl.contains(c) || e.button !== 0) return false;
+        if (!pqDnd.isEntry(cellState(c))) return false;
+        e.preventDefault();
+        pend = { cell: c, x: e.clientX, y: e.clientY };
+        return true;
+    };
+    function startDrag() {
+        var s = cellState(pend.cell), lk = look(s, pend.cell);
+        var g = document.createElement('div');
+        g.className = 'pq-dnd-ghost no-print'; g.setAttribute('aria-hidden', 'true');
+        g.innerHTML = '<span class="pq-dnd-chip"></span><span class="pq-dnd-mode"></span><span class="pq-dnd-why"></span>';
+        var chip = g.firstChild; chip.textContent = lk.code || '?'; chip.style.background = lk.bg || ''; chip.style.color = lk.fg || '';
+        document.body.appendChild(g);
+        drag = { src: pend.cell, s: s, ghost: g, over: null, overEl: null };
+        pend.cell.classList.add('dnd-src');
+        document.body.classList.add('pq-dnd-active');
+        scrollTimer = setInterval(autoScroll, 30);
+    }
+    function clearOver() {
+        if (drag && drag.overEl) drag.overEl.classList.remove('dnd-ok', 'dnd-deny');
+        if (drag) { drag.overEl = null; drag.over = null; }
+    }
+    function track(e, copy) {
+        lastMove = { x: e.clientX, y: e.clientY, target: e.target };
+        var g = drag.ghost;
+        g.style.left = (e.clientX + 14) + 'px'; g.style.top = (e.clientY + 14) + 'px';
+        g.querySelector('.pq-dnd-mode').textContent = copy ? 'Kopieren' : 'Verschieben';
+        g.classList.toggle('is-copy', copy);
+        var c = e.target && e.target.closest ? e.target.closest('.pe-c') : null;
+        if (c && !tbl.contains(c)) c = null;
+        if (c !== drag.overEl) clearOver();
+        var why = '';
+        if (c) {
+            var err = pqDnd.checkSource(drag.s, copy) || pqDnd.checkTarget(drag.s, cellState(c));
+            drag.overEl = c; drag.over = null;
+            if (err && err !== 'same') { c.classList.add('dnd-deny'); c.classList.remove('dnd-ok'); why = err; }
+            else if (!err) { c.classList.add('dnd-ok'); c.classList.remove('dnd-deny'); drag.over = c; }
+        }
+        g.querySelector('.pq-dnd-why').textContent = why;
+    }
+    function autoScroll() {
+        if (!drag || !lastMove) return;
+        var m = 48, sp = 18, x = lastMove.x, y = lastMove.y;
+        if (y < m) window.scrollBy(0, -sp); else if (y > window.innerHeight - m) window.scrollBy(0, sp);
+        var ps = tbl.closest('.ps');
+        if (ps) { var r = ps.getBoundingClientRect(); if (x < r.left + m) ps.scrollLeft -= sp; else if (x > r.right - m) ps.scrollLeft += sp; }
+    }
+    function endDrag() {
+        clearInterval(scrollTimer); scrollTimer = null;
+        if (drag) { clearOver(); drag.src.classList.remove('dnd-src'); if (drag.ghost) drag.ghost.remove(); }
+        document.body.classList.remove('pq-dnd-active');
+        drag = null; lastMove = null;
+    }
+    function cancel() { if (drag) { endDrag(); say('Ziehen abgebrochen.'); } pend = null; }
+    document.addEventListener('mousemove', function(e) {
+        if (!pend) return;
+        if (!drag) {
+            if (Math.abs(e.clientX - pend.x) + Math.abs(e.clientY - pend.y) < 6) return;
+            startDrag();
+        }
+        track(e, pqDnd.isCopy(e));
+    });
+    document.addEventListener('mouseup', function(e) {
+        if (!pend) return;
+        var p = pend; pend = null;
+        if (!drag) { toast('Bitte zuerst ein Werkzeug wählen – oder den Eintrag ziehen, um ihn zu verschieben', 'info'); return; }
+        var copy = pqDnd.isCopy(e), tgt = drag.over, overEl = drag.overEl;
+        endDrag();
+        if (tgt) perform(p.cell, tgt, copy);
+        else if (overEl && overEl !== p.cell) {
+            var err = pqDnd.checkSource(cellState(p.cell), copy) || pqDnd.checkTarget(cellState(p.cell), cellState(overEl));
+            if (err && err !== 'same') toast(err, 'warning');
+        }
+    });
+    /* Modus live umschalten (Strg/Alt gedrückt/losgelassen), Esc bricht ab */
+    function modKey(e) {
+        if (!drag) return;
+        if (e.type === 'keydown' && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancel(); return; }
+        if (lastMove && (e.key === 'Control' || e.key === 'Alt' || e.key === 'Meta')) {
+            if (e.key === 'Alt') e.preventDefault(); /* kein Fenstermenü */
+            track({ clientX: lastMove.x, clientY: lastMove.y, target: lastMove.target }, pqDnd.isCopy(e));
+        }
+    }
+    document.addEventListener('keydown', modKey, true);
+    document.addEventListener('keyup', modKey, true);
+    window.addEventListener('blur', cancel);
+
+    /* ---------- Tastatur (Rastersteuerung) ---------- */
+    function unmark(announce) {
+        if (clip && clip.cell) clip.cell.classList.remove('dnd-clip', 'dnd-clip-copy');
+        clip = null;
+        if (announce) say('Ausschneiden bzw. Kopieren abgebrochen.');
+    }
+    window.pqDndKey = function(e, c) {
+        if (!tbl || !tbl.contains(c)) return false;
+        var mod = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey, k = String(e.key || '').toLowerCase();
+        if (mod && (k === 'x' || k === 'c')) {
+            e.preventDefault();
+            var copy = k === 'c', s = cellState(c), err = pqDnd.checkSource(s, copy);
+            if (err) { toast(err, 'warning'); say(err); return true; }
+            unmark(false);
+            clip = { cell: c, copy: copy };
+            c.classList.add('dnd-clip'); if (copy) c.classList.add('dnd-clip-copy');
+            say((c.textContent || '').trim() + ' von ' + personName(c) + ' (' + pqDnd.fmtDate(s.d) + ') ' + (copy ? 'kopiert' : 'ausgeschnitten') + '. Zielzelle wählen und Strg+V drücken, Esc bricht ab.');
+            return true;
+        }
+        if (mod && k === 'v') {
+            e.preventDefault();
+            if (!clip || !clip.cell.isConnected) { unmark(false); say('Nichts zum Einfügen – zuerst mit Strg+X ausschneiden oder Strg+C kopieren.'); toast('Nichts zum Einfügen – zuerst Strg+X oder Strg+C', 'info'); return true; }
+            var cp = clip.copy, src = clip.cell;
+            if (perform(src, c, cp) && !cp) unmark(false);
+            return true;
+        }
+        if (e.key === 'Escape' && clip) { e.preventDefault(); unmark(true); return true; }
+        return false;
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        tbl = document.getElementById('planTbl');
+        if (!tbl) return;
+        live = document.createElement('div');
+        live.id = 'pqDndLive'; live.className = 'sr-only'; live.setAttribute('role', 'status'); live.setAttribute('aria-live', 'assertive');
+        document.body.appendChild(live);
+        var hint = document.createElement('div');
+        hint.id = 'pqDndHint'; hint.className = 'sr-only';
+        hint.textContent = 'Ohne Werkzeug: Einträge ziehen zum Verschieben, mit Strg kopieren. Tastatur: Strg+X ausschneiden, Strg+C kopieren, Strg+V einfügen, Esc bricht ab.';
+        document.body.appendChild(hint);
+        tbl.addEventListener('focusin', function(e) { var c = e.target.closest('.pe-c'); if (c && !c.hasAttribute('aria-describedby')) c.setAttribute('aria-describedby', 'pqDndHint'); });
+        if (typeof currentTool !== 'undefined' && !currentTool) document.body.classList.add('pq-no-tool');
+    });
 })();
