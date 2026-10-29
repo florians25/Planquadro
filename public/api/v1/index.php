@@ -67,6 +67,14 @@ function apiAuth(): array
     return $r;
 }
 
+/** Antwort wie GET me (auch Bestandteil der Login-/Refresh-Antwort, siehe docs/API.md) */
+function apiMeJson(): array
+{
+    $perms = [];
+    foreach (['plan_view', 'plan_edit', 'approve_requests', 'view_all_employees', 'manage_absences'] as $p) $perms[$p] = hasPerm($p);
+    return ['user' => apiUserJson(currentUser()), 'permissions' => $perms, 'modules' => apiModules(), 'tenant' => apiTenantInfo(), 'server_time' => date('c')];
+}
+
 function apiUserJson(array $u): array
 {
     return ['id' => (int)$u['id'], 'username' => $u['username'], 'first_name' => $u['first_name'], 'last_name' => $u['last_name'],
@@ -165,16 +173,15 @@ if ($path === 'auth/login' && $method === 'POST') {
     $_SESSION['user_id'] = (int)$u['id'];
     $pair = apiIssuePair((int)$u['id'], null, isset($b['device_name']) ? (string)$b['device_name'] : null);
     try { $db->prepare('INSERT INTO audit_log(user_id,action,details,ip_address) VALUES(?,?,?,?)')->execute([$u['id'], 'api_login', 'App-Login', $ip]); } catch (Throwable $e) {}
-    apiOut(200, $pair + ['user' => apiUserJson($u)]);
+    apiOut(200, $pair + ['user' => apiMeJson()]);
 }
 
 if ($path === 'auth/refresh' && $method === 'POST') {
     $b = apiBody();
     $r = apiRefresh((string)($b['refresh_token'] ?? ''));
     if (is_string($r)) apiError(401, $r, 'Bitte erneut anmelden.');
-    $s = $db->prepare('SELECT * FROM users WHERE id=?'); $s->execute([$r['user_id']]);
-    $uid = $r['user_id']; unset($r['user_id']);
-    apiOut(200, $r + ['user' => apiUserJson($s->fetch())]);
+    $_SESSION['user_id'] = $r['user_id']; unset($r['user_id']);
+    apiOut(200, $r + ['user' => apiMeJson()]);
 }
 
 if ($path === 'auth/oidc/token' && $method === 'POST') {
@@ -188,7 +195,7 @@ if ($path === 'auth/oidc/token' && $method === 'POST') {
     $u = oidcFindUser($claims);
     if (!$u) apiError(403, 'forbidden', 'Für dieses Firmenkonto gibt es keinen aktiven Zugang.');
     $_SESSION['user_id'] = (int)$u['id'];
-    apiOut(200, apiIssuePair((int)$u['id'], null, isset($b['device_name']) ? (string)$b['device_name'] : null, 'oidc') + ['user' => apiUserJson($u)]);
+    apiOut(200, apiIssuePair((int)$u['id'], null, isset($b['device_name']) ? (string)$b['device_name'] : null, 'oidc') + ['user' => apiMeJson()]);
 }
 
 /* ---------- ab hier: angemeldet ---------- */
@@ -201,11 +208,7 @@ if ($path === 'auth/logout' && $method === 'POST') {
     apiOut(204);
 }
 
-if ($path === 'me' && $method === 'GET') {
-    $perms = [];
-    foreach (['plan_view', 'plan_edit', 'approve_requests', 'view_all_employees', 'manage_absences'] as $p) $perms[$p] = hasPerm($p);
-    apiOut(200, ['user' => apiUserJson($me), 'permissions' => $perms, 'modules' => apiModules(), 'tenant' => apiTenantInfo(), 'server_time' => date('c')]);
-}
+if ($path === 'me' && $method === 'GET') apiOut(200, apiMeJson());
 
 if ($path === 'plan/my' && $method === 'GET') {
     $from = apiDate($_GET['from'] ?? '') ?? date('Y-m-01');

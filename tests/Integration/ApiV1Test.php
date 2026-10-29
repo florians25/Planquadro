@@ -65,6 +65,8 @@ final class ApiV1Test extends IntegrationTestCase
         $this->assertSame(401, $this->api('GET', 'me')->status);
         $this->assertSame('invalid_token', $this->api('GET', 'me', null, 'opa.manipuliert.xyz')->json()['error']['code']);
         $t = $this->login('ma1');
+        $this->assertSame('ma1', $t['user']['user']['username'], 'Login liefert das me-Objekt (docs/API.md)');
+        $this->assertArrayHasKey('permissions', $t['user']);
         $me = $this->api('GET', 'me', null, $t['access_token'])->json();
         $this->assertSame('ma1', $me['user']['username']);
         $this->assertFalse($me['permissions']['plan_edit']);

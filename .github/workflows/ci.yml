@@ -84,6 +84,23 @@ jobs:
         if: failure()
         run: cat /tmp/opspilot-test-server.log || true
 
+  mobile:
+    name: Mobile-App (Typecheck, Tests, Build)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: npm test
+
   secrets:
     name: Secret-Scan
     runs-on: ubuntu-24.04
