@@ -1,0 +1,37 @@
+# Abhängigkeiten und Build-Ausgaben
+node_modules/
+dist/
+coverage/
+*.log
+.vite/
+.DS_Store
+
+# Android: Build-Ausgaben, lokale Einstellungen, Signatur und Firebase-Konfiguration
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/release/
+android/app/google-services.json
+*.jks
+*.keystore
+keystore.properties
+
+# iOS: Build-Ausgaben, Pods, Benutzerdaten und Firebase-/APNs-Schlüssel
+ios/App/build/
+ios/App/Pods/
+ios/DerivedData/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/GoogleService-Info.plist
+*.p8
+*.p12
+*.mobileprovision
+
+# Lokale Umgebung
+.env
+.env.*
+!.env.example
