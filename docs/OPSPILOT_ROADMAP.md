@@ -89,11 +89,11 @@ Status: ✅ behoben (Phase 2) · ⏳ geplant (Phase) · ❓ Entscheidung nötig 
 
 | ID | Sev | Befund | Status |
 |---|---|---|---|
-| B-01 | H | Backups liegen auf demselben Server wie die Datenbank, Schlüssel daneben | ⏳ Phase 4 |
-| B-02 | H | Dump nicht konsistent (kein Snapshot/`--single-transaction`) | ⏳ Phase 4 |
-| B-03 | M | AES-256-CBC ohne Authentisierung (keine Integritätsprüfung) | ⏳ Phase 4 |
-| B-04 | M | Restore verschluckt Fehler einzelner Statements und meldet trotzdem Erfolg; nicht atomar | ⏳ Phase 4 |
-| B-05 | M | Cron-Schlüssel in der URL (Logs, Proxy) | ⏳ Phase 4 |
+| B-01 | H | Backups liegen auf demselben Server wie die Datenbank, Schlüssel daneben | ✅ Public-Key-Verschlüsselung (privater Schlüssel offline), externe Ziele S3/rclone, 3-2-1-Warnung |
+| B-02 | H | Dump nicht konsistent (kein Snapshot/`--single-transaction`) | ✅ `--single-transaction` bzw. `CONSISTENT SNAPSHOT` |
+| B-03 | M | AES-256-CBC ohne Authentisierung (keine Integritätsprüfung) | ✅ libsodium secretstream (XChaCha20-Poly1305) + Manifest-Prüfsummen |
+| B-04 | M | Restore verschluckt Fehler einzelner Statements und meldet trotzdem Erfolg; nicht atomar | ✅ Abbruch beim ersten Fehler, Staging-DB + atomarer `RENAME TABLE`, Sicherheits-Backup |
+| B-05 | M | Cron-Schlüssel in der URL (Logs, Proxy) | ✅ Endpunkt entfernt; Scheduler-Dienst bzw. systemd/cron |
 
 #### Sonstiges
 
@@ -141,6 +141,13 @@ sichtbare Änderung etablierter Abläufe.
 - OIDC/SSO optional.
 
 ## Phase 4 – Deployment, Backup, Recovery
+
+> Umgesetzt: Docker-Image (Apache statt PHP-FPM + Nginx, damit `public/.htaccess` unverändert gilt),
+> Compose mit MariaDB, Backup-Scheduler und optional Caddy, `/api/healthz` und `/api/readyz`,
+> Backup-System mit libsodium statt `age`/`restic` (keine externen Programme nötig), Restore-Test in
+> eine Wegwerf-Datenbank (statt Wegwerf-Container), Deploy-Test- und Release-Workflow. Dokumentation:
+> INSTALLATION, CONFIGURATION, UPDATE, BACKUP, DISASTER_RECOVERY. Offen: gemeinsame Sessions
+> (Redis/DB) für mehrere App-Container, Image-Veröffentlichung erst nach Freigabe.
 
 - Docker-Image (PHP-FPM + Nginx), `docker-compose.yml` (App, MariaDB, optional Caddy für
   HTTPS, optional Redis), Healthchecks (`/healthz` live, `/readyz` DB + Migrationen),

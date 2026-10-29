@@ -32,7 +32,11 @@ Schritt ist einzeln umkehrbar.
    Die bisherigen Variablen `CCKOE_DB_*` werden weiterhin gelesen.
 3. **Bestehende Backups sichern.** `app/backups/*.epbak` und `.backup_key` vom Server
    herunterladen und getrennt voneinander aufbewahren (Schlüssel z. B. im
-   Passwortmanager).
+   Passwortmanager). Ab Phase 4 lesbar mit `php bin/backup.php legacy-decrypt`; die
+   alte Cron-URL `api/backup?action=cron_backup` entfällt – den Cronjob löschen und die
+   neue Zeitsteuerung einrichten ([BACKUP.md](BACKUP.md)). Im Docker-Betrieb startet der
+   Container eine übernommene Datenbank ohne Versionstabelle erst mit
+   `OPSPILOT_AUTO_BASELINE=v6_9_0` ([INSTALLATION.md](INSTALLATION.md#bestehende-einsatzplanung-übernehmen)).
 4. **`install.php` prüfen.** Ab OpsPilot ist es ohne gesetzte Umgebungsvariable
    `OPSPILOT_ALLOW_INSTALL=1` gesperrt. Auf dem bisherigen Server die Datei sofort löschen.
 

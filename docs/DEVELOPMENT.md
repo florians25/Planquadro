@@ -41,6 +41,10 @@ eingebaute PHP-Server dieselben URLs wie Apache bedient (`/dashboard`, `/api/sav
 | `OPSPILOT_FORCE_SECURE_COOKIES` | `1` = Session-Cookie immer `Secure` (hinter TLS-terminierendem Proxy) |
 | `OPSPILOT_ALLOW_INSTALL` | `1` = `install.php` im Browser freigeben (nur Ersteinrichtung) |
 
+Vollständige Liste (Mandanten, Backup, Alarme, Docker): [CONFIGURATION.md](CONFIGURATION.md).
+Lokal ohne Backup-Schlüssel zeigt das Dashboard Administratoren einen Backup-Hinweis;
+abschalten mit `OPSPILOT_BACKUP_BANNER=0`.
+
 ## Tests
 
 ```bash
@@ -65,6 +69,21 @@ Testdatenbank muss „test“ enthalten (Schutz vor versehentlichem Löschen).
 | `SecurityTest` | Regressionstests zu den Sicherheitsbefunden (S-xx) |
 | `DataIntegrityTest` | Urlaubs-/Krankheitssperre, Bereichslöschung, Rollen-Seite |
 | `ConcurrencyTest` | Revisionen, Konflikte, parallele Schreibzugriffe, Veröffentlichung, Protokoll |
+| `BackupTest` | Backup → Restore-Round-Trip (PHP- und nativer Dumper), Manifest, Schutz nicht leerer Ziele, `--replace`, Restore-Test, Status, Alarme, Web-API, Dashboard-Hinweis, SaaS |
+| `HealthTest` | `/api/healthz`, `/api/readyz` (auch SaaS, mandantenbezogen) |
+| `Unit/BackupCryptoTest`, `Unit/BackupFormatTest` | Verschlüsselung inkl. Manipulation/Abschneiden, GFS-Aufbewahrung, tar, Zeilenzähler, S3-Signatur |
+
+Teilen sich mehrere Checkouts eine Datenbankinstanz, je Checkout einen eigenen
+`OPSPILOT_TEST_DB_NAME` (z. B. `opspilot_test_feature`) verwenden.
+
+### Deploymenttest (Docker)
+
+```bash
+docker build -t opspilot/app:ci .
+cp .env.example .env    # OPSPILOT_IMAGE=opspilot/app:ci, OPSPILOT_FORCE_SECURE_COOKIES=0
+sh docker/init-secrets.sh
+sh tests/deploy/compose-smoke.sh     # baut den Stack am Ende wieder ab (KEEP=1 behält ihn)
+```
 
 Neue Fehlerbehebungen bekommen einen Test, der **vor** dem Fix fehlschlägt.
 
@@ -97,5 +116,10 @@ werden genannt.
 3. **Secret-Scan:** gitleaks über die gesamte Historie; Backups, Schlüssel und
    `secrets.php` dürfen nicht eingecheckt sein.
 
-Docker-Images und Releases folgen in Phase 4; ein Push in eine Registry erfolgt erst nach
-ausdrücklicher Freigabe.
+`.github/workflows/deploy-test.yml` – baut das Image, startet Compose, prüft Installation,
+Login mit Passwortwechsel, Backup, Restore-Test, Restore und das Caddy-Profil
+(`tests/deploy/compose-smoke.sh`). Veröffentlicht nichts.
+
+`.github/workflows/release.yml` – nur bei einem gepushten Tag `v*` oder manuellem Start:
+Multi-Arch-Image (amd64/arm64) nach GHCR, mit SBOM, Provenienz und cosign-Signatur.
+Branch-Pushes veröffentlichen nie.

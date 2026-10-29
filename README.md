@@ -16,6 +16,11 @@ Self-Hosting wie SaaS betreibbar gemacht.
 | [docs/PERMISSIONS.md](docs/PERMISSIONS.md) | bestehendes Berechtigungsmodell |
 | [docs/MIGRATION_PLAN.md](docs/MIGRATION_PLAN.md) | Migration bestehender Installationen |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | lokale Entwicklung, Tests, CI |
+| [docs/INSTALLATION.md](docs/INSTALLATION.md) | Installation: Docker Compose, Reverse Proxy/HTTPS, Apache/PHP, Shared Hosting |
+| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | alle Umgebungsvariablen |
+| [docs/UPDATE.md](docs/UPDATE.md) | sicheres Update und Rollback |
+| [docs/BACKUP.md](docs/BACKUP.md) | Backup, Verschlüsselung, Ziele, Aufbewahrung, Restore |
+| [docs/DISASTER_RECOVERY.md](docs/DISASTER_RECOVERY.md) | Notfallhandbuch mit RPO/RTO |
 | [CHANGELOG.md](CHANGELOG.md) | Änderungen je Version |
 
 ## Schnellstart (Entwicklung)
