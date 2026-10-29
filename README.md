@@ -1,19 +1,18 @@
-# Vireo
+# Planquadro
 
 **Einsatz- und Teamplanung für Service-Organisationen**
-*Field & Onsite Service Planning Platform · „Schnell geplant. Sicher im Einsatz.“*
+*Kurz: **PQ** · „Jeder Einsatz an seinem Platz.“*
 
-Vireo plant Einsätze, Teams, Schichten und Abwesenheiten von Außendienst- und
+Planquadro plant Einsätze, Teams, Schichten und Abwesenheiten von Außendienst- und
 Vor-Ort-Teams – im Browser, als iOS-/Android-App, selbst betrieben oder als Cloud-Dienst
 mit mehreren Mandanten. Mehrere Planer arbeiten gleichzeitig, ohne sich gegenseitig zu
 überschreiben; vertrauliche Abwesenheitsgründe sehen nur Berechtigte.
 
-Der Name: Der Vireo ist ein kleiner, flinker Singvogel, ständig unterwegs und immer
-dort, wo er gebraucht wird – wie ein gut geplantes Serviceteam.
+Der Name kommt vom *Planquadrat*: Herzstück ist die Planungsmatrix aus Mitarbeitenden und
+Tagen – jedes Feld ein Einsatz, jeder Einsatz an seinem Platz.
 
-Vireo ist aus der bewährten Anwendung *Einsatzplanung* (v6.9.0) entstanden und erweitert
-sie, ohne bestehende Abläufe, Daten oder Rechte zu verändern. In der Entwicklungsphase
-hieß das Projekt „OpsPilot“; alte Variablennamen (`OPSPILOT_*`) gelten weiter.
+Planquadro ist aus der bewährten Anwendung *Einsatzplanung* (v6.9.0) entstanden und erweitert
+sie, ohne bestehende Abläufe, Daten oder Rechte zu verändern.
 
 > Status: Entwicklungsstand, **noch nicht für den Produktivbetrieb freigegeben**.
 
@@ -34,14 +33,14 @@ hieß das Projekt „OpsPilot“; alte Variablennamen (`OPSPILOT_*`) gelten weit
 - **Betrieb:** Docker-Image und Compose-Stack (Self-Hosting und SaaS), Healthchecks,
   verschlüsselte Backups mit externen Zielen, Aufbewahrung, automatischem Restore-Test
   und Notfallhandbuch
-- **Oberfläche:** Vireo-Designsystem, Dark Mode, Tastaturbedienung der Planungsmatrix,
+- **Oberfläche:** Planquadro-Designsystem, Dark Mode, Tastaturbedienung der Planungsmatrix,
   Barrierefreiheit (WCAG 2.2 AA), deutlich schnellere große Pläne
 
 ## Dokumentation
 
 | Dokument | Inhalt |
 |---|---|
-| [docs/VIREO_ROADMAP.md](docs/VIREO_ROADMAP.md) | Phasen, Befunde, Entscheidungen |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Phasen, Befunde, Entscheidungen |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Ist- und Zielarchitektur, Mandanten, Mobile-Entscheidung |
 | [docs/PERMISSIONS.md](docs/PERMISSIONS.md) | Berechtigungsmodell |
 | [docs/MIGRATION_PLAN.md](docs/MIGRATION_PLAN.md) | Update bestehender Installationen |
@@ -60,7 +59,7 @@ hieß das Projekt „OpsPilot“; alte Variablennamen (`OPSPILOT_*`) gelten weit
 
 ```bash
 composer install
-export VIREO_DB_HOST=127.0.0.1 VIREO_DB_NAME=vireo VIREO_DB_USER=vireo VIREO_DB_PASS=…
+export PQ_DB_HOST=127.0.0.1 PQ_DB_NAME=planquadro PQ_DB_USER=planquadro PQ_DB_PASS=…
 php bin/migrate.php up
 php public/install.php
 php -S 127.0.0.1:8080 -t public tests/router.php

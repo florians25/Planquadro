@@ -30,7 +30,7 @@ export const DEFAULT_PREFS: AppPrefs = {
   branding: null,
 };
 
-const KEY = 'vireo.prefs.v1';
+const KEY = 'planquadro.prefs.v1';
 
 export async function loadPrefs(): Promise<AppPrefs> {
   try {

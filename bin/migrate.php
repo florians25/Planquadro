@@ -1,6 +1,6 @@
 <?php
 /**
- * Vireo – Datenbank-Migrationen
+ * Planquadro – Datenbank-Migrationen
  * --------------------------------------------------------------------------
  * Aufruf (CLI):
  *   php bin/migrate.php status                 zeigt angewendete/offene Migrationen
@@ -9,7 +9,7 @@
  *                                              bis einschließlich dieser Altversion als
  *                                              migriert, ohne SQL auszuführen
  *
- * Optionen (SaaS, VIREO_MODE=saas):
+ * Optionen (SaaS, PQ_MODE=saas):
  *   --tenant=<slug>     Datenbank dieses Mandanten
  *   --all-tenants       nacheinander alle aktiven Mandanten (bricht beim ersten Fehler ab)
  *   --platform          Plattform-Datenbank (migrations/platform/*.sql)
@@ -19,7 +19,7 @@
  *   2. migrations/migrate_v*.sql       Alt-Migrationen (Einsatzplanung bis v6.9.0),
  *                                      tolerant: "Spalte/Index existiert schon" wird
  *                                      übersprungen, wie bisher mit "mysql --force"
- *   3. migrations/vireo/*.sql       neue Migrationen, strikt (Fehler = Abbruch)
+ *   3. migrations/app/*.sql       neue Migrationen, strikt (Fehler = Abbruch)
  *
  * Warum "baseline": Die Alt-Migrationen sind NICHT gefahrlos wiederholbar
  * (z. B. setzen migrate_v6_3_1/v6_9_0 Rollenrechte zurück, v5_2_7 verschiebt
@@ -35,7 +35,7 @@ $opts = []; $args = [];
 foreach (array_slice($argv, 1) as $a) {
     if (preg_match('/^--([a-z-]+)(?:=(.*))?$/', $a, $m)) $opts[$m[1]] = $m[2] ?? true; else $args[] = $a;
 }
-if (!empty($opts['tenant'])) putenv('VIREO_TENANT=' . $opts['tenant']);
+if (!empty($opts['tenant'])) putenv('PQ_TENANT=' . $opts['tenant']);
 
 require_once __DIR__ . '/../app/config/database.php';
 require_once __DIR__ . '/../app/lib/SqlSplitter.php';
@@ -84,11 +84,31 @@ function tableExists(PDO $db, string $t): bool {
 function ensureVersionTable(PDO $db): void {
     $db->exec("CREATE TABLE IF NOT EXISTS `schema_migrations` (
         `version`    VARCHAR(190) NOT NULL PRIMARY KEY,
-        `kind`       ENUM('base','legacy','opspilot') NOT NULL,   /* 'opspilot' = Migrationen aus migrations/vireo (Wert bleibt aus Kompatibilität) */
+        `kind`       ENUM('base','legacy','app') NOT NULL,   /* app = migrations/app und migrations/platform */
         `checksum`   CHAR(64) NOT NULL,
         `applied_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         `executed`   TINYINT(1) NOT NULL DEFAULT 1 COMMENT '0 = per baseline markiert'
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    upgradeVersionTable($db);
+}
+
+/**
+ * Versionstabellen aus der Vorab-Entwicklung (nie veröffentlicht) auf die
+ * endgültigen Bezeichnungen heben: Art 'app', Versionen 'pq_*'. Die
+ * Prüfsummen dieser Einträge werden dabei einmalig neu berechnet, weil sich
+ * nur die Kopfkommentare der Migrationsdateien geändert haben.
+ */
+function upgradeVersionTable(PDO $db): void {
+    $col = $db->query("SHOW COLUMNS FROM schema_migrations LIKE 'kind'")->fetch();
+    if (!$col || strpos((string)$col['Type'], "'app'") !== false) return;
+    global $root, $platform;
+    $db->exec("ALTER TABLE schema_migrations MODIFY `kind` VARCHAR(20) NOT NULL");
+    $db->exec("UPDATE schema_migrations SET version = CONCAT('pq_', SUBSTRING(version, 4)) WHERE version LIKE 'op\\_%'");
+    $db->exec("UPDATE schema_migrations SET kind = 'app' WHERE kind NOT IN ('base','legacy')");
+    $db->exec("ALTER TABLE schema_migrations MODIFY `kind` ENUM('base','legacy','app') NOT NULL");
+    $upd = $db->prepare('UPDATE schema_migrations SET checksum = ? WHERE version = ? AND kind = ?');
+    foreach (allMigrations($root, $platform) as $v => [$kind, $path]) if ($kind === 'app') $upd->execute([hash_file('sha256', $path), $v, 'app']);
+    out('  Versionstabelle auf neue Bezeichnungen umgestellt.');
 }
 
 /** Alle Migrationen in Ausführungsreihenfolge: [version => [kind, path]] */
@@ -97,16 +117,16 @@ function allMigrations(string $root, bool $platform = false): array {
         $list = [];
         $files = glob($root . '/migrations/platform/*.sql') ?: [];
         sort($files, SORT_STRING);
-        foreach ($files as $f) $list['pf_' . basename($f, '.sql')] = ['opspilot', $f];
+        foreach ($files as $f) $list['pf_' . basename($f, '.sql')] = ['app', $f];
         return $list;
     }
     $list = ['0000_base' => ['base', $root . '/database.sql']];
     $legacy = glob($root . '/migrations/migrate_v*.sql') ?: [];
     usort($legacy, function ($a, $b) { return strnatcmp(basename($a), basename($b)); });
     foreach ($legacy as $f) $list[basename($f, '.sql')] = ['legacy', $f];
-    $new = glob($root . '/migrations/vireo/*.sql') ?: [];
+    $new = glob($root . '/migrations/app/*.sql') ?: [];
     sort($new, SORT_STRING);
-    foreach ($new as $f) $list['op_' . basename($f, '.sql')] = ['opspilot', $f];
+    foreach ($new as $f) $list['pq_' . basename($f, '.sql')] = ['app', $f];
     return $list;
 }
 
@@ -152,7 +172,7 @@ function runFile(PDO $db, string $version, string $kind, string $path): void {
     $skipped = 0; $n = 0;
     foreach (SqlSplitter::split($sql) as $stmt) {
         $n++;
-        if ($kind !== 'opspilot') $stmt = legacyCompat($db, $stmt);
+        if ($kind !== 'app') $stmt = legacyCompat($db, $stmt);
         try {
             /* Manche Statements (OPTIMIZE, CALL) liefern Ergebnismengen, die
                vollständig gelesen werden müssen. */
@@ -180,7 +200,7 @@ case 'status':
     }
     foreach ($all as $v => [$kind, $path]) {
         $st = isset($applied[$v]) ? ($applied[$v]['executed'] ? 'angewendet' : 'baseline') : 'OFFEN';
-        if (isset($applied[$v]) && $applied[$v]['executed'] && $applied[$v]['checksum'] !== hash_file('sha256', $path) && $kind === 'opspilot') {
+        if (isset($applied[$v]) && $applied[$v]['executed'] && $applied[$v]['checksum'] !== hash_file('sha256', $path) && $kind === 'app') {
             $st .= ' (DATEI GEÄNDERT!)';
         }
         out(sprintf('%-12s %-9s %s', $st, $kind, $v));
@@ -197,7 +217,7 @@ case 'baseline':
     $ins = $db->prepare('INSERT IGNORE INTO schema_migrations(version, kind, checksum, executed) VALUES(?,?,?,0)');
     $count = 0;
     foreach ($all as $v => [$kind, $path]) {
-        if ($kind === 'opspilot') continue;
+        if ($kind === 'app') continue;
         if ($kind === 'legacy') {
             $ver = preg_replace('/^migrate_(v[\d_]+?)(_[a-z].*)?$/', '$1', $v);
             if (strnatcmp($ver, $upTo) > 0) continue;
@@ -224,11 +244,11 @@ case 'up':
     $pending = array_diff_key($all, $applied);
     if (!$fresh) unset($pending['0000_base']);
     if (!$pending) { out('Datenbank ist aktuell.'); exit(0); }
-    $lock = $db->query("SELECT GET_LOCK('vireo_migrate', 30)")->fetchColumn();
+    $lock = $db->query("SELECT GET_LOCK('planquadro_migrate', 30)")->fetchColumn();
     if ((int)$lock !== 1) fail('Eine andere Migration läuft bereits.');
     out(count($pending) . ' offene Migration(en):');
     foreach ($pending as $v => [$kind, $path]) runFile($db, $v, $kind, $path);
-    $db->query("SELECT RELEASE_LOCK('vireo_migrate')");
+    $db->query("SELECT RELEASE_LOCK('planquadro_migrate')");
     out('Fertig.');
     exit(0);
 

@@ -16,11 +16,11 @@ export const isNative = Capacitor.isNativePlatform();
 export const platform = Capacitor.getPlatform() as DevicePlatform;
 
 export function deviceName(): string {
-  if (platform === 'ios') return 'Vireo iOS-App';
-  if (platform === 'android') return 'Vireo Android-App';
+  if (platform === 'ios') return 'Planquadro iOS-App';
+  if (platform === 'android') return 'Planquadro Android-App';
   const ua = navigator.userAgent;
   const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : 'Browser';
-  return `Vireo Web (${browser})`;
+  return `Planquadro Web (${browser})`;
 }
 
 // ------------------------------------------------------------------ Netzwerk
@@ -73,7 +73,7 @@ export async function authenticateBiometric(reason: string): Promise<boolean> {
       cancelTitle: 'Abbrechen',
       iosFallbackTitle: 'Code eingeben',
       allowDeviceCredential: true,
-      androidTitle: 'Vireo entsperren',
+      androidTitle: 'Planquadro entsperren',
       androidSubtitle: reason,
     });
     return true;

@@ -32,10 +32,10 @@ export type SessionStatus = 'needs_server' | 'needs_login' | 'locked' | 'ready' 
 const RT_KEY = 'refresh_token';
 const CACHE_KEY_NATIVE = 'cache_key';
 const CACHE_KEY_WEB = 'cache-key';
-const PKCE_KEY = 'vireo.pkce';
+const PKCE_KEY = 'planquadro.pkce';
 /** Nach so langer Zeit im Hintergrund ist bei aktivierter Biometrie erneut zu entsperren. */
 export const LOCK_AFTER_MS = 5 * 60 * 1000;
-export const NATIVE_REDIRECT_URI = 'vireo://auth';
+export const NATIVE_REDIRECT_URI = 'planquadro://auth';
 
 export class AppLockedError extends ApiError {
   constructor() {
@@ -407,7 +407,7 @@ export class Session {
       await this.toLogin('Biometrie ist auf diesem Gerät nicht verfügbar. Bitte melde dich mit deinem Passwort an.');
       return false;
     }
-    const ok = await authenticateBiometric('Zum Entsperren von Vireo');
+    const ok = await authenticateBiometric('Zum Entsperren von Planquadro');
     if (!ok) return false;
     await this.afterUnlock();
     this.emit();
@@ -422,7 +422,7 @@ export class Session {
     }
     const info = await biometryInfo();
     if (!info.available) return { ok: false, message: info.reason || 'Auf diesem Gerät ist keine Biometrie verfügbar.' };
-    const ok = await authenticateBiometric(`${info.label} für Vireo aktivieren`);
+    const ok = await authenticateBiometric(`${info.label} für Planquadro aktivieren`);
     if (!ok) return { ok: false, message: 'Bestätigung abgebrochen.' };
     this.prefs.biometric = true;
     await this.savePrefs();

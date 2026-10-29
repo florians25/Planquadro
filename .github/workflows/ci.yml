@@ -32,7 +32,7 @@ jobs:
       - name: Keine Laufzeit-DDL in Requests
         run: |
           if grep -rnE "exec\((\"|')\s*(ALTER|CREATE) TABLE" public; then
-            echo "::error::Schemaänderungen gehören in migrations/vireo/"; exit 1; fi
+            echo "::error::Schemaänderungen gehören in migrations/app/"; exit 1; fi
 
   test:
     name: Tests (PHP ${{ matrix.php }}, ${{ matrix.db }})
@@ -56,10 +56,10 @@ jobs:
           --health-cmd="mysqladmin ping -h 127.0.0.1 -proot || healthcheck.sh --connect"
           --health-interval=5s --health-timeout=5s --health-retries=20
     env:
-      VIREO_TEST_DB_HOST: 127.0.0.1
-      VIREO_TEST_DB_PORT: "3306"
-      VIREO_TEST_DB_USER: root
-      VIREO_TEST_DB_PASS: root
+      PQ_TEST_DB_HOST: 127.0.0.1
+      PQ_TEST_DB_PORT: "3306"
+      PQ_TEST_DB_USER: root
+      PQ_TEST_DB_PASS: root
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -82,7 +82,7 @@ jobs:
         run: node --test tests/js/escape.test.mjs
       - name: Server-Log bei Fehlern
         if: failure()
-        run: cat /tmp/vireo-test-server.log || true
+        run: cat /tmp/planquadro-test-server.log || true
 
   mobile:
     name: Mobile-App (Typecheck, Tests, Build)

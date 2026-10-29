@@ -1,5 +1,5 @@
 <?php
-namespace Vireo\Tests\Unit;
+namespace Planquadro\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
@@ -50,11 +50,10 @@ final class BackupFormatTest extends TestCase
     {
         $t = self::at('2026-10-29 02:30:05');
         $n = \Backup::archiveName('acme-gmbh', 'scheduled', $t);
-        $this->assertSame('vireo_acme-gmbh_20261029-023005Z_scheduled.opbak', $n);
+        $this->assertSame('planquadro_acme-gmbh_20261029-023005Z_scheduled.pqbak', $n);
         $this->assertSame(['scope' => 'acme-gmbh', 'time' => $t, 'kind' => 'scheduled'], \Backup::parseName($n));
         $this->assertSame('_platform', \Backup::parseName(\Backup::archiveName('_platform', 'manual', $t))['scope']);
-        $this->assertSame('acme-gmbh', \Backup::parseName('opspilot_acme-gmbh_20261029-023005Z_scheduled.opbak')['scope'], 'Name aus der Entwicklungsphase');
-        foreach (['backup_auto_2025.epbak', 'vireo_x_20261029-023005Z_manual.opbak.part', '../vireo_a_b.opbak', 'vireo_Acme_20261029-023005Z_manual.opbak'] as $bad) {
+        foreach (['backup_auto_2025.epbak', 'planquadro_x_20261029-023005Z_manual.pqbak.part', '../planquadro_a_b.pqbak', 'planquadro_Acme_20261029-023005Z_manual.pqbak'] as $bad) {
             $this->assertNull(\Backup::parseName($bad), $bad);
         }
     }
@@ -122,17 +121,16 @@ final class BackupFormatTest extends TestCase
     /**
      * AWS Signature V4: Referenzwerte mit botocore 1.x (S3SigV4Auth) für dieselben
      * Eingaben erzeugt – Pfad mit Sonderzeichen, Port, Query-Parameter.
-     * Die Eingaben (Präfix "opspilot") gehören zum festen Referenzvektor und bleiben unverändert.
      */
     public function testS3SignatureMatchesReferenceImplementation(): void
     {
-        $t = new \BackupS3Target('https://s3.example.test:8443', 'eu-central-1', 'bucket-1', 'opspilot', 'AKIDEXAMPLE',
+        $t = new \BackupS3Target('https://s3.example.test:8443', 'eu-central-1', 'bucket-1', 'planquadro', 'AKIDEXAMPLE',
             'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY', true, gmmktime(12, 0, 0, 10, 29, 2026));
-        $h = $t->sign('PUT', 's3.example.test', '/bucket-1/opspilot/default/a b+c.opbak', ['x-id' => 'PutObject'], [], hash('sha256', 'hello opspilot'));
+        $h = $t->sign('PUT', 's3.example.test', '/bucket-1/planquadro/default/a b+c.pqbak', ['x-id' => 'PutObject'], [], hash('sha256', 'hello planquadro'));
         $this->assertSame('AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20261029/eu-central-1/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, '
-            . 'Signature=52f85680d3b490fca331e47ea7401c926a8ed6f1fee587a0c8e868dc992f82eb', $h['authorization']);
+            . 'Signature=f6d0cdfb0d5af8b0e6ec3cb4cfd1ccbea34855e918c72262fa2cee5fdf934442', $h['authorization']);
         $this->assertSame('20261029T120000Z', $h['x-amz-date']);
-        $h = $t->sign('PUT', 's3.example.test', '/bucket-1/opspilot/default/abc.opbak', ['x-id' => 'PutObject'], [], hash('sha256', 'hello opspilot'));
-        $this->assertStringEndsWith('Signature=76bcd42798bfb9ccd24ef46b8a2d1d1c16fa58fe234abb5ee1273da98140e09d', $h['authorization']);
+        $h = $t->sign('PUT', 's3.example.test', '/bucket-1/planquadro/default/abc.pqbak', ['x-id' => 'PutObject'], [], hash('sha256', 'hello planquadro'));
+        $this->assertStringEndsWith('Signature=527dfa25517c456c2f1eb4d0e8812ea3f6d566f93b4c24e9e621f0f5bd003581', $h['authorization']);
     }
 }

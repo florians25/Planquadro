@@ -1,4 +1,4 @@
--- OpsPilot 0004 – Stammdaten: Kunden, Standorte, Qualifikationen
+-- Planquadro 0004 – Stammdaten: Kunden, Standorte, Qualifikationen
 -- Nur additiv. Einsatzcodes (plan_areas) können optional einem Kunden und
 -- einem Standort zugeordnet werden; Mitarbeiter erhalten Qualifikationen.
 

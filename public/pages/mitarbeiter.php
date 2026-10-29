@@ -377,7 +377,7 @@ elseif(!empty($u['exit_date'])&&$u['exit_date']<$today)$uStatus='exited';
 <div class="mh"><h3>Zugangskarte</h3><button class="mx" onclick="cMod('cardMod')">&times;</button></div>
 <div class="mb" id="cardContent">
 <div class="access-card" id="accessCard">
-  <div class="ac-head">Vireo Einsatzplanung</div>
+  <div class="ac-head">Planquadro Einsatzplanung</div>
   <div class="ac-sub">Zugangsdaten</div>
   <div class="ac-row"><span class="ac-label">Name:</span><span class="ac-val" id="cardName"></span></div>
   <div class="ac-row"><span class="ac-label">Benutzername:</span><span class="ac-val ac-mono" id="cardUser"></span></div>

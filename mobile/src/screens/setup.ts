@@ -11,7 +11,7 @@ export function renderSetup(root: HTMLElement, session: Session): void {
     <div class="auth-card">
       <div class="auth-head">
         <img src="./icons/icon.svg" alt="" width="64" height="64" class="auth-logo">
-        <h1>Vireo</h1>
+        <h1>Planquadro</h1>
         <p class="muted">Einsatzplanung für unterwegs</p>
       </div>
       <form id="setup-form" class="form" novalidate>
@@ -19,14 +19,14 @@ export function renderSetup(root: HTMLElement, session: Session): void {
         <div class="field">
           <label for="server">Server-Adresse</label>
           <input id="server" name="server" type="url" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false"
-            placeholder="https://vireo.firma.de" required value="${prev}" aria-describedby="server-hint">
+            placeholder="https://planquadro.firma.de" required value="${prev}" aria-describedby="server-hint">
           <p class="hint" id="server-hint">Die Adresse erhältst du von deiner Planung bzw. Administration.</p>
         </div>
         <div class="field">
           <label for="tenant">Mandanten-Kürzel <span class="muted">(optional)</span></label>
           <input id="tenant" name="tenant" type="text" autocomplete="organization" autocapitalize="off" spellcheck="false"
             placeholder="z. B. acme" value="${session.prefs.tenant ?? ''}" aria-describedby="tenant-hint">
-          <p class="hint" id="tenant-hint">Nur nötig, wenn dein Unternehmen Vireo als Cloud-Dienst über eine gemeinsame Adresse nutzt.</p>
+          <p class="hint" id="tenant-hint">Nur nötig, wenn dein Unternehmen Planquadro als Cloud-Dienst über eine gemeinsame Adresse nutzt.</p>
         </div>
         <button type="submit" class="btn btn-primary btn-block">Weiter</button>
       </form>
@@ -53,7 +53,7 @@ export function renderSetup(root: HTMLElement, session: Session): void {
           ? e.message
           : (() => {
               const m = messageOf(e);
-              return m === 'Der Eintrag wurde nicht gefunden.' ? 'Unter dieser Adresse wurde keine Vireo-API (v1) gefunden.' : m;
+              return m === 'Der Eintrag wurde nicht gefunden.' ? 'Unter dieser Adresse wurde keine Planquadro-API (v1) gefunden.' : m;
             })();
       errBox.innerHTML = formError(msg).value;
       btn.disabled = false;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Vireo Einsatzplanung – Abwesenheiten   v6.9.0
+ * Planquadro Einsatzplanung – Abwesenheiten   v6.9.0
  *
  * Copyright (c) 2026 Florian-Fynn Scheibel. Alle Rechte vorbehalten.
  *

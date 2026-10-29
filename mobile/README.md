@@ -1,4 +1,4 @@
-# Vireo App (iOS, Android, PWA)
+# Planquadro App (iOS, Android, PWA)
 
 Mobile App für Mitarbeitende: eigener Plan, Einsatzdetails, Teamübersicht, Abwesenheiten,
 Mitteilungen – mit Offline-Lesemodus, Push und optionaler biometrischer Entsperrung.
@@ -28,8 +28,8 @@ npm run dev            # http://localhost:5173/?mock=1
   mit Hinweis „Offline – Stand: …“ angezeigt.
 
 Gegen einen echten Server: beim ersten Start die Server-Adresse eingeben (z. B.
-`https://vireo.firma.de`; `/api/v1/` wird ergänzt) und bei SaaS mit zentralem Host
-optional das Mandanten-Kürzel (Header `X-Vireo-Tenant`).
+`https://planquadro.firma.de`; `/api/v1/` wird ergänzt) und bei SaaS mit zentralem Host
+optional das Mandanten-Kürzel (Header `X-PQ-Tenant`).
 
 ## Befehle
 
@@ -48,7 +48,7 @@ optional das Mandanten-Kürzel (Header `X-Vireo-Tenant`).
 ```
 mobile/
 ├── index.html                 CSP, Manifest, lang="de"
-├── capacitor.config.ts        App-ID de.vireo.app, Name „Vireo“
+├── capacitor.config.ts        App-ID de.planquadro.app, Name „Planquadro“
 ├── vite.config.ts             Build, Vitest-Konfiguration, Service-Worker-Generator
 ├── public/                    manifest.webmanifest, Icons
 ├── scripts/gen-icons.mjs      Platzhalter-Icons ohne Abhängigkeiten
@@ -144,7 +144,7 @@ Prinzipien:
 
 Erscheint, wenn `GET config` → `auth.oidc.enabled` und `authorize_url` gesetzt sind.
 Ablauf: Authorization Code + PKCE (S256) im **System-Browser** (`@capacitor/browser`),
-Rücksprung über `vireo://auth?code=…&state=…` (Android Intent-Filter, iOS
+Rücksprung über `planquadro://auth?code=…&state=…` (Android Intent-Filter, iOS
 `CFBundleURLTypes`), `state` wird geprüft, dann `POST auth/oidc/token` mit `code`,
 `code_verifier`, `redirect_uri`. `response_type`, `scope` (Standard `openid profile`),
 `redirect_uri`, `code_challenge(_method)` und `state` ergänzt die App; `client_id` muss in
@@ -194,12 +194,12 @@ Ablauf: Berechtigung anfragen → Token von FCM (Android) bzw. APNs (iOS) →
 → `GET sync`; Tippen auf die Nachricht öffnet „Mein Plan“.
 
 **Android (FCM):** In der Firebase-Konsole ein Projekt anlegen, Android-App mit Paketname
-`de.vireo.app` registrieren, `google-services.json` herunterladen und nach
+`de.planquadro.app` registrieren, `google-services.json` herunterladen und nach
 `android/app/google-services.json` legen. Das Gradle-Plugin wird nur angewandt, wenn die
 Datei existiert. Serverseitig wird ein FCM-Dienstkonto (HTTP v1 API) benötigt.
 
 **iOS (APNs):** Im Apple-Developer-Portal einen **APNs-Auth-Key (.p8)** erzeugen; Key-ID,
-Team-ID und Bundle-ID `de.vireo.app` erhält das Backend. Die App liefert das rohe
+Team-ID und Bundle-ID `de.planquadro.app` erhält das Backend. Die App liefert das rohe
 APNs-Geräte-Token (`provider: "apns"`).
 
 > **`google-services.json`, `GoogleService-Info.plist`, `.p8`-Schlüssel, Keystores und
@@ -213,7 +213,7 @@ APNs-Geräte-Token (`provider: "apns"`).
 - [ ] Finale App-Icons und Splash-Screens (z. B. `npx @capacitor/assets generate`) statt Platzhalter
 - [ ] `npm run test` und `npm run build` grün; `npx cap sync`
 - [ ] Push mit Produktions-FCM/APNs getestet (`aps-environment` = production beim Archivieren)
-- [ ] OIDC-Rücksprung `vireo://auth` beim Identity Provider registriert
+- [ ] OIDC-Rücksprung `planquadro://auth` beim Identity Provider registriert
 - [ ] Datenschutzerklärung-URL, Datenschutz-Angaben (App Store „App Privacy“, Play „Data safety“):
       keine Tracking-/Analysedaten; verarbeitet werden Name, Dienstplan, Abwesenheiten (auf Gerät verschlüsselt)
 - [ ] Exportkonformität: nur Standard-Kryptografie (`ITSAppUsesNonExemptEncryption = false`)
@@ -244,6 +244,6 @@ App-Shell, niemals API-Antworten.
 
 - **CORS:** Die App ruft die API per `fetch` aus der WebView auf. Erlaubte Origins:
   `https://localhost` (Android), `capacitor://localhost` (iOS) und der Ursprung der PWA.
-  Benötigte Header: `Authorization`, `Content-Type`, `X-Vireo-Tenant`; Preflight `OPTIONS`.
+  Benötigte Header: `Authorization`, `Content-Type`, `X-PQ-Tenant`; Preflight `OPTIONS`.
 - `GET config`/`branding/logo` müssen ohne Token und mit CORS erreichbar sein.
 - `POST devices` sollte je Token idempotent sein (die App registriert bei jedem Start).

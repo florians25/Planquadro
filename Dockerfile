@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
-# Vireo – Container-Image (PHP 8.3 + Apache)
+# Planquadro – Container-Image (PHP 8.3 + Apache)
 # ---------------------------------------------------------------------------
-# Bauen:   docker build -t vireo/app .
+# Bauen:   docker build -t planquadro/app .
 #          (bei Docker-Hub-Limits: --build-arg BASE=mirror.gcr.io/library/php:8.3-apache)
 # Läuft als www-data (uid 33) auf Port 8080; DocumentRoot = public/, dadurch
 # greift public/.htaccess unverändert. Persistente Daten unter /data
@@ -33,11 +33,11 @@ RUN set -eux; \
 # ---------------------------------------------------------------------------
 FROM ${BASE} AS runtime
 ARG INSTALL_RCLONE=1
-ARG VIREO_VERSION=dev
-LABEL org.opencontainers.image.title="Vireo" \
-      org.opencontainers.image.description="Vireo – Einsatz-, Team- und Abwesenheitsplanung" \
-      org.opencontainers.image.version="${VIREO_VERSION}" \
-      org.opencontainers.image.source="https://github.com/florians25/vireo"
+ARG PQ_VERSION=dev
+LABEL org.opencontainers.image.title="Planquadro" \
+      org.opencontainers.image.description="Planquadro – Einsatz-, Team- und Abwesenheitsplanung" \
+      org.opencontainers.image.version="${PQ_VERSION}" \
+      org.opencontainers.image.source="https://github.com/florians25/planquadro"
 
 COPY --from=ext-build /runtime-packages.txt /tmp/runtime-packages.txt
 COPY --from=ext-build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
@@ -56,14 +56,14 @@ RUN set -eux; \
     rm -f /etc/apache2/ports.conf && touch /etc/apache2/ports.conf; \
     cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
 
-COPY docker/apache/vireo.conf /etc/apache2/sites-available/vireo.conf
-COPY docker/apache/security.conf /etc/apache2/conf-available/vireo-security.conf
-COPY docker/php/vireo.ini /usr/local/etc/php/conf.d/zz-vireo.ini
+COPY docker/apache/planquadro.conf /etc/apache2/sites-available/planquadro.conf
+COPY docker/apache/security.conf /etc/apache2/conf-available/planquadro-security.conf
+COPY docker/php/planquadro.ini /usr/local/etc/php/conf.d/zz-planquadro.ini
 RUN set -eux; \
-    a2ensite vireo; a2disconf security; a2enconf vireo-security; \
+    a2ensite planquadro; a2disconf security; a2enconf planquadro-security; \
     # vom Entrypoint zur Laufzeit geschrieben (Vertrauen in den Reverse Proxy)
-    touch /etc/apache2/conf-enabled/zz-vireo-runtime.conf; \
-    chown www-data:www-data /etc/apache2/conf-enabled/zz-vireo-runtime.conf; \
+    touch /etc/apache2/conf-enabled/zz-planquadro-runtime.conf; \
+    chown www-data:www-data /etc/apache2/conf-enabled/zz-planquadro-runtime.conf; \
     mkdir -p /data/storage /data/backups /data/sessions; chmod 0700 /data/sessions; \
     chown -R www-data:www-data /data; chmod 0750 /data
 
@@ -78,9 +78,9 @@ RUN set -eux; \
     chown www-data:www-data /var/www/html/app/backups; chmod 0750 /var/www/html/app/backups; \
     php -l public/index.php >/dev/null; php -l app/lib/Backup.php >/dev/null
 
-ENV VIREO_STORAGE_DIR=/data/storage \
-    VIREO_BACKUP_DIR=/data/backups \
-    VIREO_TIMEZONE=Europe/Berlin \
+ENV PQ_STORAGE_DIR=/data/storage \
+    PQ_BACKUP_DIR=/data/backups \
+    PQ_TIMEZONE=Europe/Berlin \
     TZ=Europe/Berlin \
     APACHE_LISTEN_PORT=8080
 

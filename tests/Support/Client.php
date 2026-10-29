@@ -1,5 +1,5 @@
 <?php
-namespace Vireo\Tests\Support;
+namespace Planquadro\Tests\Support;
 
 /**
  * Minimaler HTTP-Client mit eigener Cookie-Session (ein Objekt = ein Browser).
@@ -17,7 +17,7 @@ final class Client
 
     public function __construct()
     {
-        $this->jar = tempnam(sys_get_temp_dir(), 'opc');
+        $this->jar = tempnam(sys_get_temp_dir(), 'pqc');
     }
 
     public function __destruct() { @unlink($this->jar); }

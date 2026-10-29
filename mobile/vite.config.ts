@@ -23,7 +23,7 @@ function listFiles(dir: string): string[] {
  */
 function serviceWorkerPlugin(): Plugin {
   return {
-    name: 'vireo-service-worker',
+    name: 'planquadro-service-worker',
     apply: 'build',
     generateBundle(_options, bundle) {
       const publicDir = new URL('./public', import.meta.url).pathname;

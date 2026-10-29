@@ -1,4 +1,4 @@
-package de.vireo.app;
+package de.planquadro.app;
 
 import com.getcapacitor.BridgeActivity;
 

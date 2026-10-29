@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Erzeugt den Dark-Mode-Teil von public/assets/css/vireo-theme.css aus
+Erzeugt den Dark-Mode-Teil von public/assets/css/planquadro-theme.css aus
 public/assets/css/style.css.
 
 Warum generiert: style.css enthält viele fest verdrahtete helle Farben
@@ -16,7 +16,7 @@ import re, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / 'public/assets/css/style.css'
-DST = ROOT / 'public/assets/css/vireo-theme.css'
+DST = ROOT / 'public/assets/css/planquadro-theme.css'
 BEGIN, END = '/* >>> generated dark mode (tools/gen-dark-css.py) >>> */', '/* <<< generated dark mode <<< */'
 PFX = 'html[data-theme="dark"]'
 

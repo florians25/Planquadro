@@ -6,7 +6,7 @@ require_once __DIR__ . '/../app/lib/TenantConfig.php';
 require_once __DIR__ . '/../app/lib/Oidc.php';
 $oidcOn = oidcEnabled();
 $pwAllowed = oidcPasswordLoginAllowed();
-$brandName = (string)tcfg('branding.name', 'Vireo');
+$brandName = (string)tcfg('branding.name', 'Planquadro');
 if (isset($_SESSION['user_id']) && empty($_SESSION['must_change_password'])) { header('Location: dashboard'); exit; }
 
 $err = ''; $showChange = !empty($_SESSION['must_change_password']); $pwExpired = !empty($_SESSION['pw_expired']);
@@ -274,7 +274,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <?php endif; ?>
     <?php endif; ?>
   </div>
-  <div class="lf"><?php echo htmlspecialchars($brandName); ?> · Vireo</div>
+  <div class="lf"><?php echo htmlspecialchars($brandName); ?> · Planquadro</div>
 </div>
 <script>
 /* Prevent double-submit */

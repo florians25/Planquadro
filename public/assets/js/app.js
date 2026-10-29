@@ -1,4 +1,4 @@
-/* === Vireo Einsatzplanung v6.1.8 – app.js === */
+/* === Planquadro Einsatzplanung v6.1.8 – app.js === */
 
 /* ============================================================
    CORE: Date helper – FIXES timezone/UTC bug

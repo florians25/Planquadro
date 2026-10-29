@@ -34,7 +34,7 @@ import type {
 } from './types';
 import { addDays, daysInMonth, eachDay, isIsoDate, isoWeek, isoWeekday, monthRange, parseIsoDate } from '../lib/dates';
 
-export const MOCK_BASE_URL = 'https://demo.vireo.invalid/api/v1/';
+export const MOCK_BASE_URL = 'https://demo.planquadro.invalid/api/v1/';
 
 interface Area {
   id: number;
@@ -250,7 +250,7 @@ export function createMockServer(opts: MockOptions = {}) {
   }
 
   async function handle(method: string, path: string, url: URL, headers: Headers, body: unknown): Promise<Response> {
-    if (opts.requireTenant && headers.get('X-Vireo-Tenant') !== opts.requireTenant) {
+    if (opts.requireTenant && headers.get('X-PQ-Tenant') !== opts.requireTenant) {
       return err(404, 'not_found', 'Mandant nicht gefunden.');
     }
     const route = `${method} ${path}`;
@@ -258,7 +258,7 @@ export function createMockServer(opts: MockOptions = {}) {
     if (route === 'GET config') {
       const c = structuredClone(configFx) as ConfigResponse;
       c.modules.approvals = state.approvals;
-      if (state.oidcEnabled) c.auth.oidc = { enabled: true, label: 'Mit Firmenkonto anmelden', authorize_url: 'https://login.demo.invalid/authorize?client_id=vireo-app' };
+      if (state.oidcEnabled) c.auth.oidc = { enabled: true, label: 'Mit Firmenkonto anmelden', authorize_url: 'https://login.demo.invalid/authorize?client_id=planquadro-app' };
       return json(200, c);
     }
     if (route === 'GET health') return json(200, { status: 'ok' });

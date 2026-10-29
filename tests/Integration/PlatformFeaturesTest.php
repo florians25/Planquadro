@@ -1,10 +1,10 @@
 <?php
-namespace Vireo\Tests\Integration;
+namespace Planquadro\Tests\Integration;
 
-use Vireo\Tests\Support\Client;
-use Vireo\Tests\Support\IntegrationTestCase;
-use Vireo\Tests\Support\Response;
-use Vireo\Tests\Support\TestEnv;
+use Planquadro\Tests\Support\Client;
+use Planquadro\Tests\Support\IntegrationTestCase;
+use Planquadro\Tests\Support\Response;
+use Planquadro\Tests\Support\TestEnv;
 
 /** TenantConfig (Branding, Module, Navigation, Widgets), Stammdaten, OIDC. */
 final class PlatformFeaturesTest extends IntegrationTestCase
@@ -15,7 +15,7 @@ final class PlatformFeaturesTest extends IntegrationTestCase
     protected function tearDown(): void
     {
         $this->db()->exec("DELETE FROM app_settings WHERE setting_key IN ('tenant_config') OR setting_key LIKE 'oidc_cache_%'");
-        $this->db()->exec("UPDATE app_settings SET setting_value='Vireo' WHERE setting_key='company_name'");
+        $this->db()->exec("UPDATE app_settings SET setting_value='Planquadro' WHERE setting_key='company_name'");
         $this->db()->exec("UPDATE app_settings SET setting_value='1' WHERE setting_key='approval_system_enabled'");
     }
 
@@ -149,10 +149,10 @@ final class PlatformFeaturesTest extends IntegrationTestCase
     {
         if (!self::$idp) {
             self::$idp = TestEnv::startExtraServer([], TestEnv::$root . '/tests/fixtures/fake_idp.php');
-            self::$app = TestEnv::startExtraServer(['VIREO_OIDC_ALLOW_HTTP' => '1']);
+            self::$app = TestEnv::startExtraServer(['PQ_OIDC_ALLOW_HTTP' => '1']);
         }
         /* self::$app: gleiche DB, eigener Server mit HTTP-Freigabe für den Test-IdP */
-        $cfg = ['security' => ['oidc' => ['enabled' => true, 'issuer' => self::$idp, 'client_id' => 'vireo-test', 'claim' => 'preferred_username',
+        $cfg = ['security' => ['oidc' => ['enabled' => true, 'issuer' => self::$idp, 'client_id' => 'planquadro-test', 'claim' => 'preferred_username',
             'label' => 'Mit Testkonto', 'allow_password_login' => $allowPassword, 'client_secret' => '', 'scopes' => 'openid']]];
         $this->db()->prepare("INSERT INTO app_settings(setting_key,setting_value) VALUES('tenant_config',?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)")->execute([json_encode($cfg)]);
         return [self::$app, self::$idp];

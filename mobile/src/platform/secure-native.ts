@@ -11,7 +11,7 @@ export class NativeSecureStore implements SecureStore {
   private init(): Promise<void> {
     if (!this.ready) {
       this.ready = (async () => {
-        await SecureStorage.setKeyPrefix('vireo_');
+        await SecureStorage.setKeyPrefix('planquadro_');
         await SecureStorage.setDefaultKeychainAccess(KeychainAccess.whenUnlockedThisDeviceOnly);
         await SecureStorage.setSynchronize(false); // kein iCloud-Schlüsselbund
       })();

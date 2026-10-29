@@ -1,4 +1,4 @@
--- OpsPilot 0002 – Änderungsprotokoll je Planzelle (Mitarbeiter, Tag)
+-- Planquadro 0002 – Änderungsprotokoll je Planzelle (Mitarbeiter, Tag)
 -- Jede Änderung an Entwürfen und jede Veröffentlichung wird mit altem und
 -- neuem Stand, Benutzer, Zeitpunkt und Quelle festgehalten. Nur additiv.
 

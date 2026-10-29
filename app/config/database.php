@@ -1,11 +1,11 @@
 <?php
 /**
- * Vireo – Datenbank-Konfiguration
+ * Planquadro – Datenbank-Konfiguration
  * --------------------------------------------------------------------------
  * In dieser Datei stehen KEINE Zugangsdaten. Sie werden in dieser Reihenfolge
  * gelesen (erste gefundene Quelle gewinnt):
- *   1. Umgebungsvariablen  VIREO_DB_HOST, VIREO_DB_PORT, VIREO_DB_NAME,
- *                          VIREO_DB_USER, VIREO_DB_PASS (jeweils auch als
+ *   1. Umgebungsvariablen  PQ_DB_HOST, PQ_DB_PORT, PQ_DB_NAME,
+ *                          PQ_DB_USER, PQ_DB_PASS (jeweils auch als
  *                          *_FILE für Docker-Secrets)
  *      (Docker/Compose, systemd, SetEnv im Webserver, Hosting-Panel)
  *   2. app/config/secrets.php  (Vorlage: secrets.sample.php, nie committen)
@@ -24,7 +24,7 @@ if (is_readable(__DIR__ . '/secrets.php')) {
     if (!is_array($__secrets)) $__secrets = [];
 }
 $__cfg = function (string $env, string $key, string $fallback = '') use ($__secrets): string {
-    $v = opsEnv('VIREO_' . $env);   /* inkl. *_FILE (Docker-Secrets) */
+    $v = opsEnv('PQ_' . $env);   /* inkl. *_FILE (Docker-Secrets) */
     if ($v !== '') return $v;
     if (isset($__secrets[$key]) && $__secrets[$key] !== '') return (string)$__secrets[$key];
     $v = getenv('CCKOE_' . $env);
@@ -35,7 +35,7 @@ $__cfg = function (string $env, string $key, string $fallback = '') use ($__secr
 if (!defined('DB_HOST')) {
     define('DB_HOST',    $__cfg('DB_HOST', 'host', 'localhost'));
     define('DB_PORT',    $__cfg('DB_PORT', 'port', '3306'));
-    define('DB_NAME',    $__cfg('DB_NAME', 'name', 'vireo'));
+    define('DB_NAME',    $__cfg('DB_NAME', 'name', 'planquadro'));
     define('DB_USER',    $__cfg('DB_USER', 'user'));
     define('DB_PASS',    $__cfg('DB_PASS', 'pass'));
     define('DB_CHARSET', 'utf8mb4');
@@ -61,7 +61,7 @@ function getDB(): PDO
         } catch (PDOException $e) {
             /* Fehlermeldung nur ins Server-Log – sie kann Hostnamen und
                Benutzernamen enthalten. */
-            error_log('Vireo DB connection failed: ' . $e->getMessage());
+            error_log('Planquadro DB connection failed: ' . $e->getMessage());
             if (PHP_SAPI === 'cli') throw $e;
             http_response_code(503);
             die('<div style="font-family:sans-serif;padding:2rem;text-align:center">

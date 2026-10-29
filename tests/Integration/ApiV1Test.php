@@ -1,10 +1,10 @@
 <?php
-namespace Vireo\Tests\Integration;
+namespace Planquadro\Tests\Integration;
 
-use Vireo\Tests\Support\Client;
-use Vireo\Tests\Support\IntegrationTestCase;
-use Vireo\Tests\Support\Response;
-use Vireo\Tests\Support\TestEnv;
+use Planquadro\Tests\Support\Client;
+use Planquadro\Tests\Support\IntegrationTestCase;
+use Planquadro\Tests\Support\Response;
+use Planquadro\Tests\Support\TestEnv;
 
 /** API v1 gemäß docs/API.md: Auth, Rechte, Vertraulichkeit, Sync, Push. */
 final class ApiV1Test extends IntegrationTestCase
@@ -63,7 +63,7 @@ final class ApiV1Test extends IntegrationTestCase
     public function testProtectedEndpointsRequireValidToken(): void
     {
         $this->assertSame(401, $this->api('GET', 'me')->status);
-        $this->assertSame('invalid_token', $this->api('GET', 'me', null, 'opa.manipuliert.xyz')->json()['error']['code']);
+        $this->assertSame('invalid_token', $this->api('GET', 'me', null, 'pqa.manipuliert.xyz')->json()['error']['code']);
         $t = $this->login('ma1');
         $this->assertSame('ma1', $t['user']['user']['username'], 'Login liefert das me-Objekt (docs/API.md)');
         $this->assertArrayHasKey('permissions', $t['user']);
@@ -74,7 +74,7 @@ final class ApiV1Test extends IntegrationTestCase
         [$p, $payload, $sig] = explode('.', $t['access_token']);
         $evil = json_decode(base64_decode(strtr($payload, '-_', '+/')), true);
         $evil['sub'] = $this->uid('admin');
-        $forged = 'opa.' . rtrim(strtr(base64_encode(json_encode($evil)), '+/', '-_'), '=') . '.' . $sig;
+        $forged = 'pqa.' . rtrim(strtr(base64_encode(json_encode($evil)), '+/', '-_'), '=') . '.' . $sig;
         $this->assertSame(401, $this->api('GET', 'me', null, $forged)->status);
     }
 
@@ -192,7 +192,7 @@ final class ApiV1Test extends IntegrationTestCase
     {
         $ma = $this->uid('ma1'); $d = $this->workday();
         $t = $this->login('ma1')['access_token'];
-        $dev = $this->api('POST', 'devices', ['platform' => 'android', 'provider' => 'ntfy', 'token' => 'vireo-test-topic-1', 'app_version' => '1.0.0'], $t);
+        $dev = $this->api('POST', 'devices', ['platform' => 'android', 'provider' => 'ntfy', 'token' => 'planquadro-test-topic-1', 'app_version' => '1.0.0'], $t);
         $this->assertSame(201, $dev->status, $dev->body);
         $cursor = $this->api('GET', 'sync', null, $t)->json()['cursor'];
         $tl = $this->as('tl');
@@ -212,13 +212,13 @@ final class ApiV1Test extends IntegrationTestCase
         $q = $this->db()->query('SELECT * FROM push_queue')->fetchAll();
         $this->assertCount(1, $q);
         $this->assertStringNotContainsString('krank', $q[0]['data']);
-        $log = sys_get_temp_dir() . '/vireo-fake-ntfy.jsonl';
+        $log = sys_get_temp_dir() . '/planquadro-fake-ntfy.jsonl';
         @unlink($log);
         $ntfy = TestEnv::startExtraServer([], TestEnv::$root . '/tests/fixtures/fake_ntfy.php');
-        [$rc, $out] = TestEnv::runCli(['bin/push-worker.php'], ['VIREO_NTFY_URL' => $ntfy]);
+        [$rc, $out] = TestEnv::runCli(['bin/push-worker.php'], ['PQ_NTFY_URL' => $ntfy]);
         $this->assertSame(0, $rc, $out);
         $msg = json_decode((string)file_get_contents($log), true);
-        $this->assertSame('vireo-test-topic-1', $msg['topic']);
+        $this->assertSame('planquadro-test-topic-1', $msg['topic']);
         $this->assertSame('Plan geändert', $msg['title']);
         $this->assertNotNull($this->db()->query('SELECT sent_at FROM push_queue')->fetchColumn());
     }

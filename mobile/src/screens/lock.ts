@@ -7,7 +7,7 @@ export function renderLock(root: HTMLElement, session: Session): void {
   root.innerHTML = html`<main class="auth" id="main" tabindex="-1">
     <div class="auth-card center">
       <div class="lock-icon">${icon('lock', 'ic ic-xl')}</div>
-      <h1>Vireo ist gesperrt</h1>
+      <h1>Planquadro ist gesperrt</h1>
       <p class="muted" id="lock-msg" role="status"></p>
       <button type="button" class="btn btn-primary btn-block" data-action="unlock">Entsperren</button>
       <button type="button" class="btn btn-ghost btn-block" data-action="logout">Abmelden</button>

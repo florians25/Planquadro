@@ -14,9 +14,9 @@ export function loginErrorMessage(e: unknown): string {
     case 'account_locked':
       return 'Dein Konto ist gesperrt. Bitte wende dich an deine Planung oder Administration.';
     case 'password_change_required':
-      return 'Du musst dein Passwort zuerst in der Vireo-Weboberfläche ändern. Melde dich danach hier mit dem neuen Passwort an.';
+      return 'Du musst dein Passwort zuerst in der Planquadro-Weboberfläche ändern. Melde dich danach hier mit dem neuen Passwort an.';
     case 'maintenance':
-      return `Vireo wird gerade gewartet. ${err.serverMessage ?? 'Bitte versuche es später erneut.'}`;
+      return `Planquadro wird gerade gewartet. ${err.serverMessage ?? 'Bitte versuche es später erneut.'}`;
     case 'rate_limited':
       return err.userMessage;
     case 'network_error':
@@ -29,7 +29,7 @@ export function loginErrorMessage(e: unknown): string {
 
 function brandHead(session: Session): SafeHtml {
   const b = session.config?.tenant ?? null;
-  const name = b?.name ?? session.prefs.branding?.name ?? 'Vireo';
+  const name = b?.name ?? session.prefs.branding?.name ?? 'Planquadro';
   const logo = b?.branding.logo_url ?? session.prefs.branding?.logo_url ?? null;
   const logoOk = logo && /^https:\/\//.test(logo);
   return html`<div class="auth-head">

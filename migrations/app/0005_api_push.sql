@@ -1,4 +1,4 @@
--- OpsPilot 0005 – API v1 (Mobile-Apps): Refresh-Tokens, Push-Geräte, Push-Warteschlange
+-- Planquadro 0005 – API v1 (Mobile-Apps): Refresh-Tokens, Push-Geräte, Push-Warteschlange
 -- Nur additiv.
 
 CREATE TABLE IF NOT EXISTS `api_refresh_tokens` (

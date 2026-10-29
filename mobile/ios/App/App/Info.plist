@@ -11,7 +11,7 @@
 		<string>de</string>
 	</array>
 	<key>CFBundleDisplayName</key>
-	<string>Vireo</string>
+	<string>Planquadro</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -26,15 +26,15 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<!-- OIDC-Rücksprung vireo://auth -->
+	<!-- OIDC-Rücksprung planquadro://auth -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>de.vireo.app.auth</string>
+			<string>de.planquadro.app.auth</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>vireo</string>
+				<string>planquadro</string>
 			</array>
 		</dict>
 	</array>
@@ -56,7 +56,7 @@
 		<true/>
 	</dict>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Vireo verwendet Face ID, um die App zu entsperren und deine Anmeldung zu schützen.</string>
+	<string>Planquadro verwendet Face ID, um die App zu entsperren und deine Anmeldung zu schützen.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIBackgroundModes</key>

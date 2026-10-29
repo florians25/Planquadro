@@ -6,7 +6,7 @@ app/config/secrets.php
 *.key
 *.pem
 /secrets/
-*.opbak
+*.pqbak
 
 # Backups und produktive Daten
 app/backups/*

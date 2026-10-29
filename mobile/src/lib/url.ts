@@ -11,7 +11,7 @@ export class ServerUrlError extends Error {}
  */
 export function normalizeServerUrl(input: string): string {
   let s = input.trim();
-  if (!s) throw new ServerUrlError('Bitte gib die Adresse deines Vireo-Servers ein.');
+  if (!s) throw new ServerUrlError('Bitte gib die Adresse deines Planquadro-Servers ein.');
   if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) s = `https://${s}`;
   let url: URL;
   try {

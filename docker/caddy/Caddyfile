@@ -1,14 +1,14 @@
-# Vireo – Caddy als Reverse Proxy mit automatischem HTTPS (Let's Encrypt/ZeroSSL)
-# VIREO_DOMAIN: ein oder mehrere Hostnamen, kommagetrennt
+# Planquadro – Caddy als Reverse Proxy mit automatischem HTTPS (Let's Encrypt/ZeroSSL)
+# PQ_DOMAIN: ein oder mehrere Hostnamen, kommagetrennt
 #   (z. B. "plan.example.de" oder im SaaS-Betrieb "acme.example.de, beta.example.de").
 # Voraussetzung: DNS zeigt auf diesen Server, Ports 80 und 443 sind erreichbar.
 # Für "localhost" erzeugt Caddy ein lokales Zertifikat (Test).
 #
 # Caddy setzt X-Forwarded-For, X-Forwarded-Proto und X-Forwarded-Host selbst und
 # ignoriert entsprechende Header von Clients. Die App vertraut nur der festen
-# Adresse dieses Containers (VIREO_TRUSTED_PROXIES / VIREO_PROXY_IP).
+# Adresse dieses Containers (PQ_TRUSTED_PROXIES / PQ_PROXY_IP).
 
-{$VIREO_DOMAIN} {
+{$PQ_DOMAIN} {
 	encode zstd gzip
 
 	request_body {

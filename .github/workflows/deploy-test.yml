@@ -35,8 +35,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
-      VIREO_IMAGE: vireo/app:ci
-      VIREO_HTTP_PORT: "8080"
+      PQ_IMAGE: planquadro/app:ci
+      PQ_HTTP_PORT: "8080"
     steps:
       - uses: actions/checkout@v4
 
@@ -48,26 +48,26 @@ jobs:
           context: .
           load: true
           push: false
-          tags: vireo/app:ci
+          tags: planquadro/app:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Image prüfen (nicht root, Erweiterungen, keine Testdateien)
         run: |
-          test "$(docker run --rm --entrypoint id vireo/app:ci -u)" = "33"
-          docker run --rm --entrypoint php vireo/app:ci -m | grep -iE '^(pdo_mysql|intl|calendar|zip|sodium|pcntl|Zend OPcache)$' | sort | uniq | wc -l | grep -q 7
-          docker run --rm --entrypoint sh vireo/app:ci -c 'test ! -e tests && test ! -e vendor && test ! -e .git && command -v mariadb-dump && command -v rclone'
+          test "$(docker run --rm --entrypoint id planquadro/app:ci -u)" = "33"
+          docker run --rm --entrypoint php planquadro/app:ci -m | grep -iE '^(pdo_mysql|intl|calendar|zip|sodium|pcntl|Zend OPcache)$' | sort | uniq | wc -l | grep -q 7
+          docker run --rm --entrypoint sh planquadro/app:ci -c 'test ! -e tests && test ! -e vendor && test ! -e .git && command -v mariadb-dump && command -v rclone'
 
       - name: CI-Konfiguration und Secrets erzeugen
         run: |
           cat > .env <<'EOF'
-          VIREO_IMAGE=vireo/app:ci
-          VIREO_HTTP_BIND=127.0.0.1
-          VIREO_HTTP_PORT=8080
-          VIREO_FORCE_SECURE_COOKIES=0
-          VIREO_DOMAIN=localhost
-          VIREO_SCHEDULER_INTERVAL=15
-          VIREO_BACKUP_BANNER=1
+          PQ_IMAGE=planquadro/app:ci
+          PQ_HTTP_BIND=127.0.0.1
+          PQ_HTTP_PORT=8080
+          PQ_FORCE_SECURE_COOKIES=0
+          PQ_DOMAIN=localhost
+          PQ_SCHEDULER_INTERVAL=15
+          PQ_BACKUP_BANNER=1
           EOF
           sh docker/init-secrets.sh
 

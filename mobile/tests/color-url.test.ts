@@ -85,10 +85,10 @@ describe('HTML-Escaping', () => {
 
 describe('Server-Adresse', () => {
   it.each([
-    ['vireo.firma.de', 'https://vireo.firma.de/api/v1/'],
-    ['https://vireo.firma.de/', 'https://vireo.firma.de/api/v1/'],
-    ['https://vireo.firma.de/api/v1', 'https://vireo.firma.de/api/v1/'],
-    ['https://firma.de/vireo', 'https://firma.de/vireo/api/v1/'],
+    ['planquadro.firma.de', 'https://planquadro.firma.de/api/v1/'],
+    ['https://planquadro.firma.de/', 'https://planquadro.firma.de/api/v1/'],
+    ['https://planquadro.firma.de/api/v1', 'https://planquadro.firma.de/api/v1/'],
+    ['https://firma.de/planquadro', 'https://firma.de/planquadro/api/v1/'],
     ['  HTTPS://Firma.DE:8443/x/?a=1#b ', 'https://firma.de:8443/x/api/v1/'],
     ['http://localhost:8080', 'http://localhost:8080/api/v1/'],
     ['http://10.0.2.2', 'http://10.0.2.2/api/v1/'],
@@ -96,7 +96,7 @@ describe('Server-Adresse', () => {
     expect(normalizeServerUrl(input)).toBe(out);
   });
 
-  it.each(['', 'http://vireo.firma.de', 'ftp://x', 'https://user:pw@x.de', 'https://'])('lehnt „%s“ ab', (input) => {
+  it.each(['', 'http://planquadro.firma.de', 'ftp://x', 'https://user:pw@x.de', 'https://'])('lehnt „%s“ ab', (input) => {
     expect(() => normalizeServerUrl(input)).toThrow(ServerUrlError);
   });
 
@@ -113,18 +113,18 @@ describe('PKCE / OIDC', () => {
   });
 
   it('baut die Autorisierungs-URL und liest den Rücksprung', async () => {
-    const { url, session } = await buildAuthorizeUrl('https://idp.example/authorize?client_id=app&scope=openid', 'vireo://auth');
+    const { url, session } = await buildAuthorizeUrl('https://idp.example/authorize?client_id=app&scope=openid', 'planquadro://auth');
     const u = new URL(url);
     expect(u.searchParams.get('client_id')).toBe('app');
     expect(u.searchParams.get('scope')).toBe('openid');
     expect(u.searchParams.get('response_type')).toBe('code');
-    expect(u.searchParams.get('redirect_uri')).toBe('vireo://auth');
+    expect(u.searchParams.get('redirect_uri')).toBe('planquadro://auth');
     expect(u.searchParams.get('code_challenge_method')).toBe('S256');
     expect(u.searchParams.get('code_challenge')).toBe(await codeChallengeS256(session.verifier));
     expect(u.searchParams.get('state')).toBe(session.state);
     expect(u.searchParams.get('nonce')).toBe(session.nonce);
     expect(session.nonce.length).toBeGreaterThan(15);
-    expect(parseAuthRedirect(`vireo://auth?code=abc&state=${session.state}`)).toEqual({ code: 'abc', state: session.state, error: null });
-    expect(parseAuthRedirect('vireo://auth?error=access_denied&state=x').error).toBe('access_denied');
+    expect(parseAuthRedirect(`planquadro://auth?code=abc&state=${session.state}`)).toEqual({ code: 'abc', state: session.state, error: null });
+    expect(parseAuthRedirect('planquadro://auth?error=access_denied&state=x').error).toBe('access_denied');
   });
 });

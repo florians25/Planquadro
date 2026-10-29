@@ -1,6 +1,6 @@
 <?php
 /**
- * Vireo – Backup & Recovery
+ * Planquadro – Backup & Recovery
  * --------------------------------------------------------------------------
  * Bausteine (alle in dieser Datei, ohne externe Abhängigkeiten außer ext-sodium,
  * ext-zlib, ext-curl und optional mariadb-dump/mysqldump, mariadb/mysql, rclone):
@@ -33,19 +33,10 @@ final class BackupException extends RuntimeException {}
 
 final class BackupCrypto
 {
-    public const MAGIC = "OPBAK\x00\x01\n";          /* 8 Byte, Version 1 */
+    public const MAGIC = "PQBAK\x00\x01\n";          /* 8 Byte, Version 1 */
     public const CHUNK = 1048576;                   /* Klartext je Block */
-    public const PUB_PREFIX = 'vireo-backup-pk-v1:';
-    public const SEC_PREFIX = 'vireo-backup-sk-v1:';
-    /* Schlüssel aus der Entwicklungsphase (Arbeitstitel OpsPilot) bleiben gültig */
-    public const LEGACY_PREFIXES = ['opspilot-backup-pk-v1:' => 'vireo-backup-pk-v1:', 'opspilot-backup-sk-v1:' => 'vireo-backup-sk-v1:'];
-
-    private static function normalizeKey(string $s): string
-    {
-        $s = trim($s);
-        foreach (self::LEGACY_PREFIXES as $old => $new) if (strpos($s, $old) === 0) return $new . substr($s, strlen($old));
-        return $s;
-    }
+    public const PUB_PREFIX = 'planquadro-backup-pk-v1:';
+    public const SEC_PREFIX = 'planquadro-backup-sk-v1:';
     public const HEADER_LEN = 8 + 8 + 80 + 24;      /* Magic, Fingerprint, Sealed Key, Stream-Header */
     public const SCHEME = 'sodium-sealedbox-x25519+secretstream-xchacha20poly1305';
 
@@ -62,7 +53,7 @@ final class BackupCrypto
 
     public static function parsePublic(string $s): string
     {
-        $s = self::normalizeKey($s);
+        $s = trim($s);
         if (strpos($s, self::PUB_PREFIX) !== 0) throw new BackupException('Öffentlicher Backup-Schlüssel hat ein unbekanntes Format (erwartet ' . self::PUB_PREFIX . '…).');
         $pk = base64_decode(substr($s, strlen(self::PUB_PREFIX)), true);
         if ($pk === false || strlen($pk) !== SODIUM_CRYPTO_BOX_PUBLICKEYBYTES) throw new BackupException('Öffentlicher Backup-Schlüssel ist ungültig.');
@@ -72,7 +63,7 @@ final class BackupCrypto
     /** @return string Schlüsselpaar (secret||public) für sealed_box_open */
     public static function parseSecret(string $s): string
     {
-        $s = self::normalizeKey($s);
+        $s = trim($s);
         if (strpos($s, self::SEC_PREFIX) !== 0) throw new BackupException('Privater Backup-Schlüssel hat ein unbekanntes Format (erwartet ' . self::SEC_PREFIX . '…).');
         $sk = base64_decode(substr($s, strlen(self::SEC_PREFIX)), true);
         if ($sk === false || strlen($sk) !== SODIUM_CRYPTO_BOX_SECRETKEYBYTES) throw new BackupException('Privater Backup-Schlüssel ist ungültig.');
@@ -163,7 +154,7 @@ final class BackupDecReader
         $this->fh = $fh;
         $head = self::readExact($fh, BackupCrypto::HEADER_LEN, 'Archivkopf');
         if (substr($head, 0, 8) !== BackupCrypto::MAGIC) {
-            throw new BackupException('Keine Vireo-Backup-Datei (unbekannte Kennung). Alt-Backups (.epbak): php bin/backup.php legacy-decrypt');
+            throw new BackupException('Keine Planquadro-Backup-Datei (unbekannte Kennung). Alt-Backups (.epbak): php bin/backup.php legacy-decrypt');
         }
         $pk = BackupCrypto::publicFromSecret($keypair);
         $this->fingerprint = bin2hex(substr($head, 8, 8));
@@ -231,7 +222,7 @@ final class BackupTar
            . sprintf("%07o\0", $mode) . sprintf("%07o\0", 0) . sprintf("%07o\0", 0)
            . sprintf("%011o\0", $size) . sprintf("%011o\0", $mtime)
            . '        ' . $type . str_repeat("\0", 100)
-           . "ustar  \0" . str_pad('vireo', 32, "\0") . str_pad('vireo', 32, "\0")
+           . "ustar  \0" . str_pad('planquadro', 32, "\0") . str_pad('planquadro', 32, "\0")
            . str_repeat("\0", 8) . str_repeat("\0", 8) . str_repeat("\0", 155) . str_repeat("\0", 12);
         $sum = 0;
         for ($i = 0; $i < 512; $i++) $sum += ord($h[$i]);
@@ -412,13 +403,13 @@ final class BackupDb
     public static function defaultsFile(array $c): string
     {
         $q = fn($v) => '"' . str_replace(['\\', '"', "\n"], ['\\\\', '\\"', '\\n'], (string)$v) . '"';
-        $f = tempnam(Backup::tmpBase(), 'opmy');
+        $f = tempnam(Backup::tmpBase(), 'pqmy');
         chmod($f, 0600);
         $ini = "[client]\nhost=" . $q($c['host']) . "\nport=" . (int)$c['port'] . "\nuser=" . $q($c['user']) . "\npassword=" . $q($c['pass']) . "\n";
         /* MariaDB-Clients ab 11.4 erzwingen TLS standardmäßig; die Anwendung (PDO) verbindet
-           ohne TLS. Gleiches Verhalten, außer VIREO_DB_SSL=1. Eigene Gruppe, damit
+           ohne TLS. Gleiches Verhalten, außer PQ_DB_SSL=1. Eigene Gruppe, damit
            MySQL-Clients die Option nicht als unbekannt ablehnen. */
-        if (getenv('VIREO_DB_SSL') !== '1') $ini .= "\n[client-mariadb]\nskip-ssl\n";
+        if (getenv('PQ_DB_SSL') !== '1') $ini .= "\n[client-mariadb]\nskip-ssl\n";
         file_put_contents($f, $ini);
         return $f;
     }
@@ -443,12 +434,12 @@ final class BackupDumper
     public static function dump(array $conn, string $db, string $outGz): array
     {
         if (!BackupDb::validName($db)) throw new BackupException("Ungültiger Datenbankname: $db");
-        $mode = strtolower(opsEnv('VIREO_BACKUP_DUMPER', 'auto'));
+        $mode = strtolower(opsEnv('PQ_BACKUP_DUMPER', 'auto'));
         $pdo = BackupDb::pdo($conn, $db);
         $version = (string)$pdo->query('SELECT VERSION()')->fetchColumn();
         $pdo = null;
         $bin = $mode === 'php' ? null : self::nativeBinary($version, $mode === 'native');
-        if ($mode === 'native' && !$bin) throw new BackupException('VIREO_BACKUP_DUMPER=native, aber weder mariadb-dump noch mysqldump gefunden.');
+        if ($mode === 'native' && !$bin) throw new BackupException('PQ_BACKUP_DUMPER=native, aber weder mariadb-dump noch mysqldump gefunden.');
         $r = $bin ? self::dumpNative($bin, $conn, $db, $outGz) : self::dumpPhp($conn, $db, $outGz);
         ksort($r['tables'], SORT_STRING);
         return $r + ['server_version' => $version];
@@ -463,7 +454,7 @@ final class BackupDumper
     /**
      * Dump-Programm, das zum Server passt. mysqldump 8 scheitert an MariaDB-Servern
      * (information_schema_stats_expiry), daher im Auto-Modus nur gleiche Familie;
-     * sonst PHP-Dumper. $any = jedes gefundene Programm (VIREO_BACKUP_DUMPER=native).
+     * sonst PHP-Dumper. $any = jedes gefundene Programm (PQ_BACKUP_DUMPER=native).
      */
     public static function nativeBinary(string $serverVersion, bool $any = false): ?string
     {
@@ -519,7 +510,7 @@ final class BackupDumper
         $q = fn(string $n) => '`' . str_replace('`', '``', $n) . '`';
         $counts = [];
         try {
-            $w("-- Vireo SQL-Dump (PHP, konsistenter Snapshot)\n-- Datenbank: $db\n\n"
+            $w("-- Planquadro SQL-Dump (PHP, konsistenter Snapshot)\n-- Datenbank: $db\n\n"
              . "SET NAMES utf8mb4;\nSET @OPS_OLD_TZ=@@TIME_ZONE, TIME_ZONE='+00:00';\n"
              . "SET @OPS_OLD_FK=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;\nSET @OPS_OLD_UC=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;\n"
              . "SET @OPS_OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO';\n\n");
@@ -686,7 +677,7 @@ final class BackupSqlLoader
     {
         if (!BackupDb::validName($db)) throw new BackupException("Ungültiger Datenbankname: $db");
         self::assertSafe($sqlGz);
-        $mode = strtolower(opsEnv('VIREO_BACKUP_DUMPER', 'auto'));
+        $mode = strtolower(opsEnv('PQ_BACKUP_DUMPER', 'auto'));
         $bin = $mode === 'php' ? null : BackupDb::findBinary(['mariadb', 'mysql']);
         return $bin ? self::loadClient($bin, $conn, $db, $sqlGz) : self::loadPhp($conn, $db, $sqlGz);
     }
@@ -779,7 +770,7 @@ final class BackupLocalTarget implements BackupTarget
     {
         $base = rtrim($this->dir, '/');
         $out = [];
-        foreach (glob($base . '/' . ($prefix !== '' ? rtrim($prefix, '/') : '*') . '/*.opbak') ?: [] as $f) {
+        foreach (glob($base . '/' . ($prefix !== '' ? rtrim($prefix, '/') : '*') . '/*.pqbak') ?: [] as $f) {
             $out[] = ['key' => substr($f, strlen($base) + 1), 'size' => (int)filesize($f), 'mtime' => (int)filemtime($f)];
         }
         return $out;
@@ -799,7 +790,7 @@ final class BackupS3Target implements BackupTarget
                                 private string $accessKey, private string $secretKey, private bool $pathStyle, private ?int $fixedTime = null)
     {
         $u = parse_url($endpoint);
-        if (empty($u['host'])) throw new BackupException('VIREO_BACKUP_S3_ENDPOINT ist ungültig.');
+        if (empty($u['host'])) throw new BackupException('PQ_BACKUP_S3_ENDPOINT ist ungültig.');
         $this->scheme = $u['scheme'] ?? 'https';
         $this->host = $u['host'];
         $this->port = $u['port'] ?? null;
@@ -925,7 +916,7 @@ final class BackupS3Target implements BackupTarget
             if ($xml === false) throw new BackupException('S3: ungültige LIST-Antwort.');
             foreach ($xml->Contents as $c) {
                 $k = (string)$c->Key;
-                if (substr($k, -6) !== '.opbak') continue;
+                if (substr($k, -6) !== '.pqbak') continue;
                 $rel = $this->prefix !== '' ? substr($k, strlen($this->prefix) + 1) : $k;
                 $out[] = ['key' => $rel, 'size' => (int)$c->Size, 'mtime' => (int)strtotime((string)$c->LastModified)];
             }
@@ -939,7 +930,7 @@ final class BackupS3Target implements BackupTarget
     public function get(string $key, string $local): void { $this->request('GET', $this->objectKey($key), [], null, null, $local); }
 }
 
-/** Beliebiges rclone-Ziel (SFTP, WebDAV, Nextcloud, zweiter Server …): VIREO_BACKUP_RCLONE_REMOTE=name:pfad */
+/** Beliebiges rclone-Ziel (SFTP, WebDAV, Nextcloud, zweiter Server …): PQ_BACKUP_RCLONE_REMOTE=name:pfad */
 final class BackupRcloneTarget implements BackupTarget
 {
     public function __construct(private string $remote, private string $bin = 'rclone') {}
@@ -975,7 +966,7 @@ final class BackupRcloneTarget implements BackupTarget
         catch (BackupException $e) { if (stripos($e->getMessage(), 'directory not found') !== false) return []; throw $e; }
         $out = [];
         foreach ((array)$rows as $r) {
-            if (substr($r['Path'], -6) !== '.opbak') continue;
+            if (substr($r['Path'], -6) !== '.pqbak') continue;
             $out[] = ['key' => ($prefix !== '' ? rtrim($prefix, '/') . '/' : '') . $r['Path'], 'size' => (int)$r['Size'], 'mtime' => (int)strtotime($r['ModTime'])];
         }
         return $out;
@@ -1115,15 +1106,15 @@ final class BackupAlerter
     /** Sendet höchstens einmal je $repeatHours und Schlüssel. */
     public function alert(string $key, string $subject, string $message, array $details = []): bool
     {
-        $hook = opsEnv('VIREO_ALERT_WEBHOOK');
-        $mail = opsEnv('VIREO_ALERT_EMAIL');
+        $hook = opsEnv('PQ_ALERT_WEBHOOK');
+        $mail = opsEnv('PQ_ALERT_EMAIL');
         if ($hook === '' && $mail === '') return false;
         $state = is_readable($this->stateFile) ? (json_decode((string)file_get_contents($this->stateFile), true) ?: []) : [];
-        $repeat = max(1, (int)opsEnv('VIREO_ALERT_REPEAT_HOURS', '24')) * 3600;
+        $repeat = max(1, (int)opsEnv('PQ_ALERT_REPEAT_HOURS', '24')) * 3600;
         if (isset($state[$key]) && time() - (int)$state[$key] < $repeat) return false;
-        $host = opsEnv('VIREO_BASE_URL', gethostname() ?: 'vireo');
-        $payload = ['source' => 'vireo-backup', 'event' => $key, 'subject' => $subject, 'message' => $message,
-                    'host' => $host, 'time' => gmdate('c'), 'details' => $details, 'text' => "[Vireo] $subject: $message"];
+        $host = opsEnv('PQ_BASE_URL', gethostname() ?: 'planquadro');
+        $payload = ['source' => 'planquadro-backup', 'event' => $key, 'subject' => $subject, 'message' => $message,
+                    'host' => $host, 'time' => gmdate('c'), 'details' => $details, 'text' => "[Planquadro] $subject: $message"];
         $sent = false;
         if ($hook !== '') {
             $ch = curl_init($hook);
@@ -1131,14 +1122,14 @@ final class BackupAlerter
                 CURLOPT_HTTPHEADER => ['Content-Type: application/json'], CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_CONNECTTIMEOUT => 5]);
             $ok = curl_exec($ch) !== false && curl_getinfo($ch, CURLINFO_RESPONSE_CODE) < 300;
             curl_close($ch);
-            if (!$ok) error_log('Vireo backup: Webhook-Alarm fehlgeschlagen');
+            if (!$ok) error_log('Planquadro backup: Webhook-Alarm fehlgeschlagen');
             $sent = $sent || $ok;
         }
         if ($mail !== '') {
-            $from = opsEnv('VIREO_ALERT_FROM', 'vireo@' . (gethostname() ?: 'localhost'));
+            $from = opsEnv('PQ_ALERT_FROM', 'planquadro@' . (gethostname() ?: 'localhost'));
             $body = "$message\n\n" . json_encode($details, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\nHost: $host\n";
-            $ok = @mail($mail, '=?UTF-8?B?' . base64_encode("[Vireo] $subject") . '?=', $body, "From: $from\r\nContent-Type: text/plain; charset=UTF-8");
-            if (!$ok) error_log('Vireo backup: Mail-Alarm fehlgeschlagen');
+            $ok = @mail($mail, '=?UTF-8?B?' . base64_encode("[Planquadro] $subject") . '?=', $body, "From: $from\r\nContent-Type: text/plain; charset=UTF-8");
+            if (!$ok) error_log('Planquadro backup: Mail-Alarm fehlgeschlagen');
             $sent = $sent || $ok;
         }
         if ($sent) { $state[$key] = time(); @file_put_contents($this->stateFile, json_encode($state)); }
@@ -1159,7 +1150,7 @@ final class BackupAlerter
 
 final class Backup
 {
-    public const NAME_RE = '/^(?:vireo|opspilot)_(_platform|[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)_(\d{8}-\d{6})Z_([a-z]+)\.opbak$/';
+    public const NAME_RE = '/^planquadro_(_platform|[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)_(\d{8}-\d{6})Z_([a-z]+)\.pqbak$/';
     public const KINDS = ['scheduled', 'manual', 'prerestore'];
 
     /** @var callable(string):void|null */
@@ -1169,12 +1160,12 @@ final class Backup
 
     public static function tmpBase(): string
     {
-        $d = opsEnv('VIREO_BACKUP_TMP_DIR', sys_get_temp_dir());
+        $d = opsEnv('PQ_BACKUP_TMP_DIR', sys_get_temp_dir());
         if (!is_dir($d)) @mkdir($d, 0700, true);
         return $d;
     }
 
-    public static function storageBase(): string { return rtrim(opsEnv('VIREO_STORAGE_DIR', dirname(__DIR__) . '/storage'), '/'); }
+    public static function storageBase(): string { return rtrim(opsEnv('PQ_STORAGE_DIR', dirname(__DIR__) . '/storage'), '/'); }
 
     public static function stateDir(): string
     {
@@ -1185,12 +1176,12 @@ final class Backup
 
     public static function backupDir(): string
     {
-        $d = opsEnv('VIREO_BACKUP_DIR');
+        $d = opsEnv('PQ_BACKUP_DIR');
         if ($d !== '') return rtrim($d, '/');
         return is_dir('/data') && is_writable('/data') ? '/data/backups' : dirname(__DIR__) . '/backups';
     }
 
-    public static function maxAgeHours(): int { return max(1, (int)opsEnv('VIREO_BACKUP_MAX_AGE_HOURS', '26')); }
+    public static function maxAgeHours(): int { return max(1, (int)opsEnv('PQ_BACKUP_MAX_AGE_HOURS', '26')); }
 
     private function say(string $s): void { if ($this->log) ($this->log)($s); }
 
@@ -1198,8 +1189,8 @@ final class Backup
 
     public static function platformConn(): array
     {
-        return ['host' => opsEnv('VIREO_PLATFORM_DB_HOST', DB_HOST), 'port' => opsEnv('VIREO_PLATFORM_DB_PORT', DB_PORT),
-                'user' => opsEnv('VIREO_PLATFORM_DB_USER', DB_USER), 'pass' => opsEnv('VIREO_PLATFORM_DB_PASS', DB_PASS)];
+        return ['host' => opsEnv('PQ_PLATFORM_DB_HOST', DB_HOST), 'port' => opsEnv('PQ_PLATFORM_DB_PORT', DB_PORT),
+                'user' => opsEnv('PQ_PLATFORM_DB_USER', DB_USER), 'pass' => opsEnv('PQ_PLATFORM_DB_PASS', DB_PASS)];
     }
 
     /** Alle zu sichernden Bereiche. */
@@ -1248,13 +1239,13 @@ final class Backup
     {
         if ($this->targets !== null) return $this->targets;
         $t = [new BackupLocalTarget(self::backupDir())];
-        if (($ep = opsEnv('VIREO_BACKUP_S3_ENDPOINT')) !== '' && ($bucket = opsEnv('VIREO_BACKUP_S3_BUCKET')) !== '') {
-            $ps = opsEnv('VIREO_BACKUP_S3_PATH_STYLE', 'auto');
+        if (($ep = opsEnv('PQ_BACKUP_S3_ENDPOINT')) !== '' && ($bucket = opsEnv('PQ_BACKUP_S3_BUCKET')) !== '') {
+            $ps = opsEnv('PQ_BACKUP_S3_PATH_STYLE', 'auto');
             $pathStyle = $ps === 'auto' ? stripos($ep, 'amazonaws.com') === false : $ps === '1' || $ps === 'true';
-            $t[] = new BackupS3Target($ep, opsEnv('VIREO_BACKUP_S3_REGION', 'us-east-1'), $bucket, opsEnv('VIREO_BACKUP_S3_PREFIX', 'vireo'),
-                opsEnv('VIREO_BACKUP_S3_ACCESS_KEY'), opsEnv('VIREO_BACKUP_S3_SECRET_KEY'), $pathStyle);
+            $t[] = new BackupS3Target($ep, opsEnv('PQ_BACKUP_S3_REGION', 'us-east-1'), $bucket, opsEnv('PQ_BACKUP_S3_PREFIX', 'planquadro'),
+                opsEnv('PQ_BACKUP_S3_ACCESS_KEY'), opsEnv('PQ_BACKUP_S3_SECRET_KEY'), $pathStyle);
         }
-        if (($rc = opsEnv('VIREO_BACKUP_RCLONE_REMOTE')) !== '') $t[] = new BackupRcloneTarget($rc, opsEnv('VIREO_BACKUP_RCLONE_BIN', 'rclone'));
+        if (($rc = opsEnv('PQ_BACKUP_RCLONE_REMOTE')) !== '') $t[] = new BackupRcloneTarget($rc, opsEnv('PQ_BACKUP_RCLONE_BIN', 'rclone'));
         return $this->targets = $t;
     }
 
@@ -1264,7 +1255,7 @@ final class Backup
 
     public static function publicKey(): ?string
     {
-        $k = opsEnv('VIREO_BACKUP_PUBLIC_KEY');
+        $k = opsEnv('PQ_BACKUP_PUBLIC_KEY');
         return $k === '' ? null : BackupCrypto::parsePublic($k);
     }
 
@@ -1274,14 +1265,14 @@ final class Backup
         elseif ($file !== null) {
             if (!is_readable($file)) throw new BackupException("Schlüsseldatei $file ist nicht vorhanden oder nicht lesbar (Rechte des ausführenden Benutzers prüfen).");
             $k = (string)file_get_contents($file);
-        } else $k = opsEnv('VIREO_BACKUP_PRIVATE_KEY');
-        if (trim($k) === '') throw new BackupException('Privater Schlüssel fehlt (--key=<datei>, --key=- für die Standardeingabe oder VIREO_BACKUP_PRIVATE_KEY_FILE). Er wird nur für verify/restore benötigt.');
+        } else $k = opsEnv('PQ_BACKUP_PRIVATE_KEY');
+        if (trim($k) === '') throw new BackupException('Privater Schlüssel fehlt (--key=<datei>, --key=- für die Standardeingabe oder PQ_BACKUP_PRIVATE_KEY_FILE). Er wird nur für verify/restore benötigt.');
         return BackupCrypto::parseSecret($k);
     }
 
     public static function archiveName(string $scope, string $kind, ?int $t = null): string
     {
-        return sprintf('vireo_%s_%sZ_%s.opbak', $scope, gmdate('Ymd-His', $t ?? time()), $kind);
+        return sprintf('planquadro_%s_%sZ_%s.pqbak', $scope, gmdate('Ymd-His', $t ?? time()), $kind);
     }
 
     /** @return array{scope:string,time:int,kind:string}|null */
@@ -1294,7 +1285,7 @@ final class Backup
 
     private static function mkTmp(string $tag): string
     {
-        $d = self::tmpBase() . '/vireo-' . $tag . '-' . bin2hex(random_bytes(6));
+        $d = self::tmpBase() . '/planquadro-' . $tag . '-' . bin2hex(random_bytes(6));
         if (!mkdir($d, 0700, true)) throw new BackupException('Temporäres Verzeichnis nicht anlegbar.');
         return $d;
     }
@@ -1339,7 +1330,7 @@ final class Backup
         $tmp = null; $warnings = []; $done = [];
         try {
             $pk = self::publicKey();
-            if ($pk === null) throw new BackupException('Kein öffentlicher Backup-Schlüssel konfiguriert (VIREO_BACKUP_PUBLIC_KEY[_FILE]). Unverschlüsselte Backups werden nicht erstellt. Schlüssel erzeugen: php bin/backup.php keygen');
+            if ($pk === null) throw new BackupException('Kein öffentlicher Backup-Schlüssel konfiguriert (PQ_BACKUP_PUBLIC_KEY[_FILE]). Unverschlüsselte Backups werden nicht erstellt. Schlüssel erzeugen: php bin/backup.php keygen');
             $tmp = self::mkTmp('run');
             $this->say("[{$s['scope']}] Dump von {$s['db']} …");
             $dump = BackupDumper::dump($s['conn'], $s['db'], "$tmp/db.sql.gz");
@@ -1360,7 +1351,7 @@ final class Backup
             $now = time();
             $name = self::archiveName($s['scope'], $kind, $now);
             $manifest = [
-                'format' => 'vireo-backup', 'version' => 1, 'created_at' => gmdate('c', $now), 'kind' => $kind,
+                'format' => 'planquadro-backup', 'version' => 1, 'created_at' => gmdate('c', $now), 'kind' => $kind,
                 'scope' => $s['scope'], 'mode' => opsMode(), 'tenant' => $s['tenant'], 'host' => gethostname() ?: null,
                 'database' => ['name' => $s['db'], 'platform' => $s['platform'], 'server_version' => $dump['server_version'],
                                'dump_method' => $dump['method'], 'tables' => $dump['tables'], 'schema_migrations' => $migrations],
@@ -1411,7 +1402,7 @@ final class Backup
         } catch (Throwable $e) {
             if ($tmp) self::rmTree($tmp);
             $msg = $e instanceof BackupException ? $e->getMessage() : get_class($e) . ': ' . $e->getMessage();
-            error_log("Vireo backup [{$s['scope']}]: $msg");
+            error_log("Planquadro backup [{$s['scope']}]: $msg");
             $store->finish($id, 'failed', ['message' => mb_substr($msg, 0, 2000), 'targets' => $done]);
             $this->alerter()->alert('failed:' . $s['scope'], 'Backup fehlgeschlagen', $msg, ['scope' => $s['scope'], 'kind' => $kind]);
             $this->say("[{$s['scope']}] FEHLER: $msg");
@@ -1421,11 +1412,11 @@ final class Backup
 
     public static function retentionPolicy(): array
     {
-        return ['daily' => max(0, (int)opsEnv('VIREO_BACKUP_KEEP_DAILY', '7')),
-                'weekly' => max(0, (int)opsEnv('VIREO_BACKUP_KEEP_WEEKLY', '4')),
-                'monthly' => max(0, (int)opsEnv('VIREO_BACKUP_KEEP_MONTHLY', '12')),
-                'last' => max(1, (int)opsEnv('VIREO_BACKUP_KEEP_LAST', '3')),
-                'prerestore_days' => max(0, (int)opsEnv('VIREO_BACKUP_KEEP_PRERESTORE_DAYS', '30'))];
+        return ['daily' => max(0, (int)opsEnv('PQ_BACKUP_KEEP_DAILY', '7')),
+                'weekly' => max(0, (int)opsEnv('PQ_BACKUP_KEEP_WEEKLY', '4')),
+                'monthly' => max(0, (int)opsEnv('PQ_BACKUP_KEEP_MONTHLY', '12')),
+                'last' => max(1, (int)opsEnv('PQ_BACKUP_KEEP_LAST', '3')),
+                'prerestore_days' => max(0, (int)opsEnv('PQ_BACKUP_KEEP_PRERESTORE_DAYS', '30'))];
     }
 
     /** @return string[] gelöschte Schlüssel */
@@ -1477,7 +1468,7 @@ final class Backup
         foreach ($this->targets() as $t) {
             if ($t instanceof BackupLocalTarget) { if (is_file($t->path($key))) return [$t->path($key), false]; continue; }
             try {
-                $tmp = tempnam(self::tmpBase(), 'opbak');
+                $tmp = tempnam(self::tmpBase(), 'pqbak');
                 $t->get($key, $tmp);
                 $this->say("Archiv von {$t->name()} geladen");
                 return [$tmp, true];
@@ -1502,8 +1493,8 @@ final class Backup
         } finally { fclose($fh); }
         if (!isset($entries['manifest.json'])) throw new BackupException('Archiv enthält kein Manifest.');
         $m = json_decode((string)file_get_contents("$dir/manifest.json"), true);
-        if (!is_array($m) || ($m['format'] ?? '') !== 'vireo-backup') throw new BackupException('Manifest ungültig.');
-        if ((int)$m['version'] > 1) throw new BackupException('Archivversion ' . (int)$m['version'] . ' wird von dieser Vireo-Version nicht unterstützt.');
+        if (!is_array($m) || ($m['format'] ?? '') !== 'planquadro-backup') throw new BackupException('Manifest ungültig.');
+        if ((int)$m['version'] > 1) throw new BackupException('Archivversion ' . (int)$m['version'] . ' wird von dieser Planquadro-Version nicht unterstützt.');
         foreach ($m['parts'] as $p) {
             $f = "$dir/{$p['name']}";
             if (!is_file($f)) throw new BackupException("Teil fehlt: {$p['name']}");
@@ -1565,7 +1556,7 @@ final class Backup
                     $result['safety_backup'] = $safety['archive'];
                     $this->say('Sicherheits-Backup: ' . $safety['archive']);
                     /* 2. In Staging-Datenbank einspielen und prüfen */
-                    $prefix = opsEnv('VIREO_BACKUP_TEMP_DB_PREFIX', 'vireo_rt_');
+                    $prefix = opsEnv('PQ_BACKUP_TEMP_DB_PREFIX', 'planquadro_rt_');
                     $suffix = gmdate('YmdHis') . substr(bin2hex(random_bytes(2)), 0, 3);
                     $stage = substr($prefix . 'stage_' . $suffix, 0, 64);
                     $old = substr($prefix . 'old_' . $suffix, 0, 64);
@@ -1696,7 +1687,7 @@ final class Backup
             $dir = self::mkTmp('rtest');
             $m = $this->decryptTo($path, $keypair, $dir);
             $conn = !empty($m['database']['platform']) ? self::platformConn() : self::mainConn();
-            $tmpDb = substr(opsEnv('VIREO_BACKUP_TEMP_DB_PREFIX', 'vireo_rt_') . gmdate('YmdHis') . bin2hex(random_bytes(2)), 0, 64);
+            $tmpDb = substr(opsEnv('PQ_BACKUP_TEMP_DB_PREFIX', 'planquadro_rt_') . gmdate('YmdHis') . bin2hex(random_bytes(2)), 0, 64);
             $root = BackupDb::pdo($conn);
             $root->exec("CREATE DATABASE `$tmpDb` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             $t0 = microtime(true);
@@ -1803,11 +1794,11 @@ final class Backup
 
     /**
      * Kurzer Hinweis für das Dashboard (nur Nutzer mit manage_settings) oder null.
-     * Abschaltbar mit VIREO_BACKUP_BANNER=0.
+     * Abschaltbar mit PQ_BACKUP_BANNER=0.
      */
     public static function dashboardWarning(): ?string
     {
-        if (opsEnv('VIREO_BACKUP_BANNER', '1') === '0') return null;
+        if (opsEnv('PQ_BACKUP_BANNER', '1') === '0') return null;
         try {
             $b = new self();
             $scope = $b->currentScope()['scope'];
@@ -1818,7 +1809,7 @@ final class Backup
             if ($s['age_hours'] === null) return 'Es gibt noch kein erfolgreiches Backup.';
             if ($s['age_hours'] > $st['max_age_hours']) return 'Das letzte erfolgreiche Backup ist ' . (int)round($s['age_hours']) . ' Stunden alt.';
         } catch (Throwable $e) {
-            error_log('Vireo backup status: ' . $e->getMessage());
+            error_log('Planquadro backup status: ' . $e->getMessage());
         }
         return null;
     }

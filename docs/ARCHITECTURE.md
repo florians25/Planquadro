@@ -1,11 +1,11 @@
-# Vireo – Architektur
+# Planquadro – Architektur
 
 Stand: 29.10.2026 · Ausgangsbasis: Einsatzplanung v6.9.0 (Import-Commit `969f2a3`)
 
 Dieses Dokument beschreibt **(A)** die bestehende Anwendung, wie sie heute läuft, und
-**(B)** die Zielarchitektur von Vireo. Die Zielarchitektur wird schrittweise aus (A)
+**(B)** die Zielarchitektur von Planquadro. Die Zielarchitektur wird schrittweise aus (A)
 heraus entwickelt; es gibt keine Neuentwicklung von Grund auf
-(siehe [`VIREO_ROADMAP.md`](VIREO_ROADMAP.md) und [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md)).
+(siehe [`ROADMAP.md`](ROADMAP.md) und [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md)).
 
 ---
 
@@ -130,12 +130,12 @@ Architektonisch relevant:
 
 ---
 
-## B. Zielarchitektur Vireo
+## B. Zielarchitektur Planquadro
 
 ### B.1 Leitlinien
 
 1. **Eine Codebasis** für SaaS und Self-Hosting. Unterschiede nur über Konfiguration
-   (`VIREO_MODE=selfhosted|saas`).
+   (`PQ_MODE=selfhosted|saas`).
 2. **Evolution statt Rewrite.** Bestehende Seiten, URLs, Tabellen und Abläufe bleiben; neue
    Bausteine werden darunter geschoben (Request-Kernel, Services, API v1).
 3. **Server entscheidet.** Jede Aktion wird serverseitig autorisiert (Recht + Team-Scope +
@@ -188,11 +188,11 @@ den Kernpfad *Zelle speichern / veröffentlichen* (`app/lib/PlanCells.php`,
 > Zusätzlich werden Backup, Restore, Export und Löschung eines einzelnen Mandanten trivial.
 > Nachteil: Schema-Migrationen laufen je Mandant (`bin/migrate.php up --all-tenants`).
 
-| | Self-Hosting (`VIREO_MODE=selfhosted`, Standard) | SaaS (`VIREO_MODE=saas`) |
+| | Self-Hosting (`PQ_MODE=selfhosted`, Standard) | SaaS (`PQ_MODE=saas`) |
 |---|---|---|
-| Mandanten | genau einer, Datenbank `VIREO_DB_NAME` | beliebig viele, je eine Datenbank `vireo_t_<slug>` |
-| Auflösung | fest | Host → `tenant_domains`; nur für `/api/v1` auf dem Plattform-Host zusätzlich Header `X-Vireo-Tenant` |
-| Plattform-DB | nicht nötig | `VIREO_PLATFORM_DB_NAME` |
+| Mandanten | genau einer, Datenbank `PQ_DB_NAME` | beliebig viele, je eine Datenbank `planquadro_t_<slug>` |
+| Auflösung | fest | Host → `tenant_domains`; nur für `/api/v1` auf dem Plattform-Host zusätzlich Header `X-PQ-Tenant` |
+| Plattform-DB | nicht nötig | `PQ_PLATFORM_DB_NAME` |
 | Verwaltung | – | `bin/tenant.php` (CLI) und `/platform/` (Web) |
 
 Durchsetzung:
@@ -266,20 +266,20 @@ REPEATABLE READ (MariaDB/MySQL-Standard) und READ COMMITTED gleichermaßen.
   gesicherten Cookie (`SameSite=Lax`, Pfad `/oidc`, 10 Minuten). Das Sitzungs-Cookie
   bleibt `SameSite=Strict`; nach dem Rücksprung leitet eine HTML-Seite weiter, damit
   der Browser die neue Sitzung mitsendet.
-- `VIREO_OIDC_CLIENT_SECRET` gilt im SaaS-Modus nur zusammen mit
-  `VIREO_OIDC_ISSUER` und nur für genau diesen Issuer. Im Self-Hosting gilt es für
-  jeden Issuer, sofern `VIREO_OIDC_ISSUER` nicht gesetzt ist.
+- `PQ_OIDC_CLIENT_SECRET` gilt im SaaS-Modus nur zusammen mit
+  `PQ_OIDC_ISSUER` und nur für genau diesen Issuer. Im Self-Hosting gilt es für
+  jeden Issuer, sofern `PQ_OIDC_ISSUER` nicht gesetzt ist.
 - Im SaaS-Modus werden Identity-Provider in internen Netzen (Loopback, private und
   Link-Local-Adressen, Cloud-Metadaten) abgelehnt; die geprüfte IP wird für die
   Verbindung festgehalten (kein DNS-Rebinding). Ausnahme für eigene Betreiber-IdPs:
-  `VIREO_OIDC_ALLOW_PRIVATE=1`.
+  `PQ_OIDC_ALLOW_PRIVATE=1`.
 
 ### B.7 Betriebsmodelle
 
 | | Self-Hosted | Cloud / SaaS |
 |---|---|---|
-| Auslieferung | Docker-Image `vireo/app` (PHP-FPM + Nginx oder Apache) + `docker-compose.yml` mit MariaDB, optional Caddy für HTTPS | gleiches Image, horizontal skaliert hinter Load Balancer |
-| Mandanten | genau einer (`VIREO_MODE=selfhosted`) | viele, Auflösung über Host/Subdomain |
+| Auslieferung | Docker-Image `planquadro/app` (PHP-FPM + Nginx oder Apache) + `docker-compose.yml` mit MariaDB, optional Caddy für HTTPS | gleiches Image, horizontal skaliert hinter Load Balancer |
+| Mandanten | genau einer (`PQ_MODE=selfhosted`) | viele, Auflösung über Host/Subdomain |
 | Sessions | Datei oder DB | Redis/DB (zustandslose App-Container) |
 | Dateien | Volume `/data` | S3-kompatibler Speicher |
 | Migrationen | `php bin/migrate.php up` beim Container-Start (mit Sperre) | eigener Job vor dem Rollout |

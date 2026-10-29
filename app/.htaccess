@@ -1,4 +1,4 @@
-# Vireo Einsatzplanung — interner App-/Konfigurationsordner
+# Planquadro Einsatzplanung — interner App-/Konfigurationsordner
 # Dieser Ordner enthält die Datenbank-Zugangsdaten (config/database.php) und
 # die Backups. Er darf NIEMALS über das Web erreichbar sein.
 # Liegt regulär ohnehin außerhalb des Document-Root (public/), diese Regel ist

@@ -8,9 +8,9 @@ Ablageort des privaten Schlüssels) verfügbar halten.
 
 | Kennzahl | Ziel (Self-Hosting, Standardkonfiguration) | Bestimmt durch |
 |---|---|---|
-| **RPO** – maximaler Datenverlust | **24 h** (tägliches Backup 02:30); mit externem Ziel auch bei Totalverlust des Servers | `VIREO_BACKUP_TIME`; kürzer: zusätzliche Läufe per cron/Timer (z. B. 12:30), jeder Lauf ist ein vollständiges, konsistentes Backup |
+| **RPO** – maximaler Datenverlust | **24 h** (tägliches Backup 02:30); mit externem Ziel auch bei Totalverlust des Servers | `PQ_BACKUP_TIME`; kürzer: zusätzliche Läufe per cron/Timer (z. B. 12:30), jeder Lauf ist ein vollständiges, konsistentes Backup |
 | **RTO** – Zeit bis zum Wiederanlauf | **4 h** bei Serververlust (neuer Server + Restore), **1 h** bei Datenbankfehler auf intaktem Server | Vorbereitung dieses Handbuchs, Erreichbarkeit des Schlüssels, Restore-Tests |
-| Erkennung | Alarm spätestens **26 h** nach dem letzten erfolgreichen Backup; fehlgeschlagene Läufe sofort | `VIREO_BACKUP_MAX_AGE_HOURS`, `VIREO_ALERT_*` |
+| Erkennung | Alarm spätestens **26 h** nach dem letzten erfolgreichen Backup; fehlgeschlagene Läufe sofort | `PQ_BACKUP_MAX_AGE_HOURS`, `PQ_ALERT_*` |
 | Nachweis | wöchentlicher automatischer Restore-Test, mindestens monatlich manuell | `restore-test` |
 
 Wann ist der Plan erfüllt? Nur wenn (1) ein externes Ziel konfiguriert ist, (2) der private
@@ -49,7 +49,7 @@ Voraussetzung: externes Ziel (S3/rclone) und privater Schlüssel.
 
 ```bash
 # 1. Neuen Server bereitstellen (INSTALLATION.md, Voraussetzungen), Repository/Version wie vorher
-git clone https://github.com/<owner>/vireo.git /opt/vireo && cd /opt/vireo
+git clone https://github.com/<owner>/planquadro.git /opt/planquadro && cd /opt/planquadro
 git checkout <zuletzt eingesetzte Version>
 
 # 2. Konfiguration wiederherstellen: .env (aus Doku/Passwortmanager) mit denselben
@@ -66,7 +66,7 @@ docker compose up -d app && docker compose stop app
 # 4. Archive vom externen Ziel ansehen und das jüngste wiederherstellen
 docker compose run --rm -T --no-deps backup php bin/backup.php list
 docker compose run --rm -T --no-deps backup php bin/backup.php restore \
-    vireo_default_<zeit>Z_scheduled.opbak --replace --yes --files --key=- < backup_private.key
+    planquadro_default_<zeit>Z_scheduled.pqbak --replace --yes --files --key=- < backup_private.key
 #    (das Archiv wird automatisch vom externen Ziel geladen)
 
 # 5. Starten und prüfen
@@ -85,18 +85,18 @@ Server und Volumes sind intakt.
 docker compose stop app
 docker compose exec -T backup php bin/backup.php list
 # erst in eine Prüf-Datenbank …
-docker compose exec -T backup php bin/backup.php restore <archiv> --target-db=vireo_check --key=- < backup_private.key
+docker compose exec -T backup php bin/backup.php restore <archiv> --target-db=planquadro_check --key=- < backup_private.key
 #    … prüfen (z. B. mariadb-Client: SELECT COUNT(*) …), dann ersetzen:
 docker compose exec -T backup php bin/backup.php restore <archiv> --replace --yes --key=- < backup_private.key
 docker compose start app
 ```
 
 Nur einzelne Datensätze zurückholen: Prüf-Datenbank wie oben, betroffene Zeilen gezielt
-zurückkopieren (`INSERT … SELECT` von `vireo_check` nach `vireo`), Produktion nicht
+zurückkopieren (`INSERT … SELECT` von `planquadro_check` nach `planquadro`), Produktion nicht
 tauschen. Änderungen seit dem Backup zeigt `plan_change_log`.
 
 InnoDB startet nicht mehr (MariaDB-Logs): Volume `db-data` nicht löschen, sondern Container
-stoppen, Volume sichern (`docker run --rm -v vireo_db-data:/v -v $PWD:/b alpine tar czf /b/db-data.tgz /v`),
+stoppen, Volume sichern (`docker run --rm -v planquadro_db-data:/v -v $PWD:/b alpine tar czf /b/db-data.tgz /v`),
 neues Volume anlegen und wie Szenario A ab Schritt 3 vorgehen.
 
 ## Szenario C – Ransomware / kompromittierter Server

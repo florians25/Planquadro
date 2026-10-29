@@ -1,4 +1,4 @@
--- OpsPilot Plattform-Datenbank (nur SaaS): Mandanten, Domains, Plattform-Admins,
+-- Planquadro Plattform-Datenbank (nur SaaS): Mandanten, Domains, Plattform-Admins,
 -- zentrales Protokoll und Backup-Status. Fachdaten liegen ausschließlich in den
 -- Mandanten-Datenbanken.
 

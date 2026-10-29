@@ -1,6 +1,6 @@
 <?php
 /**
- * Vireo – TenantConfig
+ * Planquadro – TenantConfig
  * --------------------------------------------------------------------------
  * Zentrale, typisierte Konfiguration des Mandanten. Gespeichert als JSON in
  * app_settings('tenant_config') der Mandanten-Datenbank. Werte, für die es
@@ -18,7 +18,7 @@
 
 const TENANT_CONFIG_DEFAULTS = [
     'branding' => [
-        'name'    => 'Vireo',
+        'name'    => 'Planquadro',
         'primary' => '#e2001a',
         'accent'  => '#2563eb',
         'logo'    => null,          /* Dateiname im Mandanten-Speicher */
@@ -54,7 +54,7 @@ const TENANT_CONFIG_DEFAULTS = [
             'enabled'              => false,
             'issuer'               => '',
             'client_id'            => '',
-            'client_secret'        => '',   /* alternativ VIREO_OIDC_CLIENT_SECRET */
+            'client_secret'        => '',   /* alternativ PQ_OIDC_CLIENT_SECRET */
             'allow_admin'          => false, /* Admin-Konten per SSO (Standard: nur Passwort) */
             'claim'                => 'preferred_username',
             'label'                => 'Mit Firmenkonto anmelden',
@@ -266,7 +266,7 @@ function opsBrandCss(): string
 /** Speicherordner des Mandanten (Volume /data im Container) */
 function opsStorageDir(string $sub = ''): string
 {
-    $base = rtrim(opsEnv('VIREO_STORAGE_DIR', dirname(__DIR__) . '/storage'), '/');
+    $base = rtrim(opsEnv('PQ_STORAGE_DIR', dirname(__DIR__) . '/storage'), '/');
     $dir = $base . '/' . opsCurrentTenant()['slug'] . ($sub !== '' ? '/' . $sub : '');
     if (!is_dir($dir)) @mkdir($dir, 0750, true);
     return $dir;

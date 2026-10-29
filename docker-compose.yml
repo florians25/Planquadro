@@ -1,4 +1,4 @@
-# Vireo – Self-Hosting mit Docker Compose
+# Planquadro – Self-Hosting mit Docker Compose
 # ---------------------------------------------------------------------------
 # Schnellstart (Details: docs/INSTALLATION.md):
 #   cp .env.example .env            # Werte anpassen
@@ -13,26 +13,26 @@
 #          Alarme), proxy (optional, Profil "proxy": Caddy mit automatischem HTTPS)
 # Secrets liegen als Dateien in ./secrets/ und werden über *_FILE übergeben.
 
-name: vireo
+name: planquadro
 
 x-app: &app
-  image: ${VIREO_IMAGE:-vireo/app:latest}
+  image: ${PQ_IMAGE:-planquadro/app:latest}
   restart: unless-stopped
   env_file:
     - path: .env
       required: false
   environment: &app-env
-    VIREO_MODE: ${VIREO_MODE:-selfhosted}
-    VIREO_DB_HOST: db
-    VIREO_DB_PORT: "3306"
-    VIREO_DB_NAME: ${VIREO_DB_NAME:-vireo}
-    VIREO_DB_USER: ${VIREO_DB_USER:-vireo}
-    VIREO_DB_PASS_FILE: /run/secrets/db_password
-    VIREO_APP_KEY_FILE: /run/secrets/app_key
-    VIREO_BACKUP_PUBLIC_KEY_FILE: /run/secrets/backup_public_key
-    VIREO_STORAGE_DIR: /data/storage
-    VIREO_BACKUP_DIR: /data/backups
-    VIREO_TRUSTED_PROXIES: ${VIREO_TRUSTED_PROXIES:-172.31.250.10}
+    PQ_MODE: ${PQ_MODE:-selfhosted}
+    PQ_DB_HOST: db
+    PQ_DB_PORT: "3306"
+    PQ_DB_NAME: ${PQ_DB_NAME:-planquadro}
+    PQ_DB_USER: ${PQ_DB_USER:-planquadro}
+    PQ_DB_PASS_FILE: /run/secrets/db_password
+    PQ_APP_KEY_FILE: /run/secrets/app_key
+    PQ_BACKUP_PUBLIC_KEY_FILE: /run/secrets/backup_public_key
+    PQ_STORAGE_DIR: /data/storage
+    PQ_BACKUP_DIR: /data/backups
+    PQ_TRUSTED_PROXIES: ${PQ_TRUSTED_PROXIES:-172.31.250.10}
   secrets:
     - db_password
     - app_key
@@ -40,7 +40,7 @@ x-app: &app
   volumes:
     - app-data:/data
   networks:
-    - vireo
+    - planquadro
 
 services:
   app:
@@ -48,9 +48,9 @@ services:
     build:
       context: .
       args:
-        BASE: ${VIREO_PHP_BASE:-docker.io/library/php:8.3-apache}
+        BASE: ${PQ_PHP_BASE:-docker.io/library/php:8.3-apache}
     ports:
-      - "${VIREO_HTTP_BIND:-127.0.0.1}:${VIREO_HTTP_PORT:-8080}:8080"
+      - "${PQ_HTTP_BIND:-127.0.0.1}:${PQ_HTTP_PORT:-8080}:8080"
     depends_on:
       db:
         condition: service_healthy
@@ -60,7 +60,7 @@ services:
     command: ["php", "bin/scheduler.php"]
     environment:
       <<: *app-env
-      VIREO_RUN_MIGRATIONS: "0"
+      PQ_RUN_MIGRATIONS: "0"
     stop_signal: SIGTERM
     healthcheck:
       test: ["CMD", "php", "bin/scheduler.php", "health"]
@@ -75,19 +75,19 @@ services:
         condition: service_healthy
 
   db:
-    image: ${VIREO_DB_IMAGE:-docker.io/library/mariadb:10.11}
+    image: ${PQ_DB_IMAGE:-docker.io/library/mariadb:10.11}
     restart: unless-stopped
     environment:
-      MARIADB_DATABASE: ${VIREO_DB_NAME:-vireo}
-      MARIADB_USER: ${VIREO_DB_USER:-vireo}
+      MARIADB_DATABASE: ${PQ_DB_NAME:-planquadro}
+      MARIADB_USER: ${PQ_DB_USER:-planquadro}
       MARIADB_PASSWORD_FILE: /run/secrets/db_password
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MARIADB_AUTO_UPGRADE: "1"
-      TZ: ${VIREO_TIMEZONE:-Europe/Berlin}
+      TZ: ${PQ_TIMEZONE:-Europe/Berlin}
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
-      - --innodb-buffer-pool-size=${VIREO_DB_BUFFER_POOL:-256M}
+      - --innodb-buffer-pool-size=${PQ_DB_BUFFER_POOL:-256M}
       - --max-allowed-packet=64M
     secrets:
       - db_password
@@ -102,10 +102,10 @@ services:
       start_period: 30s
       retries: 10
     networks:
-      - vireo
+      - planquadro
 
   proxy:
-    image: ${VIREO_CADDY_IMAGE:-docker.io/library/caddy:2}
+    image: ${PQ_CADDY_IMAGE:-docker.io/library/caddy:2}
     profiles: ["proxy"]
     restart: unless-stopped
     ports:
@@ -113,7 +113,7 @@ services:
       - "443:443"
       - "443:443/udp"
     environment:
-      VIREO_DOMAIN: ${VIREO_DOMAIN:-localhost}
+      PQ_DOMAIN: ${PQ_DOMAIN:-localhost}
     volumes:
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
@@ -122,14 +122,14 @@ services:
       app:
         condition: service_healthy
     networks:
-      vireo:
-        ipv4_address: ${VIREO_PROXY_IP:-172.31.250.10}
+      planquadro:
+        ipv4_address: ${PQ_PROXY_IP:-172.31.250.10}
 
 networks:
-  vireo:
+  planquadro:
     ipam:
       config:
-        - subnet: ${VIREO_SUBNET:-172.31.250.0/24}
+        - subnet: ${PQ_SUBNET:-172.31.250.0/24}
 
 volumes:
   db-data:

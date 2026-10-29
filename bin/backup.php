@@ -1,6 +1,6 @@
 <?php
 /**
- * Vireo – Backup & Recovery (CLI)
+ * Planquadro – Backup & Recovery (CLI)
  * --------------------------------------------------------------------------
  *   php bin/backup.php keygen [--out=<ordner>]      Schlüsselpaar erzeugen
  *   php bin/backup.php run [--tenant=<slug>] [--kind=manual]
@@ -18,7 +18,7 @@
  * Der private Schlüssel wird nur für verify/restore/restore-test/decrypt
  * gebraucht: --key=<datei>, --key=- (Standardeingabe, z. B.
  * "docker compose exec -T backup php bin/backup.php verify X --key=- < backup_private.key")
- * oder VIREO_BACKUP_PRIVATE_KEY_FILE.
+ * oder PQ_BACKUP_PRIVATE_KEY_FILE.
  * Ausführliche Beschreibung: docs/BACKUP.md
  */
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
@@ -44,12 +44,12 @@ if ($cmd === 'keygen') {
             file_put_contents("$dir/$f", $v . "\n");
             chmod("$dir/$f", $f === 'backup_private.key' ? 0600 : 0644);
         }
-        say("Öffentlicher Schlüssel: $dir/backup_public.key   (auf den Server: VIREO_BACKUP_PUBLIC_KEY_FILE)");
+        say("Öffentlicher Schlüssel: $dir/backup_public.key   (auf den Server: PQ_BACKUP_PUBLIC_KEY_FILE)");
         say("Privater Schlüssel:     $dir/backup_private.key  (OFFLINE aufbewahren, NICHT auf dem Server lassen!)");
         say('Fingerprint: ' . BackupCrypto::fingerprint(BackupCrypto::parsePublic($k['public'])));
         exit(0);
     }
-    say('# Öffentlicher Schlüssel – auf den Server (VIREO_BACKUP_PUBLIC_KEY bzw. _FILE):');
+    say('# Öffentlicher Schlüssel – auf den Server (PQ_BACKUP_PUBLIC_KEY bzw. _FILE):');
     say($k['public']);
     say('');
     say('# PRIVATER Schlüssel – nur für Restore. OFFLINE aufbewahren (Passwortmanager, Tresor, Ausdruck),');

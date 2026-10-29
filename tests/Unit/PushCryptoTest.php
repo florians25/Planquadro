@@ -1,5 +1,5 @@
 <?php
-namespace Vireo\Tests\Unit;
+namespace Planquadro\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 

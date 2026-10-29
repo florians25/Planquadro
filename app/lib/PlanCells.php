@@ -20,12 +20,12 @@
 
 const PLAN_CELL_EMPTY_REV = '0';
 
-/** Schlüssel für Revisionen: VIREO_APP_KEY oder einmalig erzeugt in app_settings. */
+/** Schlüssel für Revisionen: PQ_APP_KEY oder einmalig erzeugt in app_settings. */
 function opsAppKey(PDO $db): string
 {
     static $key = null;
     if ($key !== null) return $key;
-    $env = getenv('VIREO_APP_KEY');
+    $env = getenv('PQ_APP_KEY');
     if ($env !== false && strlen($env) >= 32) return $key = $env;
     $s = $db->prepare("SELECT setting_value FROM app_settings WHERE setting_key='app_key'");
     $s->execute();

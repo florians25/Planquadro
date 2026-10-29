@@ -1,8 +1,8 @@
 {
-  "name": "vireo-mobile",
+  "name": "planquadro-mobile",
   "private": true,
   "version": "1.0.0",
-  "description": "Vireo App für iOS, Android und als PWA (Capacitor + Vite + TypeScript)",
+  "description": "Planquadro App für iOS, Android und als PWA (Capacitor + Vite + TypeScript)",
   "type": "module",
   "license": "UNLICENSED",
   "scripts": {

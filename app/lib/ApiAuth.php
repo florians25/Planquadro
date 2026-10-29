@@ -1,6 +1,6 @@
 <?php
 /**
- * Vireo – Token-Authentifizierung für die API v1
+ * Planquadro – Token-Authentifizierung für die API v1
  * --------------------------------------------------------------------------
  * Access-Token: zustandslos, HMAC-SHA256 mit dem App-Schlüssel, 15 Minuten,
  *   Inhalt {sub, tid (Mandant), fam (Token-Familie), exp}. Bei jeder Anfrage
@@ -25,7 +25,7 @@ function apiSign(string $data): string
 function apiIssueAccess(int $uid, string $family): array
 {
     $payload = apiB64u(json_encode(['sub' => $uid, 'tid' => opsCurrentTenant()['slug'], 'fam' => $family, 'exp' => time() + API_ACCESS_TTL]));
-    return ['token' => 'opa.' . $payload . '.' . apiSign($payload), 'expires_in' => API_ACCESS_TTL];
+    return ['token' => 'pqa.' . $payload . '.' . apiSign($payload), 'expires_in' => API_ACCESS_TTL];
 }
 
 /**
@@ -35,7 +35,7 @@ function apiIssueAccess(int $uid, string $family): array
 function apiVerifyAccess(string $token)
 {
     $p = explode('.', $token);
-    if (count($p) !== 3 || $p[0] !== 'opa' || !hash_equals(apiSign($p[1]), $p[2])) return 'invalid_token';
+    if (count($p) !== 3 || $p[0] !== 'pqa' || !hash_equals(apiSign($p[1]), $p[2])) return 'invalid_token';
     $c = json_decode(apiB64uDec($p[1]), true);
     if (!is_array($c) || !isset($c['sub'], $c['tid'], $c['fam'], $c['exp'])) return 'invalid_token';
     if ($c['tid'] !== opsCurrentTenant()['slug']) return 'invalid_token';
@@ -53,7 +53,7 @@ function apiIssuePair(int $uid, ?string $family = null, ?string $device = null, 
 {
     $db = getDB();
     $family = $family ?? bin2hex(random_bytes(16));
-    $refresh = 'opr.' . apiB64u(random_bytes(32));
+    $refresh = 'pqr.' . apiB64u(random_bytes(32));
     /* Rotation übernimmt das ursprüngliche Ablaufdatum der Familie (absolute Laufzeit) */
     $expiresAt = $expiresAt ?? date('Y-m-d H:i:s', time() + API_REFRESH_TTL);
     $db->prepare('INSERT INTO api_refresh_tokens(user_id, family_id, token_hash, device_name, auth_method, expires_at) VALUES(?,?,?,?,?,?)')

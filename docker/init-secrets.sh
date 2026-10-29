@@ -1,5 +1,5 @@
 #!/bin/sh
-# Vireo – Secrets für docker-compose.yml erzeugen (einmalig, POSIX sh)
+# Planquadro – Secrets für docker-compose.yml erzeugen (einmalig, POSIX sh)
 # ---------------------------------------------------------------------------
 #   sh docker/init-secrets.sh            legt ./secrets/ an (vorhandene Dateien bleiben)
 #
@@ -31,13 +31,13 @@ if [ ! -s "$DIR/backup_public.key" ]; then
     if command -v php >/dev/null 2>&1 && php -r 'exit(function_exists("sodium_crypto_box_keypair") ? 0 : 1);' 2>/dev/null; then
         out=$(php bin/backup.php keygen)
     elif command -v docker >/dev/null 2>&1; then
-        out=$(docker run --rm --entrypoint php "${VIREO_IMAGE:-vireo/app:latest}" bin/backup.php keygen)
+        out=$(docker run --rm --entrypoint php "${PQ_IMAGE:-planquadro/app:latest}" bin/backup.php keygen)
     else
         echo "Weder PHP (mit sodium) noch Docker gefunden – Schlüssel bitte manuell erzeugen: php bin/backup.php keygen" >&2
         exit 1
     fi
-    printf '%s\n' "$out" | grep '^vireo-backup-pk-v1:' > "$DIR/backup_public.key"
-    printf '%s\n' "$out" | grep '^vireo-backup-sk-v1:' > "$DIR/backup_private.key"
+    printf '%s\n' "$out" | grep '^planquadro-backup-pk-v1:' > "$DIR/backup_public.key"
+    printf '%s\n' "$out" | grep '^planquadro-backup-sk-v1:' > "$DIR/backup_private.key"
     chmod 0600 "$DIR/backup_private.key"
     echo "erzeugt: $DIR/backup_public.key"
     echo

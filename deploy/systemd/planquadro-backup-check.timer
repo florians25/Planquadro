@@ -1,5 +1,5 @@
 [Unit]
-Description=Vireo Backup-Statusprüfung stündlich
+Description=Planquadro Backup-Statusprüfung stündlich
 
 [Timer]
 OnCalendar=hourly

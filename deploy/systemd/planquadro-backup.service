@@ -1,0 +1,24 @@
+# Planquadro – tägliches Backup (ohne Docker)
+# Installation: siehe docs/BACKUP.md, Abschnitt „Zeitsteuerung ohne Docker“
+#   sudo cp deploy/systemd/planquadro-*.{service,timer} /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now planquadro-backup.timer planquadro-backup-check.timer
+[Unit]
+Description=Planquadro Backup (Datenbank + Dateien, verschlüsselt)
+Wants=network-online.target
+After=network-online.target mariadb.service mysql.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+# Variablen wie im Webserver: PQ_DB_*, PQ_BACKUP_*, PQ_STORAGE_DIR, PQ_ALERT_*
+EnvironmentFile=/etc/planquadro/planquadro.env
+WorkingDirectory=/var/www/planquadro
+ExecStart=/usr/bin/php bin/backup.php run
+Nice=10
+IOSchedulingClass=idle
+# Härtung
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=yes

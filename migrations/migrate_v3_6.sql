@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `app_settings` (
 INSERT IGNORE INTO `app_settings` (`setting_key`,`setting_value`) VALUES
 ('maintenance_mode','0'),
 ('maintenance_message','Das System wird gewartet. Bitte versuchen Sie es später erneut.'),
-('company_name','OpsPilot'),
+('company_name','Planquadro'),
 ('app_version','3.6');
 
 -- v3.5 columns (if not yet applied)

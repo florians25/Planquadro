@@ -1,9 +1,9 @@
 <?php
-namespace Vireo\Tests\Integration;
+namespace Planquadro\Tests\Integration;
 
-use Vireo\Tests\Support\Client;
-use Vireo\Tests\Support\IntegrationTestCase;
-use Vireo\Tests\Support\TestEnv;
+use Planquadro\Tests\Support\Client;
+use Planquadro\Tests\Support\IntegrationTestCase;
+use Planquadro\Tests\Support\TestEnv;
 
 /** Grundfunktionen: Login, Seitenaufrufe je Rolle, Rechte-Gates der Seiten. */
 final class SmokeTest extends IntegrationTestCase

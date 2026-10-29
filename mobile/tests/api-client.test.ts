@@ -5,7 +5,7 @@ import { createMockServer, MOCK_BASE_URL } from '../src/api/mock';
 import type { TokenResponse } from '../src/api/types';
 import meFx from '../src/api/fixtures/me.json';
 
-const BASE = 'https://vireo.example/api/v1/';
+const BASE = 'https://planquadro.example/api/v1/';
 
 function memStore(initial: string | null = null): RefreshTokenStore & { value: string | null; writes: Array<string | null> } {
   const s = {
@@ -172,7 +172,7 @@ describe('ApiClient – Token-Refresh', () => {
 });
 
 describe('ApiClient – Header und URLs', () => {
-  it('setzt X-Vireo-Tenant, Accept und Content-Type', async () => {
+  it('setzt X-PQ-Tenant, Accept und Content-Type', async () => {
     const seen: Headers[] = [];
     const client = new ApiClient({
       baseUrl: BASE,
@@ -184,7 +184,7 @@ describe('ApiClient – Header und URLs', () => {
       refreshTokenStore: memStore(),
     });
     await client.login({ username: 'u', password: 'p', device_name: 'x' });
-    expect(seen[0]!.get('X-Vireo-Tenant')).toBe('acme');
+    expect(seen[0]!.get('X-PQ-Tenant')).toBe('acme');
     expect(seen[0]!.get('Accept')).toBe('application/json');
     expect(seen[0]!.get('Content-Type')).toBe('application/json');
     expect(seen[0]!.get('Authorization')).toBeNull();
@@ -201,7 +201,7 @@ describe('ApiClient – Header und URLs', () => {
       refreshTokenStore: memStore(),
     });
     await client.getHealth();
-    expect(headers!.has('X-Vireo-Tenant')).toBe(false);
+    expect(headers!.has('X-PQ-Tenant')).toBe(false);
   });
 
   it('baut Query-Parameter und kodiert Pfadsegmente', async () => {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Vireo Einsatzplanung – Planungsassistent (Beta)   v6.8.5
+ * Planquadro Einsatzplanung – Planungsassistent (Beta)   v6.8.5
  *
  * Copyright (c) 2026 Florian-Fynn Scheibel. Alle Rechte vorbehalten.
  * -----------------------------------------------------------------------------

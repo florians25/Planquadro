@@ -1,0 +1,12 @@
+# Planquadro – Zeitsteuerung per cron (Alternative zu systemd-Timern / Docker-Scheduler)
+# Installation: sudo cp deploy/cron/planquadro /etc/cron.d/planquadro  (Pfade anpassen)
+# Die Umgebungsvariablen stehen in /etc/planquadro/planquadro.env (KEY=VALUE, ohne "export").
+SHELL=/bin/sh
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# täglich 02:30 Backup
+30 2 * * * www-data cd /var/www/planquadro && set -a && . /etc/planquadro/planquadro.env && set +a && php bin/backup.php run >> /var/log/planquadro-backup.log 2>&1
+# stündlich: Alarm, wenn das letzte erfolgreiche Backup zu alt ist
+5 * * * *  www-data cd /var/www/planquadro && set -a && . /etc/planquadro/planquadro.env && set +a && php bin/backup.php status --alert > /dev/null 2>&1
+# optional, besser auf einem separaten Prüfsystem: Restore-Test sonntags 04:30
+#30 4 * * 0 www-data cd /var/www/planquadro && set -a && . /etc/planquadro/planquadro.env && set +a && PQ_BACKUP_PRIVATE_KEY_FILE=/etc/planquadro/backup_private.key php bin/backup.php restore-test >> /var/log/planquadro-backup.log 2>&1

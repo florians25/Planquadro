@@ -1,5 +1,5 @@
 <?php
-namespace Vireo\Tests\Support;
+namespace Planquadro\Tests\Support;
 
 final class Response
 {

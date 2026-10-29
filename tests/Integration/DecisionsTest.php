@@ -1,9 +1,9 @@
 <?php
-namespace Vireo\Tests\Integration;
+namespace Planquadro\Tests\Integration;
 
-use Vireo\Tests\Support\Client;
-use Vireo\Tests\Support\IntegrationTestCase;
-use Vireo\Tests\Support\TestEnv;
+use Planquadro\Tests\Support\Client;
+use Planquadro\Tests\Support\IntegrationTestCase;
+use Planquadro\Tests\Support\TestEnv;
 
 /** Umsetzung der Produktentscheidungen E-1 … E-4 und weiterer Phase-2-Reste. */
 final class DecisionsTest extends IntegrationTestCase

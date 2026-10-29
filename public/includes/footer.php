@@ -1,6 +1,6 @@
 </main>
 <footer class="app-footer">
-  <span><?php echo e(getSetting('company_name','Vireo')); ?> Einsatzplanung</span>
+  <span><?php echo e(getSetting('company_name','Planquadro')); ?> Einsatzplanung</span>
   <span class="app-footer-sep">·</span>
   <span>&copy; <?php echo date('Y'); ?> Florian-Fynn Scheibel</span>
   <span class="app-footer-sep">·</span>

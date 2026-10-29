@@ -1,15 +1,15 @@
 <?php
 /**
- * Vireo – Push-Versand
+ * Planquadro – Push-Versand
  *   php bin/push-worker.php            einmal abarbeiten
  *   php bin/push-worker.php --loop     dauerhaft (alle 15 s), z. B. als Docker-Dienst
  *   --all-tenants                      im SaaS-Modus alle Mandanten nacheinander
- * Anbieter: FCM (VIREO_FCM_SERVICE_ACCOUNT_FILE), APNs (VIREO_APNS_KEY_FILE,
- * _KEY_ID, _TEAM_ID, _BUNDLE_ID, _SANDBOX), ntfy (VIREO_NTFY_URL, _TOKEN).
+ * Anbieter: FCM (PQ_FCM_SERVICE_ACCOUNT_FILE), APNs (PQ_APNS_KEY_FILE,
+ * _KEY_ID, _TEAM_ID, _BUNDLE_ID, _SANDBOX), ntfy (PQ_NTFY_URL, _TOKEN).
  */
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 $opts = getopt('', ['loop', 'all-tenants', 'tenant:']);
-if (!empty($opts['tenant'])) putenv('VIREO_TENANT=' . $opts['tenant']);
+if (!empty($opts['tenant'])) putenv('PQ_TENANT=' . $opts['tenant']);
 require_once __DIR__ . '/../app/config/database.php';
 require_once __DIR__ . '/../app/lib/Push.php';
 

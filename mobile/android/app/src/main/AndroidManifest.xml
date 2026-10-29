@@ -33,12 +33,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- OIDC-Rücksprung: vireo://auth?code=…&state=… -->
+            <!-- OIDC-Rücksprung: planquadro://auth?code=…&state=… -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="vireo" android:host="auth" />
+                <data android:scheme="planquadro" android:host="auth" />
             </intent-filter>
 
         </activity>

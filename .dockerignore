@@ -24,7 +24,7 @@ app/storage
 data
 backups
 *.epbak
-*.opbak
+*.pqbak
 *.sql.gz
 *.dump
 *.log

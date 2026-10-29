@@ -68,7 +68,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VIREO_VERSION=${{ github.ref_name }}
+            PQ_VERSION=${{ github.ref_name }}
           sbom: true
           provenance: mode=max
           cache-from: type=gha

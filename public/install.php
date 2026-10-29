@@ -4,12 +4,12 @@
  * --------------------------------------------------------------------------
  * Gesperrt, solange nicht ausdrücklich freigegeben:
  *   - per CLI:  php public/install.php
- *   - per Web:  nur mit Umgebungsvariable VIREO_ALLOW_INSTALL=1
+ *   - per Web:  nur mit Umgebungsvariable PQ_ALLOW_INSTALL=1
  * Läuft nur, wenn noch KEIN Benutzer existiert. Das Passwort wird zufällig
  * erzeugt, einmal angezeigt und muss beim ersten Login geändert werden.
  */
 $cli = PHP_SAPI === 'cli';
-if (!$cli && getenv('VIREO_ALLOW_INSTALL') !== '1') {
+if (!$cli && getenv('PQ_ALLOW_INSTALL') !== '1') {
     http_response_code(404);
     exit('Not Found');
 }
@@ -27,13 +27,13 @@ try {
     } else {
         $msgs[] = 'Es existieren bereits Benutzer – keine Änderung vorgenommen.';
     }
-} catch (Exception $e) { $msgs[] = 'Fehler bei der Einrichtung. Details im Server-Log.'; error_log('Vireo install: ' . $e->getMessage()); }
+} catch (Exception $e) { $msgs[] = 'Fehler bei der Einrichtung. Details im Server-Log.'; error_log('Planquadro install: ' . $e->getMessage()); }
 if ($cli) { echo implode(PHP_EOL, $msgs), PHP_EOL; exit($ok ? 0 : 1); }
 header('Cache-Control: no-store');
 ?><!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Installation</title><link rel="stylesheet" href="assets/css/style.css"></head>
 <body class="login-bg"><div class="login-wrap"><div class="login-box">
 <h1>Installation</h1>
 <?php foreach($msgs as $m): ?><div class="alert alert-ok"><?php echo htmlspecialchars($m); ?></div><?php endforeach; ?>
-<p class="muted">Danach <code>VIREO_ALLOW_INSTALL</code> wieder entfernen.</p>
+<p class="muted">Danach <code>PQ_ALLOW_INSTALL</code> wieder entfernen.</p>
 <a href="./" class="btn btn-primary btn-full" style="margin-top:1rem">Zum Login</a>
 </div></div></body></html>

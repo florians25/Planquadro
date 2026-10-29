@@ -1,5 +1,5 @@
 <?php
-namespace Vireo\Tests\Unit;
+namespace Planquadro\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
@@ -35,7 +35,7 @@ final class SqlSplitterTest extends TestCase
 
     public function testAllMigrationFilesSplitCleanly(): void
     {
-        $files = array_merge(glob(__DIR__ . '/../../migrations/*.sql'), glob(__DIR__ . '/../../migrations/vireo/*.sql'));
+        $files = array_merge(glob(__DIR__ . '/../../migrations/*.sql'), glob(__DIR__ . '/../../migrations/app/*.sql'));
         $this->assertNotEmpty($files);
         foreach ($files as $f) {
             foreach (\SqlSplitter::split(file_get_contents($f)) as $stmt) {

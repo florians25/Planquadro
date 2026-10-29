@@ -1,5 +1,5 @@
 <?php
-namespace Vireo\Tests\Unit;
+namespace Planquadro\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
@@ -56,8 +56,8 @@ final class BackupCryptoTest extends TestCase
     public function testKeyFormatAndFingerprint(): void
     {
         [$pk, $kp, $k] = $this->keys();
-        $this->assertStringStartsWith('vireo-backup-pk-v1:', $k['public']);
-        $this->assertStringStartsWith('vireo-backup-sk-v1:', $k['secret']);
+        $this->assertStringStartsWith('planquadro-backup-pk-v1:', $k['public']);
+        $this->assertStringStartsWith('planquadro-backup-sk-v1:', $k['secret']);
         $this->assertSame($pk, \BackupCrypto::publicFromSecret($kp));
         $this->assertMatchesRegularExpression('/^[0-9a-f]{16}$/', \BackupCrypto::fingerprint($pk));
         $this->expectException(\BackupException::class);

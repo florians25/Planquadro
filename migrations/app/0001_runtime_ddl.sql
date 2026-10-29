@@ -1,4 +1,4 @@
--- OpsPilot 0001 – bisher zur Laufzeit angelegte Spalten per Migration sicherstellen
+-- Planquadro 0001 – bisher zur Laufzeit angelegte Spalten per Migration sicherstellen
 -- (api/ical.php, pages/profil.php, api/live_status.php, api/changelog.php haben
 -- ALTER TABLE in Requests ausgeführt; das entfällt ab jetzt).
 -- Mehrfach ausführbar, MySQL 5.7/8 und MariaDB 10.3+.

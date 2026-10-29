@@ -15,9 +15,9 @@ Updates: [UPDATE.md](UPDATE.md). Backups: [BACKUP.md](BACKUP.md).
 ## 1. Docker Compose (Schnellstart)
 
 ```bash
-git clone https://github.com/<owner>/vireo.git /opt/vireo && cd /opt/vireo
+git clone https://github.com/<owner>/planquadro.git /opt/planquadro && cd /opt/planquadro
 cp .env.example .env && chmod 600 .env
-$EDITOR .env                           # mindestens VIREO_DOMAIN, VIREO_BASE_URL
+$EDITOR .env                           # mindestens PQ_DOMAIN, PQ_BASE_URL
 sh docker/init-secrets.sh              # Passwörter, App-Schlüssel, Backup-Schlüsselpaar
 ```
 
@@ -26,7 +26,7 @@ erzeugt den **privaten Backup-Schlüssel** `secrets/backup_private.key`. Diesen 
 sichern und danach vom Server löschen (`shred -u secrets/backup_private.key`) – siehe
 [BACKUP.md](BACKUP.md#schlüssel).
 
-Starten – mit HTTPS über Caddy (Let's Encrypt, DNS von `VIREO_DOMAIN` muss auf den Server
+Starten – mit HTTPS über Caddy (Let's Encrypt, DNS von `PQ_DOMAIN` muss auf den Server
 zeigen, Ports 80 und 443 offen):
 
 ```bash
@@ -63,15 +63,15 @@ Bei veröffentlichten Releases (GitHub Container Registry) in `.env` setzen und 
 `--build` starten:
 
 ```ini
-VIREO_IMAGE=ghcr.io/<owner>/vireo:1.0.0
+PQ_IMAGE=ghcr.io/<owner>/planquadro:1.0.0
 ```
 
 ```bash
 docker compose pull && docker compose --profile proxy up -d
 ```
 
-Wenn Docker Hub beim Bauen Limits meldet: `VIREO_PHP_BASE=mirror.gcr.io/library/php:8.3-apache`,
-`VIREO_DB_IMAGE=mirror.gcr.io/library/mariadb:10.11`, `VIREO_CADDY_IMAGE=mirror.gcr.io/library/caddy:2`.
+Wenn Docker Hub beim Bauen Limits meldet: `PQ_PHP_BASE=mirror.gcr.io/library/php:8.3-apache`,
+`PQ_DB_IMAGE=mirror.gcr.io/library/mariadb:10.11`, `PQ_CADDY_IMAGE=mirror.gcr.io/library/caddy:2`.
 
 ### Was wo liegt
 
@@ -88,13 +88,13 @@ Der App-Container läuft ohne Root-Rechte (`www-data`, Port 8080); erreichbar is
 ## 2. Reverse Proxy und HTTPS
 
 Die App spricht im Container nur HTTP. TLS übernimmt ein Reverse Proxy. Die App wertet
-`X-Forwarded-For` und `X-Forwarded-Proto` **nur** von Adressen in `VIREO_TRUSTED_PROXIES`
+`X-Forwarded-For` und `X-Forwarded-Proto` **nur** von Adressen in `PQ_TRUSTED_PROXIES`
 aus; für alle anderen werden diese Header ignoriert (keine IP-Fälschung, kein
-vorgetäuschtes HTTPS). Hinter TLS zusätzlich `VIREO_FORCE_SECURE_COOKIES=1`.
+vorgetäuschtes HTTPS). Hinter TLS zusätzlich `PQ_FORCE_SECURE_COOKIES=1`.
 
 **Caddy (mitgeliefert):** Profil `proxy`, Konfiguration `docker/caddy/Caddyfile`. Caddy hat
 die feste Adresse `172.31.250.10` im Compose-Netz, die als Standard in
-`VIREO_TRUSTED_PROXIES` steht. Mehrere Hostnamen: `VIREO_DOMAIN=a.example.de, b.example.de`.
+`PQ_TRUSTED_PROXIES` steht. Mehrere Hostnamen: `PQ_DOMAIN=a.example.de, b.example.de`.
 
 **Eigenes nginx auf dem Host** (App-Port bleibt auf `127.0.0.1:8080`):
 
@@ -118,8 +118,8 @@ server {
 server { listen 80; server_name plan.example.de; return 301 https://$host$request_uri; }
 ```
 
-Dazu in `.env`: `VIREO_TRUSTED_PROXIES=172.31.250.1` (Gateway des Compose-Netzes, über
-das Docker die Verbindungen vom Host weiterreicht) und `VIREO_FORCE_SECURE_COOKIES=1`.
+Dazu in `.env`: `PQ_TRUSTED_PROXIES=172.31.250.1` (Gateway des Compose-Netzes, über
+das Docker die Verbindungen vom Host weiterreicht) und `PQ_FORCE_SECURE_COOKIES=1`.
 
 **Traefik** (Labels am Dienst `app`, Traefik im selben Docker-Netz):
 
@@ -128,13 +128,13 @@ services:
   app:
     labels:
       - traefik.enable=true
-      - traefik.http.routers.vireo.rule=Host(`plan.example.de`)
-      - traefik.http.routers.vireo.entrypoints=websecure
-      - traefik.http.routers.vireo.tls.certresolver=le
-      - traefik.http.services.vireo.loadbalancer.server.port=8080
+      - traefik.http.routers.planquadro.rule=Host(`plan.example.de`)
+      - traefik.http.routers.planquadro.entrypoints=websecure
+      - traefik.http.routers.planquadro.tls.certresolver=le
+      - traefik.http.services.planquadro.loadbalancer.server.port=8080
     environment:
-      VIREO_TRUSTED_PROXIES: <IP oder Subnetz des Traefik-Containers>
-      VIREO_FORCE_SECURE_COOKIES: "1"
+      PQ_TRUSTED_PROXIES: <IP oder Subnetz des Traefik-Containers>
+      PQ_FORCE_SECURE_COOKIES: "1"
 ```
 
 Healthchecks für Load Balancer: `GET /api/healthz` (Prozess lebt, ohne DB) und
@@ -149,58 +149,58 @@ Beispiel Debian/Ubuntu:
 sudo apt install apache2 libapache2-mod-php php-mysql php-mbstring php-curl php-intl php-zip \
                  php-xml mariadb-server mariadb-client rclone
 sudo a2enmod rewrite headers expires
-sudo git clone https://github.com/<owner>/vireo.git /var/www/vireo
-sudo chown -R root:www-data /var/www/vireo
-sudo install -d -o www-data -g www-data -m 0750 /var/www/vireo/app/storage /var/www/vireo/app/backups
+sudo git clone https://github.com/<owner>/planquadro.git /var/www/planquadro
+sudo chown -R root:www-data /var/www/planquadro
+sudo install -d -o www-data -g www-data -m 0750 /var/www/planquadro/app/storage /var/www/planquadro/app/backups
 ```
 
 Datenbank:
 
 ```sql
-CREATE DATABASE vireo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'vireo'@'localhost' IDENTIFIED BY '<starkes Passwort>';
-GRANT ALL ON vireo.* TO 'vireo'@'localhost';
-GRANT ALL ON `vireo\_%`.* TO 'vireo'@'localhost';   -- Restore/Restore-Test
+CREATE DATABASE planquadro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'planquadro'@'localhost' IDENTIFIED BY '<starkes Passwort>';
+GRANT ALL ON planquadro.* TO 'planquadro'@'localhost';
+GRANT ALL ON `planquadro\_%`.* TO 'planquadro'@'localhost';   -- Restore/Restore-Test
 ```
 
-Umgebung für Webserver **und** CLI an einer Stelle: `/etc/vireo/vireo.env`
+Umgebung für Webserver **und** CLI an einer Stelle: `/etc/planquadro/planquadro.env`
 (`root:www-data`, `0640`):
 
 ```ini
-VIREO_DB_HOST=localhost
-VIREO_DB_NAME=vireo
-VIREO_DB_USER=vireo
-VIREO_DB_PASS_FILE=/etc/vireo/db_password
-VIREO_APP_KEY=<openssl rand -hex 32>
-VIREO_STORAGE_DIR=/var/www/vireo/app/storage
-VIREO_BACKUP_DIR=/var/backups/vireo
-VIREO_BACKUP_PUBLIC_KEY_FILE=/etc/vireo/backup_public.key
-VIREO_FORCE_SECURE_COOKIES=1
+PQ_DB_HOST=localhost
+PQ_DB_NAME=planquadro
+PQ_DB_USER=planquadro
+PQ_DB_PASS_FILE=/etc/planquadro/db_password
+PQ_APP_KEY=<openssl rand -hex 32>
+PQ_STORAGE_DIR=/var/www/planquadro/app/storage
+PQ_BACKUP_DIR=/var/backups/planquadro
+PQ_BACKUP_PUBLIC_KEY_FILE=/etc/planquadro/backup_public.key
+PQ_FORCE_SECURE_COOKIES=1
 ```
 
-VirtualHost (`/etc/apache2/sites-available/vireo.conf`) – **DocumentRoot ist `public/`**:
+VirtualHost (`/etc/apache2/sites-available/planquadro.conf`) – **DocumentRoot ist `public/`**:
 
 ```apache
 <VirtualHost *:443>
     ServerName plan.example.de
-    DocumentRoot /var/www/vireo/public
-    <Directory /var/www/vireo>
+    DocumentRoot /var/www/planquadro/public
+    <Directory /var/www/planquadro>
         Require all denied
         AllowOverride None
     </Directory>
-    <Directory /var/www/vireo/public>
+    <Directory /var/www/planquadro/public>
         Require all granted
         AllowOverride All
         Options -Indexes
     </Directory>
     # Umgebungsvariablen (alternativ: PassEnv mit systemd-Environment)
-    SetEnv VIREO_DB_HOST localhost
-    SetEnv VIREO_DB_NAME vireo
-    SetEnv VIREO_DB_USER vireo
-    SetEnv VIREO_DB_PASS_FILE /etc/vireo/db_password
-    SetEnv VIREO_STORAGE_DIR /var/www/vireo/app/storage
-    SetEnv VIREO_BACKUP_DIR /var/backups/vireo
-    SetEnv VIREO_BACKUP_PUBLIC_KEY_FILE /etc/vireo/backup_public.key
+    SetEnv PQ_DB_HOST localhost
+    SetEnv PQ_DB_NAME planquadro
+    SetEnv PQ_DB_USER planquadro
+    SetEnv PQ_DB_PASS_FILE /etc/planquadro/db_password
+    SetEnv PQ_STORAGE_DIR /var/www/planquadro/app/storage
+    SetEnv PQ_BACKUP_DIR /var/backups/planquadro
+    SetEnv PQ_BACKUP_PUBLIC_KEY_FILE /etc/planquadro/backup_public.key
     SSLEngine on
     SSLCertificateFile    /etc/letsencrypt/live/plan.example.de/fullchain.pem
     SSLCertificateKeyFile /etc/letsencrypt/live/plan.example.de/privkey.pem
@@ -208,20 +208,20 @@ VirtualHost (`/etc/apache2/sites-available/vireo.conf`) – **DocumentRoot ist `
 ```
 
 Hinweis: Mit `SetEnv` gesetzte Werte sieht PHP über `getenv()` (mod_php). Die Dateien in
-`/etc/vireo/` müssen für `www-data` lesbar sein (`chgrp www-data`, `chmod 0640`).
+`/etc/planquadro/` müssen für `www-data` lesbar sein (`chgrp www-data`, `chmod 0640`).
 
 Schema, Administrator, Backup-Schlüssel, Zeitsteuerung:
 
 ```bash
-cd /var/www/vireo
-set -a; . /etc/vireo/vireo.env; set +a
+cd /var/www/planquadro
+set -a; . /etc/planquadro/planquadro.env; set +a
 sudo -E -u www-data php bin/migrate.php up
 sudo -E -u www-data php public/install.php
-php bin/backup.php keygen --out=/root/vireo-keys      # privat: offline sichern, dann löschen
-sudo install -m 0640 -g www-data /root/vireo-keys/backup_public.key /etc/vireo/
-sudo install -d -o www-data -g www-data -m 0750 /var/backups/vireo
-sudo cp deploy/systemd/vireo-backup*.{service,timer} /etc/systemd/system/
-sudo systemctl daemon-reload && sudo systemctl enable --now vireo-backup.timer vireo-backup-check.timer
+php bin/backup.php keygen --out=/root/planquadro-keys      # privat: offline sichern, dann löschen
+sudo install -m 0640 -g www-data /root/planquadro-keys/backup_public.key /etc/planquadro/
+sudo install -d -o www-data -g www-data -m 0750 /var/backups/planquadro
+sudo cp deploy/systemd/planquadro-backup*.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now planquadro-backup.timer planquadro-backup-check.timer
 sudo systemctl reload apache2
 ```
 
@@ -234,7 +234,7 @@ bisherige Anleitung ([EINBAU_v6_8_5.md](../EINBAU_v6_8_5.md)), mit diesen Punkte
   `.htaccess` im Wurzelverzeichnis in `public/` um und sperrt `app/`.
 - Zugangsdaten in `app/config/secrets.php` (Vorlage `secrets.sample.php`), falls das Panel
   keine Umgebungsvariablen erlaubt.
-- Ersteinrichtung ohne Shell: einmalig `VIREO_ALLOW_INSTALL=1` (Panel oder `.htaccess`
+- Ersteinrichtung ohne Shell: einmalig `PQ_ALLOW_INSTALL=1` (Panel oder `.htaccess`
   `SetEnv`), `/install` aufrufen, Variable wieder entfernen. Migrationen ohne Shell:
   einmalig per Cronjob-Funktion des Panels `php bin/migrate.php up` ausführen.
 - **Backups:** `bin/backup.php run` über die Cronjob-Funktion des Hosters (täglich) mit
@@ -242,8 +242,8 @@ bisherige Anleitung ([EINBAU_v6_8_5.md](../EINBAU_v6_8_5.md)), mit diesen Punkte
   Einstellungen; der Dashboard-Hinweis erinnert, wenn das letzte Backup älter als 26 h ist.
   Ein externes Ziel ist auf Shared Hosting besonders wichtig (S3-kompatibel braucht nur
   `curl`). Die alte Cron-URL `api/backup?action=cron_backup&key=…` gibt es nicht mehr.
-- Ohne `mariadb-dump` nutzt Vireo automatisch den PHP-Dumper (ebenfalls konsistent).
-- Restore erfordert eine Shell (oder lokal: Archiv herunterladen, mit Vireo auf dem
+- Ohne `mariadb-dump` nutzt Planquadro automatisch den PHP-Dumper (ebenfalls konsistent).
+- Restore erfordert eine Shell (oder lokal: Archiv herunterladen, mit Planquadro auf dem
   eigenen Rechner wiederherstellen, SQL per phpMyAdmin in eine neue Datenbank laden).
 
 ## SaaS-Betrieb
@@ -254,14 +254,14 @@ docker compose exec app php bin/tenant.php create acme "Acme GmbH" --domain=acme
 ```
 
 Der Start migriert die Plattform-DB und alle Mandanten (`--platform`, `--all-tenants`). Neue
-Mandanten-Hosts in `VIREO_DOMAIN` ergänzen (Caddy) oder ein Wildcard-Zertifikat
+Mandanten-Hosts in `PQ_DOMAIN` ergänzen (Caddy) oder ein Wildcard-Zertifikat
 (DNS-Challenge, eigener Caddy-Build mit DNS-Plugin) verwenden. Der Backup-Dienst sichert
 jeden Mandanten einzeln (Status in `backup_runs`).
 
 ## Bestehende Einsatzplanung übernehmen
 
 Siehe [MIGRATION_PLAN.md](MIGRATION_PLAN.md). Kurz: Backup der Altinstallation, Datenbank
-in den neuen Server übernehmen, dann **einmalig** mit `VIREO_AUTO_BASELINE=v6_9_0` starten
+in den neuen Server übernehmen, dann **einmalig** mit `PQ_AUTO_BASELINE=v6_9_0` starten
 (oder `docker compose run --rm --no-deps app php bin/migrate.php baseline v6_9_0`). Ohne diese
 Angabe verweigert der Container den Start, statt die nicht wiederholbaren Alt-Migrationen
 erneut auszuführen.

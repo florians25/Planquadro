@@ -1,4 +1,4 @@
-title = "Vireo gitleaks config"
+title = "Planquadro gitleaks config"
 
 [extend]
 useDefault = true

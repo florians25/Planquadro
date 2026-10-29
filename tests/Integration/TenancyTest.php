@@ -1,9 +1,9 @@
 <?php
-namespace Vireo\Tests\Integration;
+namespace Planquadro\Tests\Integration;
 
-use Vireo\Tests\Support\Client;
-use Vireo\Tests\Support\IntegrationTestCase;
-use Vireo\Tests\Support\TestEnv;
+use Planquadro\Tests\Support\Client;
+use Planquadro\Tests\Support\IntegrationTestCase;
+use Planquadro\Tests\Support\TestEnv;
 use PDO;
 
 /**
@@ -25,12 +25,12 @@ final class TenancyTest extends IntegrationTestCase
         $prefix = TestEnv::$db['name'] . '_t_';
         foreach ([$pf, $prefix . 'acme', $prefix . 'beta'] as $d) $root->exec("DROP DATABASE IF EXISTS `$d`");
         $root->exec("CREATE DATABASE `$pf` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-        self::$saasEnv = ['VIREO_MODE' => 'saas', 'VIREO_PLATFORM_DB_NAME' => $pf, 'VIREO_TENANT_DB_PREFIX' => $prefix,
-            'VIREO_PLATFORM_HOST' => 'api.vireo.test'];
+        self::$saasEnv = ['PQ_MODE' => 'saas', 'PQ_PLATFORM_DB_NAME' => $pf, 'PQ_TENANT_DB_PREFIX' => $prefix,
+            'PQ_PLATFORM_HOST' => 'api.planquadro.test'];
         [$rc, $out] = TestEnv::runCli(['bin/migrate.php', 'up', '--platform'], self::$saasEnv);
         $this->assertSame(0, $rc, $out);
         foreach (['acme' => 'Acme GmbH', 'beta' => 'Beta AG'] as $slug => $name) {
-            [$rc, $out] = TestEnv::runCli(['bin/tenant.php', 'create', $slug, $name, "--domain=$slug.vireo.test"], self::$saasEnv);
+            [$rc, $out] = TestEnv::runCli(['bin/tenant.php', 'create', $slug, $name, "--domain=$slug.planquadro.test"], self::$saasEnv);
             $this->assertSame(0, $rc, $out);
             $this->assertStringContainsString('Einmalpasswort', $out);
         }
@@ -66,30 +66,30 @@ final class TenancyTest extends IntegrationTestCase
 
     public function testTenantIsResolvedByHostAndCredentialsAreIsolated(): void
     {
-        $this->assertTrue($this->loginOk($this->client('acme.vireo.test'), 'shared', 'Acme-Passwort-1'));
-        $this->assertFalse($this->loginOk($this->client('beta.vireo.test'), 'shared', 'Acme-Passwort-1'), 'Passwort aus Mandant A gilt nicht in B');
-        $this->assertTrue($this->loginOk($this->client('beta.vireo.test'), 'shared', 'Beta-Passwort-1'));
+        $this->assertTrue($this->loginOk($this->client('acme.planquadro.test'), 'shared', 'Acme-Passwort-1'));
+        $this->assertFalse($this->loginOk($this->client('beta.planquadro.test'), 'shared', 'Acme-Passwort-1'), 'Passwort aus Mandant A gilt nicht in B');
+        $this->assertTrue($this->loginOk($this->client('beta.planquadro.test'), 'shared', 'Beta-Passwort-1'));
         $this->tenantPdo('beta')->exec('DELETE FROM login_attempts');
     }
 
     public function testSessionOfTenantACannotBeUsedOnTenantB(): void
     {
-        $c = $this->client('acme.vireo.test');
+        $c = $this->client('acme.planquadro.test');
         $this->assertTrue($this->loginOk($c, 'shared', 'Acme-Passwort-1'));
         $this->assertSame(200, $c->get('/mitarbeiter')->status);
         /* Gleicher Cookie-Speicher, anderer Mandant */
-        $c->host = 'beta.vireo.test';
+        $c->host = 'beta.planquadro.test';
         $r = $c->get('/mitarbeiter');
         $this->assertSame(302, $r->status, 'Session darf in einem anderen Mandanten nicht gelten');
         /* Session-Cookie explizit unter fremdem Namen übertragen */
-        $c->host = 'acme.vireo.test';
+        $c->host = 'acme.planquadro.test';
         $r = $c->get('/dashboard');
         $this->assertSame(200, $r->status, 'ursprüngliche Session bleibt in A gültig');
     }
 
     public function testDataIsSeparatedPerTenant(): void
     {
-        $c = $this->client('acme.vireo.test');
+        $c = $this->client('acme.planquadro.test');
         $this->assertTrue($this->loginOk($c, 'shared', 'Acme-Passwort-1'));
         $page = $c->get('/mitarbeiter')->body;
         $this->assertStringContainsString('Acme', $page);
@@ -99,45 +99,45 @@ final class TenancyTest extends IntegrationTestCase
 
     public function testUnknownAndSuspendedTenants(): void
     {
-        $this->assertSame(404, $this->client('unbekannt.vireo.test')->get('/')->status);
+        $this->assertSame(404, $this->client('unbekannt.planquadro.test')->get('/')->status);
         [$rc, $out] = TestEnv::runCli(['bin/tenant.php', 'suspend', 'beta'], self::$saasEnv);
         $this->assertSame(0, $rc, $out);
         try {
-            $this->assertSame(503, $this->client('beta.vireo.test')->get('/')->status);
+            $this->assertSame(503, $this->client('beta.planquadro.test')->get('/')->status);
         } finally {
             TestEnv::runCli(['bin/tenant.php', 'activate', 'beta'], self::$saasEnv);
         }
-        $this->assertSame(200, $this->client('beta.vireo.test')->get('/')->status);
+        $this->assertSame(200, $this->client('beta.planquadro.test')->get('/')->status);
     }
 
     public function testTenantHeaderIsOnlyHonouredForApiOnPlatformHost(): void
     {
         /* Web-Seiten auf dem Plattform-Host ignorieren den Header */
-        $c = $this->client('api.vireo.test');
-        $r = $c->request('GET', '/', null, ['X-Vireo-Tenant: acme']);
+        $c = $this->client('api.planquadro.test');
+        $r = $c->request('GET', '/', null, ['X-PQ-Tenant: acme']);
         $this->assertSame(404, $r->status);
         /* "/api/v1/" nur im Query-String macht keine API-Anfrage daraus */
-        $this->assertSame(404, $c->request('GET', '/?x=/api/v1/', null, ['X-Vireo-Tenant: acme'])->status);
-        $this->assertSame(404, $c->request('GET', '/mitarbeiter?x=/api/v1/', null, ['X-Vireo-Tenant: acme'])->status);
+        $this->assertSame(404, $c->request('GET', '/?x=/api/v1/', null, ['X-PQ-Tenant: acme'])->status);
+        $this->assertSame(404, $c->request('GET', '/mitarbeiter?x=/api/v1/', null, ['X-PQ-Tenant: acme'])->status);
         /* Header auf einem Mandanten-Host kann den Mandanten nicht wechseln */
-        $c = $this->client('beta.vireo.test');
+        $c = $this->client('beta.planquadro.test');
         $this->assertFalse($this->loginOk($c, 'shared', 'Acme-Passwort-1'));
         $this->tenantPdo('beta')->exec('DELETE FROM login_attempts');
     }
 
     public function testApiTokenIsBoundToTenant(): void
     {
-        $c = $this->client('acme.vireo.test'); $c->sendCsrf = false;
+        $c = $this->client('acme.planquadro.test'); $c->sendCsrf = false;
         $r = $c->request('POST', '/api/v1/auth/login', json_encode(['username' => 'shared', 'password' => 'Acme-Passwort-1']), ['Content-Type: application/json']);
         $this->assertSame(200, $r->status, $r->body);
         $tok = $r->json()['access_token'];
         $this->assertSame(200, $c->request('GET', '/api/v1/me', null, ['Authorization: Bearer ' . $tok])->status);
-        $b = $this->client('beta.vireo.test');
+        $b = $this->client('beta.planquadro.test');
         $this->assertSame(401, $b->request('GET', '/api/v1/me', null, ['Authorization: Bearer ' . $tok])->status, 'Token aus Mandant A gilt nicht in B');
         /* Zentraler API-Host mit Mandanten-Header */
-        $p = $this->client('api.vireo.test');
-        $this->assertSame(200, $p->request('GET', '/api/v1/me', null, ['Authorization: Bearer ' . $tok, 'X-Vireo-Tenant: acme'])->status);
-        $this->assertSame(401, $p->request('GET', '/api/v1/me', null, ['Authorization: Bearer ' . $tok, 'X-Vireo-Tenant: beta'])->status);
+        $p = $this->client('api.planquadro.test');
+        $this->assertSame(200, $p->request('GET', '/api/v1/me', null, ['Authorization: Bearer ' . $tok, 'X-PQ-Tenant: acme'])->status);
+        $this->assertSame(401, $p->request('GET', '/api/v1/me', null, ['Authorization: Bearer ' . $tok, 'X-PQ-Tenant: beta'])->status);
     }
 
     public function testPlatformAdministration(): void
@@ -146,8 +146,8 @@ final class TenancyTest extends IntegrationTestCase
         $this->assertSame(0, $rc, $out);
         preg_match('/Passwort: (\S+)/', $out, $m);
         /* nicht auf Mandanten-Hosts erreichbar */
-        $this->assertSame(404, $this->client('acme.vireo.test')->get('/platform/')->status);
-        $c = $this->client('api.vireo.test');
+        $this->assertSame(404, $this->client('acme.planquadro.test')->get('/platform/')->status);
+        $c = $this->client('api.planquadro.test');
         $page = $c->get('/platform/')->body;
         preg_match('/name="_token" value="([a-f0-9]+)"/', $page, $t);
         $r = $c->request('POST', '/platform/', http_build_query(['_token' => $t[1], 'action' => 'login', 'username' => 'betreiber', 'password' => 'falsch']), ['Content-Type: application/x-www-form-urlencoded']);
@@ -157,33 +157,33 @@ final class TenancyTest extends IntegrationTestCase
         $page = $c->get('/platform/')->body;
         $this->assertStringContainsString('Acme GmbH', $page);
         $this->assertStringContainsString('Beta AG', $page);
-        $this->assertStringContainsString('acme.vireo.test', $page);
+        $this->assertStringContainsString('acme.planquadro.test', $page);
         /* Mandanten-Session gilt nicht für die Plattform */
-        $tc = $this->client('acme.vireo.test');
+        $tc = $this->client('acme.planquadro.test');
         $this->assertTrue($this->loginOk($tc, 'shared', 'Acme-Passwort-1'));
-        $tc->host = 'api.vireo.test';
+        $tc->host = 'api.planquadro.test';
         $this->assertStringContainsString('name="password"', $tc->get('/platform/')->body);
     }
 
     public function testPlatformAdminNeedsConfiguredPlatformHost(): void
     {
-        $env = self::$saasEnv; $env['VIREO_PLATFORM_HOST'] = '';
+        $env = self::$saasEnv; $env['PQ_PLATFORM_HOST'] = '';
         $url = TestEnv::startExtraServer($env);
-        foreach (['api.vireo.test', 'acme.vireo.test', 'unbekannt.test'] as $h) {
+        foreach (['api.planquadro.test', 'acme.planquadro.test', 'unbekannt.test'] as $h) {
             $c = new Client(); $c->base = $url; $c->host = $h;
             $this->assertSame(404, $c->get('/platform/')->status, $h);
         }
         /* ohne Plattform-Host gibt es auch kein Header-Routing für die API */
         $c = new Client(); $c->base = $url; $c->host = '';
-        $this->assertSame(404, $c->request('GET', '/api/v1/config', null, ['X-Vireo-Tenant: acme'])->status);
+        $this->assertSame(404, $c->request('GET', '/api/v1/config', null, ['X-PQ-Tenant: acme'])->status);
     }
 
     public function testAdoptExistingInstallation(): void
     {
         /* Die Selfhosted-Testdatenbank (mit Daten) als Mandant übernehmen */
-        [$rc, $out] = TestEnv::runCli(['bin/tenant.php', 'adopt', 'bestand', 'Bestand GmbH', TestEnv::$db['name'], '--domain=bestand.vireo.test'], self::$saasEnv);
+        [$rc, $out] = TestEnv::runCli(['bin/tenant.php', 'adopt', 'bestand', 'Bestand GmbH', TestEnv::$db['name'], '--domain=bestand.planquadro.test'], self::$saasEnv);
         $this->assertSame(0, $rc, $out);
-        $this->assertTrue($this->loginOk($this->client('bestand.vireo.test'), 'lager', TestEnv::PASSWORD), 'Bestandsbenutzer melden sich unverändert an');
+        $this->assertTrue($this->loginOk($this->client('bestand.planquadro.test'), 'lager', TestEnv::PASSWORD), 'Bestandsbenutzer melden sich unverändert an');
         [$rc, $out] = TestEnv::runCli(['bin/tenant.php', 'adopt', 'x2', 'X', TestEnv::$db['name']], self::$saasEnv);
         $this->assertNotSame(0, $rc, 'Datenbank nicht doppelt zuordnen');
         $pf = TestEnv::$db['name'] . '_platform';
