@@ -3,6 +3,7 @@ require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/functions.php';
 require_once __DIR__.'/../includes/security.php';
 require_once __DIR__.'/../../app/lib/PlanCells.php';
+require_once __DIR__.'/../../app/lib/Events.php';
 header('Content-Type: application/json');
 apiRateLimit(120);
 if(!canEdit()){http_response_code(403);echo json_encode(['error'=>'Keine Berechtigung']);exit;}
@@ -155,6 +156,8 @@ try {
             $written[] = [$w['uid'],$w['date']];
             $saved++;
         }
+        /* Live-Ereignis in derselben Transaktion (nur welche Zellen, keine Inhalte) */
+        if ($written) pqEventEmit($db, 'cells_changed', $written, false, $by, ['internal' => (bool)$isInternal]);
         /* 4) Neue Revisionen an den Client zurückgeben */
         $revs = [];
         foreach (planCellLoad($db, $written) as $k => $st) {

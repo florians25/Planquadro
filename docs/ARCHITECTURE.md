@@ -264,8 +264,41 @@ Kunden, Standorte und Qualifikationen sind keine Konfiguration, sondern Stammdat
 | Konflikterkennung | `save_bulk` sperrt die betroffenen Zeilen (`SELECT … FOR UPDATE`) und vergleicht Revisionen. Abweichung → HTTP 409 mit Liste (Zelle, aktueller Stand, wer, wann); nichts wird geschrieben. Überschreiben nur nach ausdrücklicher Bestätigung, protokolliert. |
 | Transaktionen | Alle Mehrschritt-Schreibvorgänge in Transaktionen; Deadlocks werden einmal automatisch wiederholt. `publish` sperrt die Entwürfe, die es anwendet. |
 | Änderungsprotokoll | `plan_change_log`: Zelle, Aktion (`draft_set`, `draft_clear`, `publish`, `overwrite`, …), alter/neuer Stand, Benutzer, Zeitpunkt, Quelle. |
-| Live-Aktualisierung | Umgesetzt: bestehendes Polling + Revisionen; Apps über `GET sync` und Push. Ziel: **Server-Sent Events** (`/api/v1/events`) aus einer Ereignis-Tabelle (Outbox) – funktioniert hinter jedem Reverse Proxy, ohne zusätzlichen Dienst; mit Redis Pub/Sub für mehrere App-Instanzen im SaaS. WebSockets sind nicht nötig, weil Schreibzugriffe ohnehin per HTTP laufen. |
+| Live-Aktualisierung | Umgesetzt: **Server-Sent Events** aus einer Ereignis-Tabelle (Outbox `live_events`, siehe unten) – `/api/events` für die Weboberfläche, `/api/v1/events` für die App; Fallback: bestehendes Polling (`live_status`) bzw. `GET sync` und Push. Funktioniert hinter jedem Reverse Proxy, ohne zusätzlichen Dienst, und mit beliebig vielen App-Instanzen, weil die Outbox in der Datenbank liegt. WebSockets sind nicht nötig, weil Schreibzugriffe ohnehin per HTTP laufen. |
 | Sichtbarkeit | Eigene/fremde Entwürfe bleiben markiert; Veröffentlichungsvorschau zeigt, was wessen Änderung ist. |
+
+#### Live-Ereignisse (SSE)
+
+`app/lib/Events.php`, Migration `0007_events`.
+
+- **Schreiben:** `save_bulk`, `save_remark`, `publish` (Monat/Jahr), Anträge (einreichen,
+  genehmigen, ablehnen), Abwesenheitsmodul (erfassen, löschen), Planungsassistent
+  (übernehmen, zurücknehmen) und Präsenz (`live_status`: Betreten, Verlassen, Zeilensperre)
+  schreiben mit `pqEventEmit()` **in derselben Transaktion** eine Zeile in `live_events`:
+  Typ (`cells_changed`, `published`, `request_changed`, `presence`), betrifft
+  veröffentlichten Plan ja/nein, intern ja/nein, Monate, Zellen `[user_id, Datum]`, Auslöser.
+  Keine Inhalte, keine Abwesenheitsarten, keine Bemerkungen. Rollt die Transaktion zurück,
+  verschwindet auch das Ereignis. Fehler beim Schreiben (z. B. Migration fehlt) brechen den
+  Vorgang nicht ab; Deadlocks werden weitergereicht (Wiederholung durch `opsTransaction`).
+- **Lesen:** Der Endpunkt fragt die Outbox im Abstand `PQ_SSE_POLL_MS` ab ID `Last-Event-ID`
+  ab und beendet die Verbindung nach `PQ_SSE_MAX_SECONDS`; der Client verbindet sich neu.
+  Heartbeat-Kommentare halten Proxys offen; übersprungene (nicht sichtbare) Ereignisse
+  rücken den Cursor per `id:`-Zeile ohne Daten vor. Lücken in der ID-Folge (noch nicht
+  bestätigte Transaktionen) werden bis zu 3 s abgewartet, bevor sie übersprungen werden.
+  Kennt der Server den Cursor nicht mehr (aufgeräumt/unbekannt), sendet er `reset`.
+- **Vertraulichkeit:** `pqEventForViewer()` filtert je Empfänger: Zellen anderer nur im
+  Team-Scope (`visibleUserIds`), Entwürfe und Präsenz nur für Planer (`plan_edit`), interne
+  Entwürfe nur mit `plan_view_internal`, Anträge für Antragsteller und Genehmiger im Scope,
+  App-Kanal nur veröffentlichte Stände. Inhalte lädt der Client über die bestehenden,
+  rechtegeprüften Endpunkte (`live_status`/`cells`, `plan/my`, `plan/team`, `sync`).
+- **Authentisierung:** Web per Session (Sperre wird vor dem Streamen mit
+  `session_write_close()` freigegeben). App: EventSource kann keinen Authorization-Header
+  senden, das Access-Token gehört nie in eine URL – deshalb `POST /api/v1/events/ticket`
+  (Bearer) → Einmal-Ticket (256 Bit, nur als SHA-256 gespeichert, 30 s gültig, genau einmal
+  einlösbar, gebunden an Benutzer, Token-Familie und Mandant). Clients, die Header setzen
+  können, dürfen `GET events` auch mit Bearer-Header aufrufen.
+- **Aufräumen:** gelegentlich beim Verbindungsaufbau; Ereignisse älter als
+  `PQ_EVENTS_RETENTION_HOURS` (der neueste bleibt stehen), abgelaufene Tickets.
 
 Isolationsstufe: Die Konfliktprüfung hängt nicht an REPEATABLE READ. Revisionen
 werden innerhalb der Transaktion nach `SELECT … FOR UPDATE` gelesen (Sperrlesen

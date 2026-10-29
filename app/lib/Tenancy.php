@@ -93,6 +93,9 @@ function opsCurrentTenant(): array
             $reqPath = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
             if (!$row && $platHost !== '' && $host === $platHost && strncmp($reqPath, '/api/v1/', 8) === 0) {
                 $slug = strtolower(trim((string)($_SERVER['HTTP_X_PQ_TENANT'] ?? '')));
+                /* EventSource kann keine Header setzen: nur für den Ereignisstrom (Einmal-Ticket,
+                   das zusätzlich an den Mandanten gebunden ist) auch als Query-Parameter */
+                if ($slug === '' && $reqPath === '/api/v1/events') $slug = strtolower(trim((string)($_GET['tenant'] ?? '')));
             }
         }
         if ($slug !== null) {

@@ -68,6 +68,36 @@ Hinweis: Die Sperre nutzt `GET_LOCK()` (MariaDB ≥ 10.0, MySQL ≥ 5.7). In Gal
 ist `GET_LOCK()` nicht verfügbar bzw. nicht clusterweit – dort `files` mit Sticky Sessions
 verwenden oder alle Schreibzugriffe auf einen Knoten leiten.
 
+## Live-Aktualisierung (Server-Sent Events)
+
+| Variable | Standard | Bedeutung |
+|---|---|---|
+| `PQ_SSE_ENABLED` | `1` | `0` = Ereignisstrom aus; `/api/events` und `/api/v1/events` antworten mit 204, Web und App bleiben beim Polling bzw. Sync |
+| `PQ_SSE_MAX_SECONDS` | `40` | Laufzeit einer Verbindung (5–300), danach verbindet der Client neu. Unter dem Timeout des Reverse Proxys halten |
+| `PQ_SSE_POLL_MS` | `1000` | Abfrageintervall der Ereignistabelle je Verbindung (200–10000) |
+| `PQ_SSE_HEARTBEAT_SECONDS` | `15` | Abstand der Heartbeat-Kommentare (2–120) |
+| `PQ_EVENTS_RETENTION_HOURS` | `48` | Aufbewahrung der Ereignisse; ältere werden beim Verbindungsaufbau gelegentlich gelöscht |
+
+Jede offene Verbindung belegt einen PHP-Prozess (Apache mod_php: einen Worker) für bis zu
+`PQ_SSE_MAX_SECONDS`. `MaxRequestWorkers` bzw. `pm.max_children` so bemessen, dass je
+gleichzeitig geöffneter Monatsplanung bzw. App im Vordergrund ein Prozess frei ist, oder die
+Laufzeit verkürzen; im Zweifel `PQ_SSE_ENABLED=0` (Polling wie bisher).
+
+**Reverse Proxy:** Der Endpunkt sendet `Content-Type: text/event-stream`,
+`Cache-Control: no-cache, no-transform` und `X-Accel-Buffering: no` und schaltet PHP-Puffer
+und `zlib.output_compression` ab. Zusätzlich:
+
+- **nginx:** `X-Accel-Buffering: no` wirkt automatisch; `proxy_read_timeout` über
+  `PQ_SSE_MAX_SECONDS` (Standard 60 s genügt), kein `gzip` für `text/event-stream`.
+- **Apache als Proxy:** `ProxyPass … flushpackets=on` bzw. `SetEnv proxy-sendchunked 1`;
+  `mod_deflate` nicht auf `text/event-stream` anwenden (unter mod_php setzt die Anwendung
+  selbst `no-gzip`).
+- **Caddy:** `reverse_proxy` gibt `text/event-stream` sofort weiter; nichts zu tun.
+- **Cloudflare & Co.:** Timeout für inaktive Verbindungen (meist 100 s) liegt über der
+  Laufzeit; Heartbeats halten die Verbindung offen.
+- **PHP-FPM hinter Apache:** `ProxyPass … flushpackets=on` für `mod_proxy_fcgi`;
+  `output_buffering` aus `php.ini` stört nicht (die Puffer werden verworfen).
+
 ## Container-Start (Entrypoint)
 
 | Variable | Standard | Bedeutung |

@@ -19,7 +19,7 @@
  *  - je Session eine Sperre (GET_LOCK) wie flock() bei Dateisessions:
  *    parallele Requests derselben Sitzung überschreiben sich nicht.
  *    Wartezeit PQ_SESSION_LOCK_TIMEOUT (Standard 10 s), für Polling-Requests
- *    (live_status, notifications) PQ_SESSION_POLL_LOCK_TIMEOUT (Standard 1 s).
+ *    (live_status, notifications, Ereignisstrom api/events) PQ_SESSION_POLL_LOCK_TIMEOUT (Standard 1 s).
  *    Bekommt ein Request die Sperre nicht, liest er die Sitzung und schreibt
  *    sie am Ende nicht zurück (nur lesend) – Polling blockiert nicht.
  *  - eine während des Requests gelöschte Sitzung (Logout/Regenerate in
@@ -51,7 +51,7 @@ function opsUseSessionStore(string $target = 'tenant'): bool
     $lifetime = opsSessionLifetime();
     ini_set('session.gc_maxlifetime', (string)$lifetime);
     $uri = (string)($_SERVER['REQUEST_URI'] ?? '');
-    $poll = strpos($uri, 'live_status') !== false || strpos($uri, 'notifications') !== false;
+    $poll = strpos($uri, 'live_status') !== false || strpos($uri, 'notifications') !== false || strpos($uri, '/api/events') !== false;
     $wait = $poll ? (int)opsEnv('PQ_SESSION_POLL_LOCK_TIMEOUT', '1') : (int)opsEnv('PQ_SESSION_LOCK_TIMEOUT', '10');
     $connect = $target === 'platform'
         ? fn() => opsSessionPdo(opsEnv('PQ_PLATFORM_DB_HOST', DB_HOST), opsEnv('PQ_PLATFORM_DB_PORT', DB_PORT), opsPlatformDbName(),

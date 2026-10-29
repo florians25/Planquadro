@@ -6,6 +6,7 @@ import type {
   ConfigResponse,
   DeviceRegistered,
   DeviceRegistration,
+  EventsTicketResponse,
   HealthResponse,
   HolidaysResponse,
   IsoDate,
@@ -293,6 +294,10 @@ export class ApiClient {
 
   getSync(since?: string | null): Promise<SyncResponse> {
     return this.request('GET', 'sync', { query: { since: since ?? undefined } });
+  }
+
+  getEventsTicket(): Promise<EventsTicketResponse> {
+    return this.request('POST', 'events/ticket');
   }
 
   registerDevice(reg: DeviceRegistration): Promise<DeviceRegistered> {

@@ -75,9 +75,9 @@ function opsEnforceSessionTimeout(): void
         $_SESSION['session_expired'] = 1;
         return;
     }
-    /* Polling (Live-Status) zählt nicht als Aktivität */
+    /* Polling (Live-Status) und der Ereignisstrom zählen nicht als Aktivität */
     $uri = $_SERVER['REQUEST_URI'] ?? '';
-    if (strpos($uri, 'live_status') === false && strpos($uri, 'notifications') === false) $_SESSION['last_activity'] = $now;
+    if (strpos($uri, 'live_status') === false && strpos($uri, 'notifications') === false && strpos($uri, '/api/events') === false) $_SESSION['last_activity'] = $now;
 }
 
 /** Session-gebundenes CSRF-Token (32 Byte, hex). */

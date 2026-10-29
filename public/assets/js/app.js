@@ -1328,8 +1328,10 @@ var pollSpeed = 2500; /* Base poll interval ms */
 function startLivePolling() {
     if (typeof PY === 'undefined' || typeof PM === 'undefined') return;
     refreshTableData();
+    pqLiveStart();
     liveInterval = setInterval(function(){
-        if(liveActive) refreshTableData();
+        /* Mit aktivem Ereignisstrom (SSE) nur noch alle 10 s pingen (Präsenz, Abzeichen) */
+        if(liveActive && (!pqLive.ok || Date.now() - pqLive.lastPing >= 10000)) refreshTableData();
     }, pollSpeed);
     /* Faster polling when tab is focused */
     document.addEventListener('visibilitychange', function(){
@@ -1349,6 +1351,7 @@ function startLivePolling() {
 
 function refreshTableData() {
     if (typeof PY === 'undefined' || typeof PM === 'undefined') return;
+    pqLive.lastPing = Date.now();
     fetch(getApiBase()+'api/live_status', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({action:'ping', page:'monatsplanung', year:PY, month:PM})
@@ -1493,6 +1496,48 @@ function liveCellRefresh(animate) {
             if (indicator) { indicator.textContent = changed+' Zelle(n) aktualisiert'; indicator.style.display = ''; setTimeout(function(){ if(indicator) indicator.style.display='none'; }, 3000); }
         }
     }).catch(function(){});
+}
+
+/* ============================================================
+   LIVE-EREIGNISSE (Server-Sent Events, api/events)
+   Ergänzt das Polling: Änderungen anderer erscheinen sofort. Ereignisse
+   nennen nur betroffene Zellen; Inhalte kommen weiter über live_status
+   (cells), d. h. mit denselben Rechten wie bisher. Ohne EventSource, bei
+   abgeschaltetem SSE (HTTP 204) oder wiederholten Fehlern bleibt es beim
+   Polling wie bisher.
+   ============================================================ */
+var pqLive = { es: null, ok: false, fails: 0, lastPing: 0, timer: null, presence: null };
+
+function pqLiveMonth() { return PY + '-' + (PM < 10 ? '0' : '') + PM; }
+
+function pqLiveStart() {
+    if (pqLive.es || typeof EventSource === 'undefined' || typeof PY === 'undefined' || typeof PM === 'undefined') return;
+    var es;
+    try { es = new EventSource(getApiBase() + 'api/events'); } catch (e) { return; }
+    pqLive.es = es;
+    es.addEventListener('ready', function() { pqLive.ok = true; pqLive.fails = 0; });
+    es.addEventListener('reset', function() { pqLive.ok = true; liveCellRefresh(true); });
+    ['cells_changed', 'published', 'request_changed'].forEach(function(t) {
+        es.addEventListener(t, function(e) {
+            var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+            if (!d || !d.months || d.months.indexOf(pqLiveMonth()) === -1) return;
+            /* Mehrere Ereignisse kurz hintereinander → ein Nachladen */
+            clearTimeout(pqLive.timer);
+            pqLive.timer = setTimeout(function() { liveCellRefresh(!d.own); refreshTableData(); }, 150);
+        });
+    });
+    es.addEventListener('presence', function(e) {
+        var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+        if (!d || d.own || (d.months && d.months.indexOf(pqLiveMonth()) === -1)) return;
+        clearTimeout(pqLive.presence);
+        pqLive.presence = setTimeout(refreshTableData, 150);
+    });
+    es.onerror = function() {
+        /* Normales Verbindungsende (begrenzte Laufzeit) → Browser verbindet neu mit Last-Event-ID */
+        pqLive.ok = false;
+        if (es.readyState === 2 || ++pqLive.fails > 5) { es.close(); pqLive.es = null; }
+    };
+    es.onopen = function() { pqLive.fails = 0; };
 }
 
 /* Flash animation on changed cells */

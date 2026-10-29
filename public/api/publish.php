@@ -3,6 +3,7 @@ require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/security.php';
 require_once __DIR__.'/../includes/functions.php';
 require_once __DIR__.'/../../app/lib/PlanCells.php';
+require_once __DIR__.'/../../app/lib/Events.php';
 require_once __DIR__.'/../../app/lib/Push.php';
 header('Content-Type: application/json');
 apiRateLimit(30);
@@ -21,8 +22,9 @@ $publishAll = !empty($input['publish_all']) && hasPerm('plan_publish_all');
  * abgeschlossen ist – sein neuer Entwurf geht nicht verloren (Befund D-02).
  * Jede angewendete Zelle wird in plan_change_log protokolliert.
  */
-function applyDrafts($db, $year, $month, $by, $onlyByUser=null, &$changed=null) {
+function applyDrafts($db, $year, $month, $by, $onlyByUser=null, &$changed=null, &$cells=null) {
     if (!is_array($changed)) $changed = [];
+    if (!is_array($cells)) $cells = [];
     $sql = 'SELECT * FROM plan_drafts WHERE year=? AND month=? AND is_internal=0';
     $params = [$year, $month];
     if ($onlyByUser !== null) {
@@ -61,6 +63,7 @@ function applyDrafts($db, $year, $month, $by, $onlyByUser=null, &$changed=null) 
         }
         $delD->execute([$d['id']]);
         planChangeLog($db, $uid, $date, 'publish', $old, $new + ['draft_by'=>(int)$d['created_by']], (int)$by);
+        $cells[] = [$uid, $date];
         /* Nur echte Änderungen des veröffentlichten Stands benachrichtigen */
         if (json_encode($old['pub'] ?? null) !== json_encode($new['pub'] ?? null)) $changed[$uid][] = $date;
         $applied++;
@@ -76,11 +79,13 @@ if (!empty($input['publish_year'])) {
     try {
         $changed = [];
         $totalApplied = opsTransaction($db, function($db) use ($pubYear, $by, &$changed) {
-            $n = 0; $changed = [];
+            $n = 0; $changed = []; $cells = []; $months = [];
             for ($pm = 1; $pm <= 12; $pm++) {
-                $n += applyDrafts($db, $pubYear, $pm, $by, null, $changed);
+                $n += applyDrafts($db, $pubYear, $pm, $by, null, $changed, $cells);
                 $db->prepare('INSERT INTO publish_log(year,month,published_by,published_at) VALUES(?,?,?,NOW())')->execute([$pubYear,$pm,$by]);
+                $months[] = sprintf('%04d-%02d', $pubYear, $pm);
             }
+            pqEventEmit($db, 'published', $cells, true, (int)$by, ['months' => $months]);
             return $n;
         });
         try { planNotifyChanges($db, $changed, $by); } catch (Throwable $e) { opsLogThrowable('notify', $e); }
@@ -101,8 +106,9 @@ if($month<1||$month>12||$year<2000||$year>2100){http_response_code(400);echo jso
 try{
     $changed = [];
     $applied = opsTransaction($db, function($db) use ($publishAll, $year, $month, $by, &$changed) {
-        $changed = [];
-        $n = applyDrafts($db, $year, $month, $by, $publishAll ? null : $by, $changed);
+        $changed = []; $cells = [];
+        $n = applyDrafts($db, $year, $month, $by, $publishAll ? null : $by, $changed, $cells);
+        pqEventEmit($db, 'published', $cells, true, (int)$by, ['months' => [sprintf('%04d-%02d', $year, $month)]]);
         $db->prepare('INSERT INTO publish_log(year,month,published_by,published_at)VALUES(?,?,?,NOW())')->execute([$year,$month,$by]);
         return $n;
     });

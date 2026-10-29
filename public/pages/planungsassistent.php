@@ -19,6 +19,7 @@
 
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../../app/lib/PlanCells.php';
+require_once __DIR__ . '/../../app/lib/Events.php';
 requireLogin();
 requireModule('assistant');
 
@@ -1112,7 +1113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             $dayIdx = [];
             foreach ($ctx['days'] as $d) $dayIdx[$d['date']] = $d;
 
-            $written = 0; $skipped = [];
+            $written = 0; $skipped = []; $evCells = [];
             $db->beginTransaction();
 
             $runStmt = $db->prepare('INSERT INTO planning_runs
@@ -1186,12 +1187,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                         ($cfg['internal'] && $EPA_MAY_INTERNAL) ? 1 : 0,
                         $ME, $runId,
                     ]);
+                    $evCells[] = [$uid, $date];
                     $written++;
                 }
             }
 
             $db->prepare('UPDATE planning_runs SET slots_filled = ?, conflicts = ? WHERE id = ?')
                ->execute([$written, count($skipped), $runId]);
+            pqEventEmit($db, 'cells_changed', $evCells, false, $ME, ['internal' => (bool)($cfg['internal'] && $EPA_MAY_INTERNAL)]);
             $db->commit();
 
             /* Protokolleintrag – dieselbe Tabelle wie Login und Einstellungen. */
@@ -1227,11 +1230,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             $db->beginTransaction();
             $rows = $db->prepare('SELECT user_id, plan_date FROM plan_drafts WHERE planning_run_id = ? FOR UPDATE');
             $rows->execute([$runId]);
+            $evCells = [];
             foreach ($rows->fetchAll() as $r) {
                 planChangeLog($db, (int)$r['user_id'], $r['plan_date'], 'assistant_undo', ['run_id' => $runId], null, $ME, 'assistant');
+                $evCells[] = [(int)$r['user_id'], $r['plan_date']];
             }
             $del = $db->prepare('DELETE FROM plan_drafts WHERE planning_run_id = ?');
             $del->execute([$runId]);
+            pqEventEmit($db, 'cells_changed', $evCells, false, $ME);
             $db->commit();
             $db->prepare("UPDATE planning_runs SET status='verworfen' WHERE id = ?")->execute([$runId]);
             echo json_encode(['success' => true, 'msg' => $del->rowCount() . ' Entwürfe zurückgenommen.']);

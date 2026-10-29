@@ -65,14 +65,21 @@ export class App {
       if (online && !was) {
         toast('Wieder online.', 'ok');
         void this.afterReconnect();
+        this.session.startLive();
       } else if (!online && was) {
+        this.session.stopLive();
         this.updateBanner();
       }
     });
 
     onAppStateChange(async (active) => {
+      // Live-Verbindung nur im Vordergrund
+      if (!active) this.session.stopLive();
       await this.session.handleAppActive(active);
-      if (active && this.session.status === 'ready') void this.backgroundSync();
+      if (active && this.session.status === 'ready') {
+        void this.backgroundSync();
+        this.session.startLive();
+      }
     });
 
     onAppUrlOpen((url) => {
@@ -136,6 +143,7 @@ export class App {
         }
         this.route();
         void this.backgroundSync();
+        this.session.startLive();
       } else {
         this.renderTabs();
       }

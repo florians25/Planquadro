@@ -178,7 +178,9 @@ Offen (bewusst verschoben, kein Funktionsverlust):
   Einsatzcodes und Mitarbeitern).
 - Module ein-/ausschaltbar; Navigation und Dashboard aus der TenantConfig.
 - API v1 (REST, JSON, Token-Auth) als Grundlage für Mobile.
-- Server-Sent Events für Live-Aktualisierung.
+- Server-Sent Events für Live-Aktualisierung. ✅ (Outbox `live_events`, Migration 0007;
+  `/api/events` für die Monatsplanung, `/api/v1/events` mit Einmal-Ticket für die App;
+  Polling bzw. `sync` bleiben als Fallback.)
 - OIDC/SSO optional. ✅
 - Ursprünglich geplante `tenant_id`-Spalten entfallen durch die Datenbank je Mandant.
 

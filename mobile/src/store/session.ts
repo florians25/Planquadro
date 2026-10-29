@@ -5,7 +5,7 @@
 import { ApiClient, type FetchLike, type RefreshTokenStore } from '../api/client';
 import { ApiError, toApiError } from '../api/errors';
 import { createMockServer, MOCK_BASE_URL, type MockServer } from '../api/mock';
-import type { ConfigResponse, MeResponse, TokenResponse } from '../api/types';
+import type { ConfigResponse, LiveEventData, MeResponse, TokenResponse } from '../api/types';
 import { buildAuthorizeUrl, parseAuthRedirect, type PkceSession } from '../lib/pkce';
 import { normalizeServerUrl, normalizeTenantSlug } from '../lib/url';
 import {
@@ -25,6 +25,7 @@ import { generateNonExtractableKey, importKeyMaterial, randomKeyMaterial } from 
 import { IdbKv, type KvStore } from './kv';
 import { clearPrefs, DEFAULT_PREFS, loadPrefs, savePrefs, type AppPrefs } from './prefs';
 import { WebSecureStore, type SecureStore } from './secure';
+import { applyLivePlan, LiveConnection, planLive } from './live';
 import { runSync, type SyncResult } from './sync';
 
 export type SessionStatus = 'needs_server' | 'needs_login' | 'locked' | 'ready' | 'unavailable';
@@ -85,6 +86,7 @@ export class Session {
   }
 
   private emit(): void {
+    if (this.status !== 'ready') this.stopLive();
     for (const l of this.listeners) l();
   }
 
@@ -480,6 +482,58 @@ export class Session {
 
   private emitSync(): void {
     if (this.lastSync) for (const l of this.syncListeners) l(this.lastSync);
+  }
+
+  // ---------------------------------------------------------------- Live (SSE, nur im Vordergrund)
+
+  private live: LiveConnection | null = null;
+  private liveQueue: Promise<void> = Promise.resolve();
+
+  /** Startet die Live-Verbindung (Fallback ohne SSE: bestehender Sync). */
+  startLive(): boolean {
+    if (this.status !== 'ready' || !this.api || this.prefs.demo || !this.online) return false;
+    if (!this.live) {
+      const api = this.api;
+      this.live = new LiveConnection({
+        baseUrl: api.baseUrl,
+        ticket: () => api.getEventsTicket(),
+        onEvent: (ev) => {
+          // Ereignisse nacheinander abarbeiten; Fehler verwirft der nächste Sync
+          this.liveQueue = this.liveQueue.then(() => this.handleLiveEvent(ev)).catch(() => undefined);
+        },
+        onReset: () => {
+          this.liveQueue = this.liveQueue.then(async () => {
+            const r = await this.sync();
+            if (r) this.emitSync();
+          }).catch(() => undefined);
+        },
+      });
+    }
+    return this.live.start();
+  }
+
+  stopLive(): void {
+    this.live?.stop();
+    this.live = null;
+  }
+
+  get liveConnected(): boolean {
+    return this.live?.connected ?? false;
+  }
+
+  private async handleLiveEvent(ev: LiveEventData): Promise<void> {
+    if (!this.api || !this.cache || !this.me || this.status !== 'ready') return;
+    const plan = planLive(ev, this.me.user.id, await this.cache.keys());
+    const refreshed: string[] = [];
+    if (plan.sync) {
+      const r = await this.sync();
+      if (r) refreshed.push(...r.refreshed);
+    }
+    refreshed.push(...(await applyLivePlan(this.api, this.cache, plan)));
+    if (refreshed.length) {
+      this.lastSync = { initial: false, fullResync: false, changedDates: [], refreshed };
+      this.emitSync();
+    }
   }
 
   async sync(): Promise<SyncResult | null> {

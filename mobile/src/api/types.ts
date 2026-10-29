@@ -278,6 +278,27 @@ export interface SyncResponse {
   full_resync: boolean;
 }
 
+/** `POST events/ticket` – Einmal-Ticket für den Ereignisstrom (EventSource kann keine Header senden) */
+export interface EventsTicketResponse {
+  ticket: string;
+  expires_in: number;
+  /** relativ zur API-Basis, z. B. `events?ticket=…` */
+  url: string;
+}
+
+/** Nutzlast eines Ereignisses aus `GET events` (nur betroffene Zellen, nie Inhalte) */
+export interface LiveEventData {
+  type: 'cells_changed' | 'published' | 'request_changed';
+  published: boolean;
+  months: string[];
+  /** `[user_id, Y-m-d]`; `null` = ganzer Monat */
+  cells: Array<[number, IsoDate]> | null;
+  /** betrifft eigene Zellen (`null` = unbekannt) */
+  self: boolean | null;
+  /** selbst ausgelöst */
+  own: boolean;
+}
+
 export type DevicePlatform = 'ios' | 'android' | 'web';
 export type PushProvider = 'fcm' | 'apns' | 'ntfy';
 

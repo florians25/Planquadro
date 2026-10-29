@@ -13,6 +13,7 @@
 
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../../app/lib/PlanCells.php';
+require_once __DIR__ . '/../../app/lib/Events.php';
 require_once __DIR__ . '/../../app/lib/Push.php';
 requireLogin();
 requireModule('absences');
@@ -485,7 +486,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             $byDate = [];
             foreach (abw_assignments($db, $uid, $dates) as $r) $byDate[$r['plan_date']] = $r;
 
-            $written = 0; $moved = 0; $skipped = []; $subsUsed = [];
+            $written = 0; $moved = 0; $skipped = []; $subsUsed = []; $evCells = [];
             foreach ($dates as $d) {
                 $t      = strtotime($d);
                 $yy     = (int)date('Y', $t);
@@ -513,6 +514,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                 } else {
                     $drfAbs->execute([$uid, $d, $yy, $mm, $type, $rem, $ME]);
                 }
+                $evCells[] = [$uid, $d];
                 $written++;
 
                 /* Vertretung je Tag – Vorrang hat die Einzelauswahl. */
@@ -543,10 +545,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                     } else {
                         $drfAsg->execute([$dSub, $d, $yy, $mm, $areaId, $note, $ME]);
                     }
+                    $evCells[] = [$dSub, $d];
                     $moved++;
                     $subsUsed[$dSub] = true;
                 }
             }
+            pqEventEmit($db, 'cells_changed', $evCells, $publish, $ME);
             $db->commit();
 
             /* Vertretungen über neue Einsätze informieren (die abwesende Person
@@ -613,6 +617,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                                       AND change_type IN ('absence','locked')");
             $d2->execute([$uid, $from, $to]);
             $n += $d2->rowCount();
+            if ($n > 0) pqEventEmit($db, 'cells_changed', pqEventRangeCells($uid, $from, $to), true, $ME);
             $db->commit();
             $msg = $n . ' Tag(e) entfernt.';
             if ($kept) $msg .= ' ' . $kept . ' gesperrte(r) Tag(e) (genehmigter Urlaub/Krankheit) bleiben erhalten.';

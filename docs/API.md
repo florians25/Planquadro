@@ -177,6 +177,62 @@ Für den Offline-Lesemodus: welche eigenen Tage sich seit dem Cursor geändert h
 ```
 `full_resync: true` → Cache verwerfen und neu laden.
 
+### `POST events/ticket` · `GET events` (Live-Aktualisierung, Server-Sent Events)
+Im Vordergrund meldet der Server Änderungen sofort per SSE. `EventSource` kann keinen
+`Authorization`-Header setzen, und das Access-Token darf nie in eine URL. Deshalb:
+
+1. `POST events/ticket` (Bearer) →
+   ```json
+   { "ticket": "pqe.…", "expires_in": 30, "url": "events?ticket=pqe.…" }
+   ```
+   Das Ticket gilt **einmal**, 30 Sekunden, nur für diesen Benutzer, diese Token-Familie
+   (Abmelden widerruft es) und diesen Mandanten. Auf dem zentralen API-Host enthält `url`
+   zusätzlich `tenant=<slug>`.
+2. `new EventSource(<API-Basis> + url [+ "&last_event_id=<id>"])`.
+
+`GET events` akzeptiert alternativ den Bearer-Header (Clients mit `fetch`-Streaming).
+Fehler vor Beginn des Streams im üblichen JSON-Format (`401 invalid_token` bei
+ungültigem, abgelaufenem oder bereits verwendetem Ticket). `204` = Live-Aktualisierung
+serverseitig abgeschaltet → nur `sync`.
+
+Antwort `text/event-stream`:
+```
+retry: 3000
+
+id: 1842
+event: ready
+data: {"cursor":"1842"}
+
+id: 1845
+event: published
+data: {"type":"published","published":true,"months":["2026-11"],"cells":[[12,"2026-11-02"]],"self":true,"own":false}
+
+: hb
+
+event: bye
+data: {}
+```
+
+| Ereignis | Bedeutung |
+|---|---|
+| `ready` | Verbindung steht; ohne `last_event_id` mit `id` = aktueller Stand |
+| `published` | Veröffentlichung (Monat/Jahr) |
+| `cells_changed` | sonstige Änderung des veröffentlichten Plans (z. B. Abwesenheitsmodul) |
+| `request_changed` | eigener Antrag eingereicht/genehmigt/abgelehnt (`published: true` bei Genehmigung) |
+| `reset` | Cursor unbekannt oder Ereignisse aufgeräumt → Cache neu laden (`sync`) |
+| `bye` | reguläres Ende nach der begrenzten Laufzeit (Standard 40 s) → neues Ticket, neu verbinden |
+
+Felder: `months` (`YYYY-MM`), `cells` = `[user_id, Datum]` – nur Zellen, die der Benutzer
+sehen darf (eigene; andere nur mit `plan_view` im Team-Scope); `null` = ganzer Monat.
+`self`: eigene Zellen betroffen, `own`: selbst ausgelöst. Die App erhält nur
+**veröffentlichte** Änderungen und eigene Anträge, nie Entwürfe, nie Inhalte oder
+Abwesenheitsarten – Details lädt sie über `sync`, `plan/team`, `absences/my`.
+Fortsetzen: `last_event_id` (bzw. Header `Last-Event-ID`) = zuletzt empfangene `id`.
+Kommentarzeilen (`: hb`) sind Heartbeats; Zeilen nur mit `id:` rücken den Cursor vor.
+
+Die Weboberfläche nutzt denselben Strom unter `/api/events` (Session-Anmeldung, zusätzlich
+Entwürfe und Präsenz für Planer); ohne EventSource bleibt sie beim Polling.
+
 ### `POST devices` · `DELETE devices/{id}`
 Push-Registrierung.
 ```json

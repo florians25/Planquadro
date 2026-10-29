@@ -46,6 +46,13 @@ nichts ändert.
   Synchronisation.
 - Push bei veröffentlichten Planänderungen (FCM, APNs, ntfy für Self-Hosting) über eine
   Warteschlange und `bin/push-worker.php`.
+- **Live-Aktualisierung per Server-Sent Events:** Änderungen anderer (Entwürfe,
+  Veröffentlichung, Anträge, Abwesenheitsmodul, Assistent, Präsenz) erscheinen in der
+  Monatsplanung sofort statt erst beim nächsten Abfragen; die App aktualisiert eigenen
+  Plan, Team und Abwesenheiten im Vordergrund. Ereignisse nennen nur betroffene Zellen
+  im eigenen Sichtbereich, nie Abwesenheitsarten. Neue Endpunkte `/api/events` und
+  `/api/v1/events` (+ `POST events/ticket`), Migration `0007_events`. Ohne SSE (alter
+  Browser, Proxy, `PQ_SSE_ENABLED=0`) läuft alles wie bisher über Polling bzw. `sync`.
 
 ### Betrieb, Backup, Recovery (Phase 4)
 - **Docker:** Image (Apache, läuft als www-data), `docker-compose.yml` für Self-Hosting,

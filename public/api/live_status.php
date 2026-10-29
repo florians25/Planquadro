@@ -3,12 +3,19 @@ require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/functions.php';
 require_once __DIR__.'/../includes/security.php';
 require_once __DIR__.'/../../app/lib/PlanCells.php';
+require_once __DIR__.'/../../app/lib/Events.php';
 header('Content-Type: application/json; charset=utf-8');
 if(!isLoggedIn()){http_response_code(403);echo json_encode(['error'=>'Nicht angemeldet']);exit;}
 $input=json_decode(file_get_contents('php://input'),true);
 $action=$input['action']??$_GET['action']??'';
 $uid=$_SESSION['user_id'];
 $db=getDB();
+
+/* Präsenz-Ereignis für den Live-Strom (wer kommt/geht/sperrt eine Zeile; keine Inhalte) */
+function livePresenceEvent($db, $uid, $page, $y, $m, $action) {
+    if (!$page || $y < 2000 || $m < 1 || $m > 12) return;
+    pqEventEmit($db, 'presence', null, false, (int)$uid, ['months' => [sprintf('%04d-%02d', $y, $m)], 'data' => ['page' => mb_substr((string)$page, 0, 40), 'action' => $action]]);
+}
 
 /* Helper: compute data hash including drafts */
 function computeDataHash($db, $y, $m) {
@@ -33,7 +40,13 @@ function computeDataHash($db, $y, $m) {
 
 if($action==='ping'){
     $page=$input['page']??'';$y=(int)($input['year']??0);$m=(int)($input['month']??0);
-    if($page&&$y&&$m) pingEditing($uid,$page,$y,$m);
+    if($page&&$y&&$m){
+        /* Neu auf der Seite (oder nach Zeitüberschreitung zurück)? → Präsenz-Ereignis */
+        $isNew=false;
+        try{$pe=$db->prepare('SELECT COUNT(*) FROM editing_status WHERE user_id=? AND page=? AND year=? AND month=? AND last_ping>=DATE_SUB(NOW(),INTERVAL 30 SECOND)');$pe->execute([$uid,$page,$y,$m]);$isNew=(int)$pe->fetchColumn()===0;}catch(Exception $e){}
+        pingEditing($uid,$page,$y,$m);
+        if($isNew) livePresenceEvent($db,$uid,$page,$y,$m,'join');
+    }
     $editors=activeEditors($page,$y,$m,$uid);
 
     /* Data hash including drafts */
@@ -134,6 +147,7 @@ if($action==='ping'){
 } elseif($action==='leave'){
     $page=$input['page']??'';$y=(int)($input['year']??0);$m=(int)($input['month']??0);
     $db->prepare('DELETE FROM editing_status WHERE user_id=? AND page=? AND year=? AND month=?')->execute([$uid,$page,$y,$m]);
+    livePresenceEvent($db,$uid,$page,$y,$m,'leave');
     echo json_encode(['success'=>true]);
 
 } elseif($action==='lock_row'){
@@ -142,6 +156,7 @@ if($action==='ping'){
     try {
         $db->prepare('INSERT INTO editing_status(user_id,page,year,month,target_uid) VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE last_ping=NOW(),target_uid=?')
                 ->execute([$_SESSION['user_id'],'monatsplanung',(int)($input['year']??0),(int)($input['month']??0),$targetUid,$targetUid]);
+        livePresenceEvent($db,$uid,'monatsplanung',(int)($input['year']??0),(int)($input['month']??0),'lock');
         echo json_encode(['success'=>true]);
     } catch(Exception $e) {
         try {

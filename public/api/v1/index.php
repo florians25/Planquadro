@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../../app/lib/PlanCells.php';
 require_once __DIR__ . '/../../../app/lib/ApiAuth.php';
 require_once __DIR__ . '/../../../app/lib/Oidc.php';
+require_once __DIR__ . '/../../../app/lib/Events.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -200,6 +201,22 @@ if ($path === 'auth/oidc/token' && $method === 'POST') {
     apiOut(200, apiIssuePair((int)$u['id'], null, isset($b['device_name']) ? (string)$b['device_name'] : null, 'oidc') + ['user' => apiMeJson()]);
 }
 
+/* ---------- Ereignisstrom (SSE): Bearer-Header ODER Einmal-Ticket ---------- */
+if ($path === 'events' && $method === 'GET') {
+    if (!pqSseEnabled()) { http_response_code(204); exit; }
+    if (isset($_GET['ticket']) && !preg_match('/^Bearer\s/i', (string)($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? ''))) {
+        $tuid = pqEventTicketRedeem($db, (string)$_GET['ticket'], opsCurrentTenant()['slug']);
+        if ($tuid === null) apiError(401, 'invalid_token', 'Ticket ungültig, abgelaufen oder bereits verwendet.');
+        $_SESSION['user_id'] = $tuid;
+        if (!opsModule('mobile')) apiError(403, 'module_disabled', 'Der App-Zugang ist für Ihre Organisation deaktiviert.');
+        if (isMaintenanceMode() && !hasRole('admin', 'manager')) apiError(503, 'maintenance', (string)getSetting('maintenance_message', 'Wartungsarbeiten.'));
+    } else {
+        apiAuth();
+    }
+    pqSseStream($db, pqEventViewer('app'), pqSseLastEventId(), pqSseMaxSeconds());
+    exit;
+}
+
 /* ---------- ab hier: angemeldet ---------- */
 $auth = apiAuth();
 $me = currentUser();
@@ -211,6 +228,16 @@ if ($path === 'auth/logout' && $method === 'POST') {
 }
 
 if ($path === 'me' && $method === 'GET') apiOut(200, apiMeJson());
+
+if ($path === 'events/ticket' && $method === 'POST') {
+    if (!pqSseEnabled()) apiError(404, 'not_found', 'Live-Aktualisierung ist abgeschaltet.');
+    $slug = opsCurrentTenant()['slug'];
+    $ticket = pqEventTicketIssue($db, $myId, $auth['fam'], $slug);
+    $q = ['ticket' => $ticket];
+    /* Zentraler API-Host: Mandant fürs EventSource mitgeben (kein Header möglich) */
+    if (!empty($_SERVER['HTTP_X_PQ_TENANT'])) $q['tenant'] = $slug;
+    apiOut(200, ['ticket' => $ticket, 'expires_in' => PQ_EVENT_TICKET_TTL, 'url' => 'events?' . http_build_query($q)]);
+}
 
 if ($path === 'plan/my' && $method === 'GET') {
     $from = apiDate($_GET['from'] ?? '') ?? date('Y-m-01');

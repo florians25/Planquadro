@@ -3,6 +3,7 @@ require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/functions.php';
 require_once __DIR__.'/../includes/security.php';
 require_once __DIR__.'/../../app/lib/PlanCells.php';
+require_once __DIR__.'/../../app/lib/Events.php';
 header('Content-Type: application/json; charset=utf-8');
 apiRateLimit(60);
 if(!canEdit()){http_response_code(403);echo json_encode(['error'=>'Keine Berechtigung']);exit;}
@@ -95,6 +96,7 @@ function saveRemarkLocked($db, $uid, $date, $remark, $intRemark, $by, $editPubli
         $after = planCellLoad($db, [[$uid, $date]])[$k];
         if (planCellRev($db, $after) === planCellRev($db, $st)) return ['ok' => true, 'rev' => planCellRev($db, $st)];
         planChangeLog($db, $uid, $date, 'remark', planCellSnapshot($st), planCellSnapshot($after) + ['public' => $editPublic ? 1 : 0, 'internal' => $editInternal ? 1 : 0], (int)$by);
+        pqEventEmit($db, 'cells_changed', [[(int)$uid, $date]], false, (int)$by, ['internal' => $editInternal && !$editPublic]);
         return ['ok' => true, 'rev' => planCellRev($db, $after)];
     });
 }

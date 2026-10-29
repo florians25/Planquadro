@@ -3,6 +3,7 @@ require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/security.php';
 require_once __DIR__.'/../includes/functions.php';
 require_once __DIR__.'/../../app/lib/PlanCells.php';
+require_once __DIR__.'/../../app/lib/Events.php';
 require_once __DIR__.'/../../app/lib/Push.php';
 header('Content-Type: application/json; charset=utf-8');
 if (!isLoggedIn()) { http_response_code(401); echo json_encode(['error'=>'Nicht angemeldet']); exit; }
@@ -48,7 +49,7 @@ case 'submit_batch':
     if (empty($items)) { echo json_encode(['success'=>false, 'error'=>'Keine Daten']); exit; }
 
     $krankTypes = ['krank_halb','krank_ganz','krank_attest'];
-    $saved = 0; $skipped = 0;
+    $saved = 0; $skipped = 0; $reqCells = [];
 
     try { $db->beginTransaction();
     foreach ($items as $item) {
@@ -83,7 +84,9 @@ case 'submit_batch':
         $db->prepare('INSERT INTO change_requests (user_id, plan_date, request_type, plan_area_id, absence_type, old_type, old_value, remarks, status, requested_by) VALUES (?,?,?,?,?,?,?,?,?,?)')
            ->execute([$uid, $date, $type, $areaId, $absType, $oldType, $oldValue, $remarks ?: null, 'pending', $cu['id']]);
         $saved++;
+        $reqCells[] = [$uid, $date];
     }
+    pqEventEmit($db, 'request_changed', $reqCells, false, (int)$cu['id']);
     $db->commit();
     $msg = $saved.' Änderungsantrag/-anträge eingereicht';
     if ($skipped) $msg .= ' ('.$skipped.' übersprungen – bereits offen)';
@@ -120,7 +123,7 @@ case 'approve_batch':
     if (!hasPerm('approve_requests')) { echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']); exit; }
     $ids = $input['ids'] ?? [];
     if (empty($ids)) { echo json_encode(['success'=>false,'error'=>'Keine IDs']); exit; }
-    try { $db->beginTransaction(); $done=0; $changedCells=[];
+    try { $db->beginTransaction(); $done=0; $changedCells=[]; $evCells=[];
     foreach ($ids as $rid) {
         $rid = (int)$rid;
         $s = $db->prepare("SELECT * FROM change_requests WHERE id=? AND status='pending'");
@@ -144,8 +147,10 @@ case 'approve_batch':
         $dateF = date('d.m.Y', strtotime($date));
         addNotification($uid, 'Antrag genehmigt', 'Dein Änderungsantrag für den '.$dateF.' wurde genehmigt.', 'mein_plan');
         $changedCells[$uid][] = $date;
+        $evCells[] = [$uid, $date];
         $done++;
     }
+    pqEventEmit($db, 'request_changed', $evCells, true, (int)$cu['id']);
     $db->commit();
     /* Push an die App (die In-App-Meldung "Antrag genehmigt" gibt es bereits) */
     try {
@@ -161,7 +166,7 @@ case 'reject_batch':
     if (!hasPerm('approve_requests')) { echo json_encode(['success'=>false,'error'=>'Keine Berechtigung']); exit; }
     $ids = $input['ids'] ?? []; $reason = trim($input['reason'] ?? '');
     if (empty($ids)) { echo json_encode(['success'=>false,'error'=>'Keine IDs']); exit; }
-    try { $done=0;
+    try { $done=0; $evCells=[];
     foreach ($ids as $rid) {
         $rid = (int)$rid;
         $s = $db->prepare("SELECT user_id, plan_date FROM change_requests WHERE id=? AND status='pending'");
@@ -173,8 +178,10 @@ case 'reject_batch':
         $msg = 'Dein Änderungsantrag für den '.$dateF.' wurde abgelehnt.';
         if ($reason) $msg .= ' Begründung: '.$reason;
         addNotification($req['user_id'], 'Antrag abgelehnt', $msg, 'mein_plan');
+        $evCells[] = [(int)$req['user_id'], $req['plan_date']];
         $done++;
     }
+    pqEventEmit($db, 'request_changed', $evCells, false, (int)$cu['id']);
     echo json_encode(['success'=>true, 'msg'=>$done.' Antrag/Anträge abgelehnt']);
     } catch(Exception $e) { opsApiFail($e, 'change_requests', ['success'=>false,'error'=>'Datenbankfehler']); }
     exit;
