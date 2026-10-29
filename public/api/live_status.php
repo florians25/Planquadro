@@ -2,6 +2,7 @@
 require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/functions.php';
 require_once __DIR__.'/../includes/security.php';
+require_once __DIR__.'/../../app/lib/PlanCells.php';
 header('Content-Type: application/json; charset=utf-8');
 if(!isLoggedIn()){http_response_code(403);echo json_encode(['error'=>'Nicht angemeldet']);exit;}
 $input=json_decode(file_get_contents('php://input'),true);
@@ -125,7 +126,10 @@ if($action==='ping'){
             $draftInfo[$dk]=['by_id'=>(int)$dr['created_by'],'by'=>trim(($dr['first_name']??'').' '.($dr['last_name']??''))];
         }
     }catch(Exception $e){}
-    echo json_encode(['success'=>true,'cells'=>$cells,'data_hash'=>$hash,'drafts'=>$draftInfo,'my_uid'=>$uid]);
+    /* Revisionen je Zelle für die Versionsprüfung beim Speichern (fehlend = leer) */
+    $revs = [];
+    try { $revs = planMonthRevs($db, $y, $m); } catch (Exception $e) {}
+    echo json_encode(['success'=>true,'cells'=>$cells,'data_hash'=>$hash,'drafts'=>$draftInfo,'my_uid'=>$uid,'revs'=>$revs]);
 
 } elseif($action==='leave'){
     $page=$input['page']??'';$y=(int)($input['year']??0);$m=(int)($input['month']??0);

@@ -17,6 +17,11 @@ $canErl = hasPerm('view_erl_column');
 $canInternal = hasPerm('plan_view_internal');
 $canPublishAll = hasPerm('plan_publish_all');
 
+/* Revision je Zelle (Versionsprüfung beim Speichern, siehe app/lib/PlanCells.php) */
+require_once __DIR__ . '/../../app/lib/PlanCells.php';
+$cellRevs = [];
+try { $cellRevs = planMonthRevs(getDB(), $y, $m); } catch (Exception $e) {}
+
 /* Load draft map: track all non-internal drafts per cell */
 $draftMap = []; /* [user_id][date] => ['by'=>name, 'by_id'=>id, 'type'=>..., 'value'=>...] */
 try {
@@ -245,7 +250,7 @@ $cellDraft = $draftMap[$u['id']][$d] ?? null;
 $isDraftMine = $cellDraft && $cellDraft['by_id'] === $myUid;
 $isDraftOther = $cellDraft && $cellDraft['by_id'] !== $myUid;
 ?><td class="cd pc pe-c <?php if($we)echo'we ';if($we&&$weOk&&$bg)echo'we-filled ';if($we&&$weOk)echo'we-open ';if($td)echo'td ';echo $hlc;if($hasRemarkOrInt)echo' has-remark';if($remark)echo' has-pub-remark';if($canInternal&&$intRemark)echo' has-int-remark';if($isLocked)echo' cell-locked';if($entryBlocked||$exitBlocked)echo' cell-unavailable';if($isInternalEntry&&$canInternal)echo' cell-internal';if($isDraftMine)echo' draft-mine';if($isDraftOther)echo' draft-other';?>"
-data-d="<?php echo $d;?>" data-u="<?php echo $u['id'];?>" data-t="<?php echo $ct;?>" data-v="<?php echo $cv;?>" data-bl="<?php echo $blocked;?>" data-we="<?php echo $we?1:0;?>" data-webl="<?php echo $weBlocked;?>"<?php if($remark):?> data-remark="<?php echo e($remark);?>"<?php endif;?><?php if($canInternal&&$intRemark):?> data-int-remark="<?php echo e($intRemark);?>"<?php endif;?><?php if($remarkByName):?> data-remark-by="<?php echo e($remarkByName);?>"<?php endif;?><?php if($remarkAtFmt):?> data-remark-at="<?php echo e($remarkAtFmt);?>"<?php endif;?><?php if($isVacLock):?> data-vaclock="1"<?php endif;?><?php if($isDraftOther):?> data-draft-by="<?php echo e($cellDraft['by']);?>"<?php endif;?>
+data-d="<?php echo $d;?>" data-u="<?php echo $u['id'];?>" data-r="<?php echo $cellRevs[$u['id'].'_'.$d] ?? '0';?>" data-t="<?php echo $ct;?>" data-v="<?php echo $cv;?>" data-bl="<?php echo $blocked;?>" data-we="<?php echo $we?1:0;?>" data-webl="<?php echo $weBlocked;?>"<?php if($remark):?> data-remark="<?php echo e($remark);?>"<?php endif;?><?php if($canInternal&&$intRemark):?> data-int-remark="<?php echo e($intRemark);?>"<?php endif;?><?php if($remarkByName):?> data-remark-by="<?php echo e($remarkByName);?>"<?php endif;?><?php if($remarkAtFmt):?> data-remark-at="<?php echo e($remarkAtFmt);?>"<?php endif;?><?php if($isVacLock):?> data-vaclock="1"<?php endif;?><?php if($isDraftOther):?> data-draft-by="<?php echo e($cellDraft['by']);?>"<?php endif;?>
 <?php if($bg):?> style="background:<?php echo e($bg);?><?php if($we) echo ' !important';?>;color:<?php echo e($fg);?>"<?php endif;?>><?php echo e($cd);?></td>
 <?php endforeach;?>
 <?php if($see):?><td class="cr-end <?php echo ($absSee&&vacLeftAtEnd($u['id'],$y,$m)<0)?'txt-d':'';?>"><?php echo $absSee?number_format(vacLeftAtEnd($u['id'],$y,$m),1,',',''):'·';?></td><?php endif;?>

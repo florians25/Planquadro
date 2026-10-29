@@ -12,6 +12,7 @@
  */
 
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../../app/lib/PlanCells.php';
 requireLogin();
 
 $db = getDB();
@@ -496,6 +497,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                     continue;
                 }
 
+                $before = planCellLoad($db, [[$uid, $d]], true)[planCellKey($uid, $d)];
+                planChangeLog($db, $uid, $d, 'absence_module', planCellSnapshot($before),
+                    $publish ? ['pub' => ['type' => 'absence', 'value' => $type]] : ['draft' => ['action' => 'set', 'type' => 'absence', 'value' => $type, 'by' => $ME]], $ME);
                 if ($publish) {
                     /* Tag räumen: Einsatz, alte Abwesenheit und jeder Entwurf –
                        sonst überlagert der Entwurf die neue Abwesenheit in der
@@ -526,6 +530,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
                     }
                     /* Am Eintrag der Vertretung steht, für wen sie einspringt. */
                     $note = 'Vertretung für ' . $allowed[$uid]['first_name'] . ' ' . $allowed[$uid]['last_name'];
+                    $sb = planCellLoad($db, [[$dSub, $d]], true)[planCellKey($dSub, $d)];
+                    planChangeLog($db, $dSub, $d, 'absence_module', planCellSnapshot($sb),
+                        $publish ? ['pub' => ['type' => 'assignment', 'value' => $areaId], 'substitute_for' => $uid] : ['draft' => ['action' => 'set', 'type' => 'assignment', 'value' => (string)$areaId, 'by' => $ME], 'substitute_for' => $uid], $ME);
                     if ($publish) {
                         $delAsg->execute([$dSub, $d]);
                         $delAbs->execute([$dSub, $d]);

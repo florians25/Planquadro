@@ -785,19 +785,41 @@ function initRemarkTooltip() {
 /* ============================================================
    API
    ============================================================ */
+/* Revision der Zelle, wie sie zuletzt vom Server kam (Optimistic Concurrency).
+   Fehlt die Zelle im DOM, wird keine Revision gesendet (bisheriges Verhalten). */
+function cellRev(uid, date) {
+    var c = document.querySelector('.pe-c[data-u="'+uid+'"][data-d="'+date+'"]');
+    return c ? (c.dataset.r || '0') : null;
+}
+function applyRevs(revs, keys) {
+    if (!revs) return;
+    (keys || Object.keys(revs)).forEach(function(k) {
+        var p = k.split('_'); var c = document.querySelector('.pe-c[data-u="'+p[0]+'"][data-d="'+p[1]+'"]');
+        if (c) c.dataset.r = revs[k] || '0';
+    });
+}
 function saveBulk(changes, showToast, opts) {
     if (epBlockedOffline()) return;
     opts = opts || {};
     var isInternal = document.getElementById('toolInternal') ? document.getElementById('toolInternal').checked : false;
+    changes = changes.map(function(c) {
+        if (c.rev === undefined) { var r = cellRev(c.user_id, c.date); if (r !== null) c.rev = r; }
+        return c;
+    });
     var payload = {changes:changes};
     if(isInternal) payload.is_internal = 1;
     if(opts.force_vacation) payload.force_vacation = 1;
     if(opts.force_sick) payload.force_sick = 1;
     if(opts.is_internal) payload.is_internal = 1;
+    if(opts.overwrite_conflicts) payload.overwrite_conflicts = 1;
     fetch(getApiBase()+'api/save_bulk',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
-    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-    .then(function(d){if(d.success){
+    .then(function(r){
+        if(r.status===409) return r.json().then(function(d){ showSaveConflicts(changes, d, showToast, opts); return null; });
+        if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(d){if(!d)return;if(d.success){
+        applyRevs(d.revs);
         if(showToast)toast(d.count+' Zelle(n) gespeichert','success');
+        if(d.overwritten>0) toast(d.overwritten+' Änderung(en) anderer überschrieben','warning');
         if(d.vac_blocked>0) toast(d.vac_blocked+' Zelle(n) übersprungen (genehmigter Urlaub gesperrt)','warning');
         lastRefreshHash='';
         window._planHasDrafts=true;
@@ -807,6 +829,25 @@ function saveBulk(changes, showToast, opts) {
         if(typeof liveCellRefresh==='function')setTimeout(function(){liveCellRefresh(false);},200);
     }else toast('Fehler: '+(d.error||''),'error');})
     .catch(function(e){toast(e.message||'Verbindungsfehler','error');});
+}
+/* Konflikt: Zellen wurden inzwischen von anderen geändert. Nichts wurde
+   gespeichert. Der Planer entscheidet: überschreiben oder neuen Stand laden. */
+function showSaveConflicts(changes, d, showToast, opts) {
+    var list = d.conflicts || [];
+    if (typeof liveCellRefresh === 'function') liveCellRefresh(true);
+    var lines = list.slice(0, 8).map(function(c) {
+        return '• ' + c.user + ', ' + c.date + ': jetzt „' + c.current + '“' + (c.by ? ' (' + c.by + (c.at ? ', ' + c.at : '') + ')' : (c.at ? ' (' + c.at + ')' : ''));
+    });
+    if (list.length > 8) lines.push('… und ' + (list.length - 8) + ' weitere');
+    var msg = list.length + ' Zelle(n) wurden inzwischen von anderen geändert. Ihre Änderung wurde NICHT gespeichert.\n\n' +
+              lines.join('\n') + '\n\nTrotzdem überschreiben? („Abbrechen“ übernimmt den aktuellen Stand.)';
+    epConfirm(msg, function() {
+        var revByKey = {}; list.forEach(function(c) { revByKey[c.user_id + '_' + c.iso] = c.rev; });
+        var again = changes.map(function(c) { var k = c.user_id + '_' + c.date; if (revByKey[k] !== undefined) c.rev = revByKey[k]; return c; });
+        var o = {}; for (var k in opts) o[k] = opts[k]; o.overwrite_conflicts = 1;
+        saveBulk(again, showToast, o);
+    }, function() { toast('Aktueller Stand übernommen – bitte erneut bearbeiten.', 'info'); });
+    var m = document.getElementById('confirmMsg'); if (m) m.style.whiteSpace = 'pre-line';
 }
 function publishPlan(y,m,all){if(epBlockedOffline())return;
     var msg = all ? 'ALLE \u00c4nderungen f\u00fcr '+m+'/'+y+' ver\u00f6ffentlichen?' : 'Meine \u00c4nderungen f\u00fcr '+m+'/'+y+' ver\u00f6ffentlichen?\n\n\u00c4nderungen anderer Benutzer bleiben als Entw\u00fcrfe erhalten.';
@@ -1269,6 +1310,8 @@ function liveCellRefresh(animate) {
     }).then(function(r){return r.json();}).then(function(d){
         if (!d.success || !d.cells) return;
         var changed = 0;
+        /* Revisionen aller Zellen aktualisieren (fehlend = leer) */
+        if (d.revs) document.querySelectorAll('.pe-c').forEach(function(c){ c.dataset.r = d.revs[c.dataset.u + '_' + c.dataset.d] || '0'; });
         document.querySelectorAll('.pe-c').forEach(function(c) {
             if (c.classList.contains('cell-unavailable')) return;
             var key = c.dataset.u + '_' + c.dataset.d;

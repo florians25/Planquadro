@@ -2,6 +2,7 @@
 require_once __DIR__.'/../includes/auth.php';
 require_once __DIR__.'/../includes/security.php';
 require_once __DIR__.'/../includes/functions.php';
+require_once __DIR__.'/../../app/lib/PlanCells.php';
 header('Content-Type: application/json; charset=utf-8');
 if (!isLoggedIn()) { http_response_code(401); echo json_encode(['error'=>'Nicht angemeldet']); exit; }
 
@@ -124,8 +125,9 @@ case 'approve_batch':
         $s = $db->prepare("SELECT * FROM change_requests WHERE id=? AND status='pending'");
         $s->execute([$rid]); $req = $s->fetch(PDO::FETCH_ASSOC);
         if (!$req || !isSupervisorOf($req['user_id'])) continue;
-        $uid = $req['user_id']; $date = $req['plan_date'];
+        $uid = (int)$req['user_id']; $date = $req['plan_date'];
         $yr = (int)date('Y', strtotime($date)); $mo = (int)date('m', strtotime($date));
+        $before = planCellLoad($db, [[$uid, $date]], true)[planCellKey($uid, $date)];
         $db->prepare('DELETE FROM assignments WHERE user_id=? AND plan_date=?')->execute([$uid, $date]);
         $db->prepare('DELETE FROM absences WHERE user_id=? AND absence_date=?')->execute([$uid, $date]);
         if ($req['request_type'] === 'assignment' && $req['plan_area_id']) {
@@ -136,6 +138,8 @@ case 'approve_batch':
                ->execute([$uid, $date, $req['absence_type'], $cu['id']]);
         }
         $db->prepare("UPDATE change_requests SET status='approved', approved_by=?, updated_at=NOW() WHERE id=?")->execute([$cu['id'], $rid]);
+        planChangeLog($db, $uid, $date, 'approve', planCellSnapshot($before),
+            ['pub' => ['type' => $req['request_type'], 'value' => $req['request_type'] === 'assignment' ? (int)$req['plan_area_id'] : $req['absence_type']], 'request_id' => $rid], (int)$cu['id']);
         $dateF = date('d.m.Y', strtotime($date));
         addNotification($uid, 'Antrag genehmigt', 'Dein Änderungsantrag für den '.$dateF.' wurde genehmigt.', 'mein_plan');
         $done++;
