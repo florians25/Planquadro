@@ -1,0 +1,34 @@
+# Zugangsdaten und Schlüssel – niemals committen
+app/config/secrets.php
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Backups und produktive Daten
+app/backups/*
+!app/backups/.htaccess
+*.epbak
+*.sql.gz
+*.dump
+/backups/
+/data/
+
+# Abhängigkeiten / Build
+/vendor/
+node_modules/
+/mobile/dist/
+/mobile/ios/App/Pods/
+/mobile/android/.gradle/
+/coverage/
+.phpunit.cache/
+.phpunit.result.cache
+
+# Systemdateien
+.DS_Store
+Thumbs.db
+*.deb
+*.log
+.idea/
+.vscode/

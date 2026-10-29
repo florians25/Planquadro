@@ -1,0 +1,73 @@
+RewriteEngine On
+Options -Indexes
+
+# Security: Block direct access to config/includes
+<IfModule mod_rewrite.c>
+RewriteRule ^config/ - [F,L]
+RewriteRule ^includes/ - [F,L]
+RewriteRule ^backups/ - [F,L]
+
+# Redirect .php URLs to clean URLs (301)
+RewriteCond %{THE_REQUEST} /pages/([a-z_]+)\.php [NC]
+RewriteRule ^ /%1 [R=301,L]
+
+RewriteCond %{THE_REQUEST} /([a-z_]+)\.php\s [NC]
+RewriteCond %1 !^index$
+RewriteRule ^ /%1 [R=301,L]
+
+# Root-level files: /logout -> /logout.php, /install -> /install.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(logout|install)$ $1.php [L,QSA]
+
+# Clean URLs: /dashboard -> /pages/dashboard.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-z_]+)$ pages/$1.php [L,QSA]
+
+# API clean URLs: /api/endpoint -> /api/endpoint.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^api/([a-z_]+)$ api/$1.php [L,QSA]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header set X-XSS-Protection "1; mode=block"
+Header set Referrer-Policy "strict-origin-when-cross-origin"
+Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'self'"
+Header set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+</IfModule>
+
+# Block sensitive files
+<FilesMatch "\.(sql|md|log|env|bak|old|ini|conf|epbak)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>
+
+# === Performance: GZIP-Komprimierung ===
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json application/xml image/svg+xml
+</IfModule>
+
+# === Performance: Browser-Caching statischer Dateien ===
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/svg+xml "access plus 30 days"
+    ExpiresByType image/x-icon "access plus 30 days"
+    ExpiresByType font/woff2 "access plus 30 days"
+</IfModule>
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|png|jpe?g|svg|ico|woff2?)$">
+        Header set Cache-Control "public, max-age=604800"
+    </FilesMatch>
+</IfModule>
+
+ServerSignature Off

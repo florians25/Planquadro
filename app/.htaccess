@@ -1,0 +1,13 @@
+# OpsPilot Einsatzplanung — interner App-/Konfigurationsordner
+# Dieser Ordner enthält die Datenbank-Zugangsdaten (config/database.php) und
+# die Backups. Er darf NIEMALS über das Web erreichbar sein.
+# Liegt regulär ohnehin außerhalb des Document-Root (public/), diese Regel ist
+# eine zusätzliche Absicherung (Defense-in-Depth).
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>
