@@ -22,6 +22,7 @@ const TENANT_CONFIG_DEFAULTS = [
         'primary' => '#2557d6',
         'accent'  => '#ff7a1a',
         'logo'    => null,          /* Dateiname im Mandanten-Speicher */
+        'show_vendor' => true,      /* Hinweis „mit Planquadro“ auf der Anmeldeseite */
     ],
     'modules' => [
         'assistant'  => true,   /* Planungsassistent */

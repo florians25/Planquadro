@@ -1,22 +1,36 @@
-<p><img src="public/assets/brand/planquadro-logo.svg" alt="Planquadro" height="56"></p>
+<p align="center"><img src="public/assets/brand/planquadro-logo.svg" alt="Planquadro" height="64"></p>
 
-# Planquadro
+<h3 align="center">Einsatz- und Teamplanung für Service-Organisationen</h3>
+<p align="center"><em>„Jeder Einsatz an seinem Platz.“</em></p>
 
-**Einsatz- und Teamplanung für Service-Organisationen**
-*Kurz: **PQ** · „Jeder Einsatz an seinem Platz.“*
+<p align="center">
+<a href="https://github.com/florians25/Planquadro/actions/workflows/ci.yml"><img src="https://github.com/florians25/Planquadro/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+<a href="https://github.com/florians25/Planquadro/releases"><img src="https://img.shields.io/github/v/release/florians25/Planquadro?label=Release&color=2557D6" alt="Release"></a>
+<img src="https://img.shields.io/badge/PHP-8.1%E2%80%938.3-14213D" alt="PHP 8.1–8.3">
+<img src="https://img.shields.io/badge/MariaDB%20%7C%20MySQL-10.11%20%7C%208.0-14213D" alt="MariaDB 10.11 / MySQL 8.0">
+<img src="https://img.shields.io/badge/Apps-iOS%20%7C%20Android%20%7C%20PWA-FF7A1A" alt="Apps">
+</p>
 
-Planquadro plant Einsätze, Teams, Schichten und Abwesenheiten von Außendienst- und
+**Planquadro** plant Einsätze, Teams, Schichten und Abwesenheiten von Außendienst- und
 Vor-Ort-Teams – im Browser, als iOS-/Android-App, selbst betrieben oder als Cloud-Dienst
-mit mehreren Mandanten. Mehrere Planer arbeiten gleichzeitig, ohne sich gegenseitig zu
-überschreiben; vertrauliche Abwesenheitsgründe sehen nur Berechtigte.
+mit vielen Mandanten. Mehrere Planer arbeiten gleichzeitig, ohne sich gegenseitig zu
+überschreiben, und vertrauliche Abwesenheitsgründe sehen nur Berechtigte.
 
 Der Name kommt vom *Planquadrat*: Herzstück ist die Planungsmatrix aus Mitarbeitenden und
-Tagen – jedes Feld ein Einsatz, jeder Einsatz an seinem Platz.
+Tagen – jedes Feld ein Einsatz. Kurzname: **PQ**.
 
-Planquadro ist aus der bewährten Anwendung *Einsatzplanung* (v6.9.0) entstanden und erweitert
-sie, ohne bestehende Abläufe, Daten oder Rechte zu verändern.
+## Warum Planquadro?
 
-> Status: Entwicklungsstand, **noch nicht für den Produktivbetrieb freigegeben**.
+| | |
+|---|---|
+| 🧩 **Planen wie auf der Plantafel** | Werkzeug wählen, Felder setzen oder ziehen, Einträge per Drag & Drop verschieben – mit Maus, Touch oder komplett per Tastatur. |
+| 👥 **Gemeinsam ohne Chaos** | Zellgenaue Versionsprüfung mit Konfliktdialog, Live-Aktualisierung, Änderungsprotokoll je Feld. Niemand überschreibt still die Arbeit anderer. |
+| ✅ **Entwurf → Veröffentlichen** | In Ruhe planen, dann freigeben. Betroffene werden per Glocke und App-Push benachrichtigt. |
+| 🔒 **Vertraulich per Design** | Krankheits- und Urlaubsgründe sehen nur Betroffene, Vorgesetzte und ausdrücklich Berechtigte – auch in API, Live-Updates und App. |
+| 📱 **Apps inklusive** | iOS und Android (Capacitor) plus Web-App: eigener Plan mit Kundeninfos, Team, Urlaubsanträge, Push, Offline-Lesemodus, Face ID. |
+| 🏢 **Ihr Auftritt** | Eigener Name, Farben, Logo, Domain, Module und Navigation – je Firma bzw. Mandant ([White-Label](docs/WHITE_LABEL.md)). |
+| ☁️ **Self-Hosting oder SaaS** | Eine Codebasis: Docker-Compose für den eigenen Server oder Mandantenbetrieb mit einer Datenbank je Kunde. |
+| 💾 **Backups, die man zurückspielen kann** | Verschlüsselt, extern (S3/rclone), mit Aufbewahrung und automatischem Restore-Test. |
 
 ## Screenshots
 
@@ -47,45 +61,44 @@ sie, ohne bestehende Abläufe, Daten oder Rechte zu verändern.
 
 ## Funktionen
 
-- **Planung:** Dashboard, Mein Plan, Gesamtplan, Monats- und Jahresplanung, Einsatzcodes,
-  Dauereinsätze, Planungsassistent, Entwürfe mit Änderungsmarkierung und Veröffentlichung
-- **Team & Abwesenheiten:** Mitarbeiter, Teams (Vorgesetzte), Rollen und Rechte, Urlaub,
-  Krankheit, Gleitzeit, Feiertage/Ferien, Vertretungen, Änderungsanträge
-- **Mehrbenutzerbetrieb:** zellgenaue Versionsprüfung mit Konfliktdialog, Sperren beim
-  Speichern/Veröffentlichen, Änderungsprotokoll je Zelle, Live-Aktualisierung
-- **Plattform:** Mandantenfähigkeit (eine Datenbank je Mandant), TenantConfig mit Branding,
-  Modulen, Navigation, Dashboard-Widgets und Planungsregeln, Stammdaten (Kunden, Standorte,
-  Qualifikationen), optional SSO per OpenID Connect, zentrale Plattform-Administration
-- **Apps:** iOS/Android/PWA (`mobile/`) über die API v1 – persönlicher Plan, Team,
-  Abwesenheiten und Anträge, Einsatzdetails mit Kundeninfos, Push, Offline-Lesemodus,
-  Biometrie, Dark Mode, Mandanten-Branding
-- **Betrieb:** Docker-Image und Compose-Stack (Self-Hosting und SaaS), Healthchecks,
-  verschlüsselte Backups mit externen Zielen, Aufbewahrung, automatischem Restore-Test
-  und Notfallhandbuch
-- **Oberfläche:** Planquadro-Designsystem, Dark Mode, Tastaturbedienung der Planungsmatrix,
-  Barrierefreiheit (WCAG 2.2 AA), deutlich schnellere große Pläne
+- **Planung:** Monats- und Jahresplanung, Gesamtplan, Mein Plan, Einsatzbereiche mit
+  Kunden und Standorten, Entwürfe und Veröffentlichen, Bemerkungen (öffentlich/intern),
+  Drag & Drop, Tastaturbedienung, einheitliche Filter, Druckansicht, Planungsassistent
+- **Team & Abwesenheiten:** Mitarbeitende, Vorgesetzte, Urlaub, Krankheit, Gleitzeit,
+  Feiertage und Ferien, Vertretungen, Anträge mit Genehmigung, Kalender-Abo (iCal)
+- **Rechte:** Rechte-Katalog, Rollen inkl. eigener Rollen, Abweichungen je Person,
+  Team-Scope, Vertraulichkeit; Single Sign-on (OpenID Connect) mit optionaler Rollenzuordnung
+- **Zusammenarbeit:** Konfliktdialog, Sperren, Änderungsprotokoll, Live-Updates (Server-Sent
+  Events), Benachrichtigungen und Push
+- **Plattform:** Mandantenfähigkeit, Branding, Module, Navigation, Dashboard-Kacheln,
+  Planungsregeln, Stammdaten, Plattform-Administration, REST-API v1
+- **Betrieb:** Docker-Image, Compose-Stacks (einzeln, mehrere Replikate, SaaS), Healthchecks,
+  verschlüsselte Backups, Restore-Test, SMTP-/Webhook-Alarme, Notfallhandbuch
+- **Oberfläche:** Designsystem, Dark Mode, Barrierefreiheit (WCAG 2.2 AA), schnelle große
+  Pläne
+
+## Schnellstart mit Docker
+
+```bash
+git clone https://github.com/florians25/Planquadro.git && cd Planquadro
+cp .env.example .env && sh docker/init-secrets.sh
+docker compose --profile proxy up -d --build
+docker compose exec app php public/install.php      # erster Administrator
+docker compose exec app php bin/demo.php            # optional: Demodaten zum Ausprobieren
+```
+
+Details, HTTPS, Updates und Backups: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 ## Dokumentation
 
-| Dokument | Inhalt |
+| Für … | Dokument |
 |---|---|
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Phasen, Befunde, Entscheidungen |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Ist- und Zielarchitektur, Mandanten, Mobile-Entscheidung |
-| [docs/PERMISSIONS.md](docs/PERMISSIONS.md) | Berechtigungsmodell |
-| [docs/MIGRATION_PLAN.md](docs/MIGRATION_PLAN.md) | Update bestehender Installationen |
-| [docs/API.md](docs/API.md) | REST-API v1 für Apps |
-| [docs/BRAND.md](docs/BRAND.md) | Markenhandbuch: Name, Logo, Farben, Schrift, Ton |
-| [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Designsystem, Dark Mode, Barrierefreiheit |
-| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Entwicklung, Tests, CI, Branches |
-| [mobile/README.md](mobile/README.md) | Mobile-Apps bauen und veröffentlichen |
-| [docs/INSTALLATION.md](docs/INSTALLATION.md) | Installation: Docker Compose, Reverse Proxy/HTTPS, Apache/PHP, Shared Hosting |
-| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | alle Umgebungsvariablen |
-| [docs/UPDATE.md](docs/UPDATE.md) | sicheres Update und Rollback |
-| [docs/BACKUP.md](docs/BACKUP.md) | Backup, Verschlüsselung, Ziele, Aufbewahrung, Restore |
-| [docs/DISASTER_RECOVERY.md](docs/DISASTER_RECOVERY.md) | Notfallhandbuch mit RPO/RTO |
-| [CHANGELOG.md](CHANGELOG.md) | Änderungen je Version |
+| **Anwender** | [Benutzerhandbuch](docs/HANDBUCH.md) · [App](mobile/README.md) |
+| **Firmen & Administration** | [White-Label / eigenes Branding](docs/WHITE_LABEL.md) · [Rechte & Rollen](docs/PERMISSIONS.md) · [Markenhandbuch](docs/BRAND.md) |
+| **Betrieb** | [Installation](docs/INSTALLATION.md) · [Konfiguration](docs/CONFIGURATION.md) · [Update](docs/UPDATE.md) · [Backup](docs/BACKUP.md) · [Notfallhandbuch](docs/DISASTER_RECOVERY.md) · [Migration bestehender Installationen](docs/MIGRATION_PLAN.md) |
+| **Entwicklung** | [Architektur](docs/ARCHITECTURE.md) · [API v1](docs/API.md) · [Designsystem](docs/DESIGN_SYSTEM.md) · [Entwicklung & Tests](docs/DEVELOPMENT.md) · [Roadmap](docs/ROADMAP.md) · [Changelog](CHANGELOG.md) |
 
-## Schnellstart (Entwicklung)
+## Entwicklung
 
 ```bash
 composer install
@@ -95,6 +108,15 @@ php public/install.php
 php bin/demo.php          # optional: Demodaten für eine Vorführinstanz
 php -S 127.0.0.1:8080 -t public tests/router.php
 ```
+
+Tests: `vendor/bin/phpunit` (Integrationstests gegen MariaDB/MySQL), `node --test tests/js/*.test.mjs`,
+`cd mobile && npm test` – siehe [DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
+## Herkunft
+
+Planquadro ist aus der bewährten Anwendung *Einsatzplanung* (v6.9.0) entstanden und erweitert
+sie, ohne bestehende Abläufe, Daten oder Rechte zu verändern. Bestehende Installationen
+lassen sich übernehmen ([MIGRATION_PLAN.md](docs/MIGRATION_PLAN.md)).
 
 ## Lizenz
 

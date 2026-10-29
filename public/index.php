@@ -7,6 +7,7 @@ require_once __DIR__ . '/../app/lib/Oidc.php';
 $oidcOn = oidcEnabled();
 $pwAllowed = oidcPasswordLoginAllowed();
 $brandName = (string)tcfg('branding.name', 'Planquadro');
+$brandLogo = (bool)tcfg('branding.logo');
 if (isset($_SESSION['user_id']) && empty($_SESSION['must_change_password'])) { header('Location: dashboard'); exit; }
 
 $err = ''; $showChange = !empty($_SESSION['must_change_password']); $pwExpired = !empty($_SESSION['pw_expired']);
@@ -176,6 +177,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .lb{background:#fff;border-radius:16px;padding:2.5rem 2rem 2rem;box-shadow:0 25px 80px rgba(0,0,0,.4),0 8px 32px rgba(0,0,0,.2),0 0 0 1px rgba(255,255,255,.05);position:relative;overflow:hidden}
 .lh{text-align:center;margin-bottom:1.75rem}
 .logo{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:13px;background:#14213D;color:#fff;font-size:1.15rem;font-weight:900;margin-bottom:.75rem;box-shadow:0 6px 20px rgba(37,87,214,.35)}
+.logo-img{display:block;max-width:220px;max-height:64px;margin:0 auto .75rem;object-fit:contain}
 .lh h1{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;color:#0f172a}
 .lh .sub{font-size:.82rem;color:#6b7280;margin-top:.25rem}
 .fg{margin-bottom:.85rem}
@@ -222,7 +224,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <div class="lw">
   <div class="lb">
     <div class="lh">
-      <div class="logo"><svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="4" fill="#fff"/><rect x="24" y="4" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="44" y="4" width="16" height="16" rx="4" fill="#fff"/><rect x="4" y="24" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="24" y="24" width="16" height="16" rx="4" fill="#fff"/><rect x="44" y="24" width="16" height="16" rx="4" fill="#FF7A1A"/><rect x="4" y="44" width="16" height="16" rx="4" fill="#fff"/><rect x="24" y="44" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="44" y="44" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/></svg></div>
+      <?php if ($brandLogo): ?><img src="api/branding?logo=1" alt="<?php echo htmlspecialchars($brandName); ?>" class="logo-img"><?php else: ?><div class="logo"><svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="4" fill="#fff"/><rect x="24" y="4" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="44" y="4" width="16" height="16" rx="4" fill="#fff"/><rect x="4" y="24" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="24" y="24" width="16" height="16" rx="4" fill="#fff"/><rect x="44" y="24" width="16" height="16" rx="4" fill="#FF7A1A"/><rect x="4" y="44" width="16" height="16" rx="4" fill="#fff"/><rect x="24" y="44" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="44" y="44" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/></svg></div><?php endif; ?>
       <h1><?php echo htmlspecialchars($brandName); ?></h1>
       <p class="sub"><?php echo $showChange ? ($pwExpired ? 'Passwort abgelaufen' : 'Neues Passwort vergeben') : 'Willkommen zurück'; ?></p>
     </div>
@@ -275,7 +277,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <?php endif; ?>
     <?php endif; ?>
   </div>
-  <div class="lf"><?php echo $brandName === 'Planquadro' ? 'Planquadro · Jeder Einsatz an seinem Platz.' : htmlspecialchars($brandName) . ' · mit Planquadro'; ?></div>
+  <div class="lf"><?php echo $brandName === 'Planquadro' ? 'Planquadro · Jeder Einsatz an seinem Platz.' : htmlspecialchars($brandName) . (tcfg('branding.show_vendor', true) ? ' · mit Planquadro' : ''); ?></div>
 </div>
 <script>
 /* Prevent double-submit */

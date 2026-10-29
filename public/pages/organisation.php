@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_SERVER['HTTP_X_REQUESTED_W
             $name = mb_substr(trim((string)($_POST['name'] ?? '')), 0, 80);
             $p = opsValidColor($_POST['primary'] ?? ''); $a = opsValidColor($_POST['accent'] ?? '');
             if ($name === '' || !$p || !$a) throw new InvalidArgumentException('Name und gültige Farben (#rrggbb) angeben.');
-            tcfgSet(['branding' => ['name' => $name, 'primary' => $p, 'accent' => $a]]);
+            tcfgSet(['branding' => ['name' => $name, 'primary' => $p, 'accent' => $a, 'show_vendor' => !empty($_POST['show_vendor'])]]);
             orgAudit('tenant_config', "branding: $name $p $a");
             echo json_encode(['success' => true, 'msg' => 'Branding gespeichert.']); exit;
         }
@@ -165,6 +165,7 @@ $redirectUri = oidcRedirectUri();
         <div class="fg"><label for="bAccent">Akzentfarbe</label><input type="color" id="bAccent" name="accent" value="<?php echo e($cfg['branding']['accent']); ?>"></div>
         <div class="fg"><label>Vorschau</label><div class="org-preview"><span id="pvBtn" class="btn btn-primary btn-sm">Schaltfläche</span> <span id="pvContrast" class="muted" style="font-size:.75rem"></span></div></div>
       </div>
+      <label class="org-check"><input type="checkbox" name="show_vendor" value="1" <?php if (!empty($cfg['branding']['show_vendor'])) echo 'checked'; ?>> Hinweis „mit Planquadro“ auf der Anmeldeseite anzeigen</label>
       <button class="btn btn-primary" type="submit">Branding speichern</button>
     </form>
     <hr class="org-hr">
