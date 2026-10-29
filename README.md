@@ -43,12 +43,26 @@ Tagen – jedes Feld ein Einsatz. Kurzname: **PQ**.
 <td width="50%"><img src="docs/screenshots/web-monatsplanung-dark.png" alt="Monatsplanung im Dunkelmodus"><br><sub>Dunkelmodus</sub></td>
 </tr>
 <tr>
+<td><img src="docs/screenshots/web-assistent-vorschlag.png" alt="Planungsassistent: Vorschlag prüfen"><br><sub>Planungsassistent – Vorschlag prüfen</sub></td>
+<td><img src="docs/screenshots/web-assistent-schritt1.png" alt="Planungsassistent: Zeitraum und Team mit Live-Vorschau"><br><sub>Planungsassistent – Live-Vorschau</sub></td>
+</tr>
+<tr>
 <td><img src="docs/screenshots/web-gesamtplan.png" alt="Gesamtplan"><br><sub>Gesamtplan</sub></td>
 <td><img src="docs/screenshots/web-organisation.png" alt="Organisation: Branding, Module, Navigation"><br><sub>Organisation – Branding, Module, SSO</sub></td>
 </tr>
 </table>
 
-**Apps für iOS und Android**
+**Android-App** – Screenshots aus der laufenden App im Android-Emulator (automatisch erzeugt)
+
+<p>
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/android-plan-light.png" alt="Android: Mein Plan" width="19%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/android-team-light.png" alt="Android: Team-Raster" width="19%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/android-tag-light.png" alt="Android: Einsatzdetails mit Teilen und Kalender" width="19%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/android-widget-light.png" alt="Android: Startbildschirm-Widget „Diese Woche“" width="19%">
+<img src="https://raw.githubusercontent.com/florians25/Planquadro/app-screenshots/android-abwesenheiten-dark.png" alt="Android: Urlaubskonto und Antrag, dunkel" width="19%">
+</p>
+
+**iPhone & iPad** – native SwiftUI-App mit Liquid Glass ([apple/](apple/README.md))
 
 <p>
 <img src="docs/screenshots/ios-plan.png" alt="iPhone: Mein Plan" width="24%">
@@ -56,8 +70,6 @@ Tagen – jedes Feld ein Einsatz. Kurzname: **PQ**.
 <img src="docs/screenshots/ios-abwesenheiten.png" alt="iPhone: Abwesenheiten und Urlaubsantrag" width="24%">
 <img src="docs/screenshots/ios-team-dark.png" alt="iPhone: Team im Dunkelmodus" width="24%">
 </p>
-
-<sub>iPhone-Ansicht der App (gleiche Oberfläche wie in der iOS-App, gerendert in iPhone-15-Pro-Größe mit iOS-Sicherheitsbereichen).</sub>
 
 <sub>Alle Namen, Firmen und Daten sind frei erfunden (Demodaten aus <code>php bin/demo.php</code>).</sub>
 
