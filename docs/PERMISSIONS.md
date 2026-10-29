@@ -61,8 +61,9 @@ maßgeblich ist dann die Datenbank.
 | `view_gesamtplan_details` | ✔ | ✔ | ✔ | ✔ | – | – | – | – | – |
 
 Hinweise:
-- `manage_absences` und `use_planning_assistant` werden geprüft, fehlen aber in
-  `allPermissions()` und sind deshalb auf der Seite „Rollen & Rechte“ nicht pflegbar.
+- `manage_absences` und `use_planning_assistant` werden geprüft, fehlten aber bis v6.9.0
+  in `allPermissions()` und waren deshalb auf der Seite „Rollen & Rechte“ nicht pflegbar
+  (seit Phase 2 behoben, Werte unverändert übernommen).
 - `manage_users` wird gespeichert, aber **nicht ausgewertet** – die Benutzerverwaltung
   hängt fest an der Rolle (siehe 3.).
 
@@ -147,12 +148,13 @@ Hinweise:
 
 ## 6. Abweichungen zwischen beabsichtigtem und tatsächlichem Verhalten
 
-Diese Punkte sind **Fehler**, keine Rechte, die erhalten werden müssen. Sie werden in
-Phase 2 behoben; jede Behebung ist in der Roadmap und im CHANGELOG vermerkt.
+Diese Punkte sind **Fehler**, keine Rechte, die erhalten werden müssen. P-1 bis P-5 und
+P-7 sind in Phase 2 behoben (Tests in `tests/Integration/SecurityTest.php` und
+`DataIntegrityTest.php`); P-6 wartet auf eine fachliche Entscheidung.
 
 | # | Beabsichtigt (Doku/UI) | Tatsächlich | Wirkung der Behebung |
 |---|---|---|---|
-| P-1 | Benutzerverwaltung pflegt Mitarbeiter | Manager/Verwaltung können jedem Konto – auch dem eigenen – die Rolle `admin` geben und Admin-Passwörter setzen | Admin-Rolle und Admin-Konten nur noch durch Admins änderbar; eigene Rolle nicht änderbar |
+| P-1 | Benutzerverwaltung pflegt Mitarbeiter | Manager/Verwaltung können jedem Konto – auch dem eigenen – die Rolle `admin` geben und Admin-Passwörter setzen | Admin-Rolle und Admin-Konten nur noch durch Admins änderbar; eigene Rolle nicht änderbar; Rollen mit `manage_roles` vergibt nur, wer es selbst hat. **Unverändert:** Manager/Verwaltung pflegen weiterhin alle übrigen Konten und Rollen (keine Team-Einschränkung) – eine strengere Regel ist Teil der Rechte-Migration in Phase 3. |
 | P-2 | Anträge genehmigt, wer `approve_requests` hat (Navigation) | API prüft nur `plan_edit` → Verwaltung kann per Direktaufruf genehmigen | Genehmigen/Ablehnen erfordert `approve_requests` |
 | P-3 | Team-Scope gilt für alle Planungsdaten | WOTs, Stunden/Erl. und Wochenkontext ohne Scope-Prüfung | Scope-Prüfung ergänzt |
 | P-4 | Vertraulichkeit Krankheit/Urlaub | Liste im Abwesenheitsmodul überträgt die Art im Feld `key` | Feld wird maskiert |

@@ -52,6 +52,9 @@ php bin/migrate.php up                     # spielt nur neue OpsPilot-Migratione
 `baseline` schreibt ausschließlich in die neue Tabelle `schema_migrations`; Fachdaten
 bleiben unberührt. Rückweg: `DROP TABLE schema_migrations`.
 
+Der Runner erkennt MySQL und übersetzt die MariaDB-Syntax der Alt-Migrationen
+(`ADD COLUMN IF NOT EXISTS`); getestet in der CI mit MariaDB 10.11 und MySQL 8.0.
+
 Ohne Shell-Zugang (Shared Hosting) werden die Dateien unter `migrations/opspilot/` wie
 bisher in Versionsreihenfolge per phpMyAdmin eingespielt; sie sind so geschrieben, dass sie
 mehrfach ausgeführt werden können (`IF NOT EXISTS`, `INSERT IGNORE`).
@@ -63,7 +66,15 @@ mehrfach ausgeführt werden können (`IF NOT EXISTS`, `INSERT IGNORE`).
 | `0001_runtime_ddl.sql` | `users.cal_token`, `editing_status.target_uid` (bisher zur Laufzeit angelegt), `changelog.entry_type` | additiv | nicht nötig |
 | `0002_plan_change_log.sql` | Tabelle `plan_change_log` (Änderungsprotokoll je Zelle) | additiv | `DROP TABLE plan_change_log` |
 | `0003_clear_initial_passwords.sql` | leert `users.initial_password` (Klartext-Einmalpasswörter). Das Einmalpasswort bleibt über den Hash gültig; der Wechselzwang bleibt bestehen | Datenbereinigung | nicht umkehrbar – gewollt; Werte wurden nirgends angezeigt |
-| `0004_permission_catalog.sql` | ergänzt fehlende `role_permissions`-Zeilen für `manage_absences`/`use_planning_assistant` **nur dort, wo keine existieren** und mit dem bisher wirksamen Wert | additiv, rechteneutral | Zeilen löschen |
+
+### Rechteneutralität von Phase 2
+
+Phase 2 ändert keine Zeile in `role_permissions` oder `permission_user_overrides`.
+Die Rechte `manage_absences` und `use_planning_assistant` erscheinen jetzt auf der Seite
+„Rollen & Rechte“ mit ihrem gespeicherten Wert. Verhaltensänderungen ergeben sich
+ausschließlich aus den Fehlerbehebungen P-1 … P-7 in `PERMISSIONS.md`; ein Test stellt
+sicher, dass jedes Recht auf der Rollen-Seite pflegbar ist (sonst würde „Speichern“ nicht
+angezeigte Rechte auf 0 setzen).
 
 ## 4. Schritt 2 – Rechte-Migration ohne Privilegienausweitung (Phase 3)
 

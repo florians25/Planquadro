@@ -40,32 +40,32 @@ Changelog · Datenschutzseite · Login-Sperre, Captcha, Passwortrichtlinie.
 ### Befunde
 
 Schweregrad: **K** kritisch · **H** hoch · **M** mittel · **N** niedrig.
-Status: ✅ behoben · 🔧 in Arbeit (Phase 2) · ⏳ geplant (Phase) · ❓ Entscheidung nötig.
+Status: ✅ behoben (Phase 2) · ⏳ geplant (Phase) · ❓ Entscheidung nötig · ⏳ geplant (Phase) · ❓ Entscheidung nötig.
 
 #### Sicherheit und Berechtigungen
 
 | ID | Sev | Befund | Ort | Status |
 |---|---|---|---|---|
 | S-01 | K | Produktive DB-Zugangsdaten im Quellcode (Fallback-Werte) | `app/config/database.php` | ✅ beim Import entfernt – **Passwort rotieren!** |
-| S-02 | K | Benutzerverwaltung: Manager/Verwaltung können beliebige Konten (auch eigenes) zu `admin` machen, Admin-Passwörter setzen/zurücksetzen | `pages/mitarbeiter.php` save/reset_pw/toggle | 🔧 Phase 2 |
-| S-03 | K | `install.php` öffentlich erreichbar, legt bei fehlendem `admin` ein Konto mit bekanntem Passwort an | `public/install.php` | 🔧 Phase 2 |
-| S-04 | K | Passwort-Hashes, Klartext-Einmalpasswörter und Kalender-Tokens aller Benutzer im HTML der Teamseite | `pages/mitarbeiter.php` (`json_encode($u)`) | 🔧 Phase 2 |
-| S-05 | K | Stored XSS: `esc()` im JS maskiert keine Anführungszeichen → Attribut-Ausbruch über Antragsbemerkungen, Namen, WOT-Links | `assets/js/app.js`, `pages/genehmigungen.php` | 🔧 Phase 2 |
-| S-06 | H | CSRF-Schutz fehlt auf allen APIs und Seiten-Aktionen außer Rollen (gemildert durch `SameSite=Strict`) | `api/*`, `pages/*` | 🔧 Phase 2 zentral |
-| S-07 | H | Session Fixation: keine neue Session-ID nach Login | `index.php` | 🔧 Phase 2 |
-| S-08 | H | Einmalpasswörter im Klartext gespeichert (`users.initial_password`) | `pages/mitarbeiter.php` | 🔧 Phase 2 (Spalte wird geleert, nicht mehr befüllt) |
-| S-09 | H | Fehlende Team-Scope-Prüfung: WOTs, Stunden/Erl., Wochenkontext | `api/save_wots`, `api/save_month_data`, `api/change_requests` | 🔧 Phase 2 |
-| S-10 | H | Genehmigen ohne `approve_requests` möglich | `api/change_requests` | 🔧 Phase 2 |
-| S-11 | H | Vertrauliche Abwesenheitsart im Feld `key` der Abwesenheitsliste | `pages/abwesenheiten.php` | 🔧 Phase 2 |
-| S-12 | H | XSS über Bereichsfarben und WOT-Farben/-Links (`javascript:`) | `planbereiche`, `save_wots`, Ausgaben | 🔧 Phase 2 Validierung + Escaping |
-| S-13 | M | Login-Sperre per `X-Forwarded-For` umgehbar (Header ungeprüft übernommen) | `index.php`, `security.php` | 🔧 Phase 2 nur hinter vertrauenswürdigem Proxy |
-| S-14 | M | Profil- und Rollen-AJAX ohne `requireLogin()` (erzwungener Passwortwechsel umgehbar) | `pages/profil.php`, `pages/rollen.php` | 🔧 Phase 2 |
-| S-15 | M | „Niemand außer …“ löscht Overrides aller Benutzer statt nur der Rolle | `pages/rollen.php` | 🔧 Phase 2 |
-| S-16 | M | Admin kann sich `manage_roles` entziehen und sperrt damit alle aus | `pages/rollen.php` | 🔧 Phase 2 Admin-Rolle schreibgeschützt |
+| S-02 | K | Benutzerverwaltung: Manager/Verwaltung können beliebige Konten (auch eigenes) zu `admin` machen, Admin-Passwörter setzen/zurücksetzen | `pages/mitarbeiter.php` save/reset_pw/toggle | ✅ |
+| S-03 | K | `install.php` öffentlich erreichbar, legt bei fehlendem `admin` ein Konto mit bekanntem Passwort an | `public/install.php` | ✅ |
+| S-04 | K | Passwort-Hashes, Klartext-Einmalpasswörter und Kalender-Tokens aller Benutzer im HTML der Teamseite | `pages/mitarbeiter.php` (`json_encode($u)`) | ✅ |
+| S-05 | K | Stored XSS: `esc()` im JS maskiert keine Anführungszeichen → Attribut-Ausbruch über Antragsbemerkungen, Namen, WOT-Links | `assets/js/app.js`, `pages/genehmigungen.php` | ✅ |
+| S-06 | H | CSRF-Schutz fehlt auf allen APIs und Seiten-Aktionen außer Rollen (gemildert durch `SameSite=Strict`) | `api/*`, `pages/*` | ✅ zentral |
+| S-07 | H | Session Fixation: keine neue Session-ID nach Login | `index.php` | ✅ |
+| S-08 | H | Einmalpasswörter im Klartext gespeichert (`users.initial_password`) | `pages/mitarbeiter.php` | ✅ (Spalte wird geleert, nicht mehr befüllt) |
+| S-09 | H | Fehlende Team-Scope-Prüfung: WOTs, Stunden/Erl., Wochenkontext | `api/save_wots`, `api/save_month_data`, `api/change_requests` | ✅ |
+| S-10 | H | Genehmigen ohne `approve_requests` möglich | `api/change_requests` | ✅ |
+| S-11 | H | Vertrauliche Abwesenheitsart im Feld `key` der Abwesenheitsliste | `pages/abwesenheiten.php` | ✅ |
+| S-12 | H | XSS über Bereichsfarben und WOT-Farben/-Links (`javascript:`) | `planbereiche`, `save_wots`, Ausgaben | ✅ Validierung + Escaping |
+| S-13 | M | Login-Sperre per `X-Forwarded-For` umgehbar (Header ungeprüft übernommen) | `index.php`, `security.php` | ✅ nur hinter vertrauenswürdigem Proxy |
+| S-14 | M | Profil- und Rollen-AJAX ohne `requireLogin()` (erzwungener Passwortwechsel umgehbar) | `pages/profil.php`, `pages/rollen.php` | ✅ |
+| S-15 | M | „Niemand außer …“ löscht Overrides aller Benutzer statt nur der Rolle | `pages/rollen.php` | ✅ |
+| S-16 | M | Admin kann sich `manage_roles` entziehen und sperrt damit alle aus | `pages/rollen.php` | ✅ Admin-Rolle schreibgeschützt |
 | S-17 | M | Planungsassistent: Manager planen immer teamübergreifend, auch ohne `view_all_employees` | `pages/planungsassistent.php` | ❓ fachliche Entscheidung |
 | S-18 | M | `view_all_employees` (Planungs-Scope) öffnet zugleich Gesundheitsdaten aller | `canSeeAbsenceDetails()` | ❓ fachliche Entscheidung, ⏳ Phase 3 |
-| S-19 | M | Meldungen (`announcements active`) ohne Login abrufbar | `api/announcements` | 🔧 Phase 2 Login erforderlich |
-| S-20 | M | Fehlermeldungen geben Datenbankdetails an den Client (`$e->getMessage()`) | diverse APIs | 🔧 Phase 2 für geänderte Endpunkte, ⏳ Rest in Phase 3 (Kernel) |
+| S-19 | M | Meldungen (`announcements active`) ohne Login abrufbar | `api/announcements` | ✅ Login erforderlich |
+| S-20 | M | Fehlermeldungen geben Datenbankdetails an den Client (`$e->getMessage()`) | diverse APIs | ✅ für geänderte Endpunkte, ⏳ Rest in Phase 3 (Kernel) |
 | S-21 | N | `onclick='…<?php echo e(...)?>…'` – `&#039;` wird im Handler zu `'` | `monatsplanung`, `rollen` | ⏳ Phase 5 (Inline-Handler ersetzen) |
 | S-22 | N | CSP mit `unsafe-inline` | `.htaccess` | ⏳ Phase 5 |
 | S-23 | N | Passwortrichtlinie Standard 6 Zeichen, 30-Tage-Zwangswechsel (entspricht nicht NIST/BSI) | Einstellungen | ⏳ Phase 3 (TenantConfig, Standard 12 Zeichen, kein Zwangsablauf) |
@@ -74,16 +74,16 @@ Status: ✅ behoben · 🔧 in Arbeit (Phase 2) · ⏳ geplant (Phase) · ❓ En
 
 | ID | Sev | Befund | Status |
 |---|---|---|---|
-| D-01 | H | **Lost Update:** Zweiter Planer überschreibt den Entwurf des ersten an derselben Zelle ohne Hinweis (UNIQUE `user_id,plan_date`, Upsert ohne Versionsprüfung) | 🔧 Phase 2 Revisionen + HTTP 409 |
-| D-02 | H | `publish` liest Entwürfe ohne Sperre; ein parallel gespeicherter Entwurf wird beim Löschen des alten mitgelöscht | 🔧 Phase 2 `FOR UPDATE` |
-| D-03 | H | Abwesenheitsmodul überschreibt genehmigten Urlaub/Krankheit und Einsätze der Vertretung ohne Prüfung; `delete` ohne Transaktion, ohne Datumsvalidierung | 🔧 Phase 2 (Prüfung, Transaktion, Validierung) |
-| D-04 | H | Löschen eines Einsatzbereichs löscht per `ON DELETE CASCADE` die gesamte Einsatzhistorie | 🔧 Phase 2 Löschen bei vorhandenen Einsätzen verweigert |
-| D-05 | M | „Rückgängig“ im Assistenten löscht spätere manuelle Entwürfe anderer (`planning_run_id` bleibt beim Überschreiben stehen) | 🔧 Phase 2 `planning_run_id` wird beim manuellen Speichern zurückgesetzt |
-| D-06 | M | Kein Änderungsprotokoll je Zelle (wer hat wann was geändert/veröffentlicht) | 🔧 Phase 2 `plan_change_log` |
+| D-01 | H | **Lost Update:** Zweiter Planer überschreibt den Entwurf des ersten an derselben Zelle ohne Hinweis (UNIQUE `user_id,plan_date`, Upsert ohne Versionsprüfung) | ✅ Revisionen + HTTP 409 |
+| D-02 | H | `publish` liest Entwürfe ohne Sperre; ein parallel gespeicherter Entwurf wird beim Löschen des alten mitgelöscht | ✅ `FOR UPDATE` |
+| D-03 | H | Abwesenheitsmodul überschreibt genehmigten Urlaub/Krankheit und Einsätze der Vertretung ohne Prüfung; `delete` ohne Transaktion, ohne Datumsvalidierung | ✅ (Prüfung, Transaktion, Validierung) |
+| D-04 | H | Löschen eines Einsatzbereichs löscht per `ON DELETE CASCADE` die gesamte Einsatzhistorie | ✅ Löschen bei vorhandenen Einsätzen verweigert |
+| D-05 | M | „Rückgängig“ im Assistenten löscht spätere manuelle Entwürfe anderer (`planning_run_id` bleibt beim Überschreiben stehen) | ✅ `planning_run_id` wird beim manuellen Speichern zurückgesetzt |
+| D-06 | M | Kein Änderungsprotokoll je Zelle (wer hat wann was geändert/veröffentlicht) | ✅ `plan_change_log` |
 | D-07 | M | Alt-Migrationen nicht wiederholbar (setzen Rechte zurück, verschieben Daten) – entgegen README | ✅ Migrations-Runner mit Versionstabelle und Baseline |
-| D-08 | M | Schema-Änderungen zur Laufzeit (`ALTER TABLE` in Requests) | 🔧 Phase 2 in Migration überführt, Laufzeit-DDL entfernt |
+| D-08 | M | Schema-Änderungen zur Laufzeit (`ALTER TABLE` in Requests) | ✅ in Migration überführt, Laufzeit-DDL entfernt |
 | D-09 | M | Persistente PDO-Verbindungen können offene Transaktionen/Sperren weiterreichen | ✅ beim Import abgeschaltet |
-| D-10 | N | Unvalidierte Datumswerte erzeugen Einträge für 1970-01-01 | 🔧 Phase 2 für geänderte Endpunkte |
+| D-10 | N | Unvalidierte Datumswerte erzeugen Einträge für 1970-01-01 | ✅ für geänderte Endpunkte |
 
 #### Backup
 
@@ -99,9 +99,9 @@ Status: ✅ behoben · 🔧 in Arbeit (Phase 2) · ⏳ geplant (Phase) · ❓ En
 
 | ID | Befund | Status |
 |---|---|---|
-| X-01 | `public/einstellungen.php` ist eine veraltete, nicht lauffähige Kopie von `pages/einstellungen.php` | 🔧 Phase 2 entfernt (Aufruf leitet wie bisher auf `/einstellungen`) |
-| X-02 | `genehmigungen.php` sendet `Location` nach HTML-Ausgabe (Umleitung wirkungslos) | 🔧 Phase 2 |
-| X-03 | Rechte `manage_absences`, `use_planning_assistant` nicht in der Rechte-Oberfläche pflegbar | 🔧 Phase 2 |
+| X-01 | `public/einstellungen.php` ist eine veraltete, nicht lauffähige Kopie von `pages/einstellungen.php` | ✅ entfernt (Aufruf leitet wie bisher auf `/einstellungen`) |
+| X-02 | `genehmigungen.php` sendet `Location` nach HTML-Ausgabe (Umleitung wirkungslos) | ✅ |
+| X-03 | Rechte `manage_absences`, `use_planning_assistant` nicht in der Rechte-Oberfläche pflegbar | ✅ |
 
 ---
 
@@ -112,13 +112,17 @@ sichtbare Änderung etablierter Abläufe.
 
 - [x] Bereinigter Import, Secrets aus dem Code
 - [x] Migrations-Runner `bin/migrate.php` (Versionstabelle, Baseline, Sperre)
-- [ ] Test-Infrastruktur: PHPUnit, Integrationstests über den eingebauten PHP-Server gegen
+- [x] Test-Infrastruktur: PHPUnit, Integrationstests über den eingebauten PHP-Server gegen
       echte MariaDB, Rewrite-Router, Testdaten für alle Rollen
-- [ ] CI (GitHub Actions): Syntax-Lint, Tests gegen MariaDB, Secret-Scan
-- [ ] Sicherheitsbefunde S-02 … S-16, S-19, S-20 (teilweise)
-- [ ] Optimistic Concurrency (D-01/D-02), Änderungsprotokoll (D-06)
-- [ ] Integritätsbefunde D-03 … D-05, D-08, D-10
+- [x] CI (GitHub Actions): Syntax-Lint, Tests gegen MariaDB 10.11 und MySQL 8.0 (PHP 8.1/8.3), Secret-Scan
+- [x] Sicherheitsbefunde S-02 … S-16, S-19, S-20 (teilweise)
+- [x] Optimistic Concurrency (D-01/D-02), Änderungsprotokoll (D-06)
+- [x] Integritätsbefunde D-03 … D-05, D-08, D-10
+- [x] Alt-Migrationen auch auf MySQL 8 lauffähig (MariaDB-Syntax wird übersetzt)
 - [ ] Offene Entscheidungen S-17, S-18 klären
+- [ ] Planungsassistent (`apply`) in `plan_change_log` protokollieren und Revisionen prüfen
+- [ ] Bemerkungen (`api/save_remark`) mit Revisionsprüfung
+- [ ] Verbleibende Endpunkte ohne Fehlertext-Weitergabe (S-20) – mit Request-Kernel in Phase 3
 
 ## Phase 3 – Plattform
 

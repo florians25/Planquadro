@@ -1,0 +1,11 @@
+title = "OpsPilot gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Testdaten und Beispielwerte"
+paths = [
+  '''tests/Support/TestEnv\.php''',
+  '''composer\.lock''',
+]

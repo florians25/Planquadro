@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint (PHP-Syntax, JS-Syntax)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+      - name: PHP-Syntax
+        run: find app bin public tests -name '*.php' -print0 | xargs -0 -n1 -P4 php -l > /dev/null
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: JS-Syntax
+        run: node --check public/assets/js/app.js
+      - name: Keine Laufzeit-DDL in Requests
+        run: |
+          if grep -rnE "exec\((\"|')\s*(ALTER|CREATE) TABLE" public; then
+            echo "::error::Schemaänderungen gehören in migrations/opspilot/"; exit 1; fi
+
+  test:
+    name: Tests (PHP ${{ matrix.php }}, ${{ matrix.db }})
+    runs-on: ubuntu-24.04
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { php: "8.1", db: "mariadb:10.11" }
+          - { php: "8.3", db: "mariadb:10.11" }
+          - { php: "8.3", db: "mysql:8.0" }
+    services:
+      db:
+        image: ${{ matrix.db }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MARIADB_ROOT_PASSWORD: root
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot || healthcheck.sh --connect"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      OPSPILOT_TEST_DB_HOST: 127.0.0.1
+      OPSPILOT_TEST_DB_PORT: "3306"
+      OPSPILOT_TEST_DB_USER: root
+      OPSPILOT_TEST_DB_PASS: root
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_mysql, mbstring, openssl, curl, calendar
+          coverage: none
+      - name: Composer-Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ matrix.php }}-${{ hashFiles('composer.lock') }}
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - name: PHPUnit (Unit + Integration)
+        run: vendor/bin/phpunit
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: JS-Tests
+        run: node --test tests/js/escape.test.mjs
+      - name: Server-Log bei Fehlern
+        if: failure()
+        run: cat /tmp/opspilot-test-server.log || true
+
+  secrets:
+    name: Secret-Scan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.24.2/gitleaks_8.24.2_linux_x64.tar.gz | tar xz gitleaks
+          ./gitleaks git --redact --no-banner -v .
+      - name: Keine Backups oder Schlüssel im Repository
+        run: |
+          if git ls-files | grep -E '\.(epbak|sql\.gz|dump|key|pem)$|app/config/secrets\.php$|\.backup_key$'; then
+            echo "::error::Backups, Schlüssel oder secrets.php dürfen nicht eingecheckt werden"; exit 1; fi

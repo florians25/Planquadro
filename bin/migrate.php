@@ -93,6 +93,25 @@ function baseSql(string $sql): string {
     return $sql;
 }
 
+/** MySQL (nicht MariaDB) kennt kein "ADD COLUMN IF NOT EXISTS". */
+function isMariaDb(PDO $db): bool {
+    static $m = null;
+    if ($m === null) $m = stripos((string)$db->query('SELECT VERSION()')->fetchColumn(), 'mariadb') !== false;
+    return $m;
+}
+
+/**
+ * Alt-Migrationen nutzen teils MariaDB-Syntax. Für MySQL wird
+ * "ADD COLUMN IF NOT EXISTS" zu "ADD COLUMN"; existiert die Spalte schon,
+ * meldet MySQL 1060 – das gilt bei Alt-Migrationen als "bereits erledigt".
+ */
+function legacyCompat(PDO $db, string $stmt): string {
+    if (isMariaDb($db)) return $stmt;
+    $stmt = preg_replace('/\b(ADD\s+(?:COLUMN|INDEX|KEY|UNIQUE(?:\s+INDEX|\s+KEY)?)\s+)IF\s+NOT\s+EXISTS\s+/i', '$1', $stmt);
+    $stmt = preg_replace('/\b(DROP\s+(?:COLUMN|INDEX|KEY)\s+)IF\s+EXISTS\s+/i', '$1', $stmt);
+    return preg_replace('/^(\s*CREATE\s+(?:UNIQUE\s+)?INDEX\s+)IF\s+NOT\s+EXISTS\s+/i', '$1', $stmt);
+}
+
 function runFile(PDO $db, string $version, string $kind, string $path): void {
     $sql = file_get_contents($path);
     if ($sql === false) fail("Kann $path nicht lesen");
@@ -100,6 +119,7 @@ function runFile(PDO $db, string $version, string $kind, string $path): void {
     $skipped = 0; $n = 0;
     foreach (SqlSplitter::split($sql) as $stmt) {
         $n++;
+        if ($kind !== 'opspilot') $stmt = legacyCompat($db, $stmt);
         try {
             /* Manche Statements (OPTIMIZE, CALL) liefern Ergebnismengen, die
                vollständig gelesen werden müssen. */

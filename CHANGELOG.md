@@ -2,6 +2,57 @@
 
 *Copyright © 2026 Florian-Fynn Scheibel. Alle Rechte vorbehalten.*
 
+## OpsPilot 7.0.0-dev – Phase 2 „Stabilisierung“ (unveröffentlicht)
+
+Basis ist Einsatzplanung v6.9.0. Alle Funktionen und Abläufe bleiben erhalten; die
+Änderungen beheben Fehler und sichern den Mehrbenutzerbetrieb ab. Details und Befund-IDs:
+`docs/OPSPILOT_ROADMAP.md`.
+
+### Gleichzeitiges Arbeiten
+- **Keine stillen Überschreibungen mehr.** Hat jemand anderes eine Zelle geändert, seit
+  sie auf dem eigenen Bildschirm geladen wurde, wird nicht gespeichert. Ein Dialog nennt
+  Zelle, aktuellen Stand, wer und wann – und lässt bewusst überschreiben oder den
+  aktuellen Stand übernehmen.
+- Veröffentlichen sperrt die betroffenen Entwürfe; parallel gespeicherte Änderungen gehen
+  nicht mehr verloren.
+- **Änderungsprotokoll je Zelle** (`plan_change_log`): Entwurf, Überschreiben,
+  Veröffentlichen, Antragsgenehmigung, Abwesenheitsmodul – mit Benutzer und Zeitpunkt.
+
+### Sicherheit
+- Zentraler CSRF-Schutz für alle Speichervorgänge, neue Session-ID beim Login,
+  Session-Cookie überall mit HttpOnly/SameSite.
+- Benutzerverwaltung: Die Rolle Administrator und Administrator-Konten können nur noch
+  von Administratoren geändert werden; die eigene Rolle ist nicht änderbar.
+- Die Teamseite enthält keine Passwort-Hashes, Einmalpasswörter oder Kalender-Tokens
+  mehr; Einmalpasswörter werden nicht mehr im Klartext gespeichert.
+- `install.php` ist gesperrt (nur per CLI oder mit `OPSPILOT_ALLOW_INSTALL=1`) und
+  erzeugt ein Zufallspasswort.
+- Schutz vor eingeschleustem Skript über Antragsbemerkungen, WOT-Links/-Farben und
+  Bereichsfarben.
+- Team-Bereich wird jetzt auch bei WOTs, Stunden/Erl. und Wochenkontext geprüft;
+  Anträge genehmigen erfordert das Recht „Anträge genehmigen“.
+- Vertrauliche Abwesenheitsarten werden im Abwesenheitsmodul nicht mehr übertragen.
+- DB-Zugangsdaten nur noch über Umgebung oder `app/config/secrets.php`.
+
+### Datenintegrität
+- Abwesenheitsmodul respektiert die Sperre für genehmigten Urlaub und Krankheit,
+  prüft Datumsangaben und ersetzt keinen anderen Einsatz der Vertretung.
+- Einsatzbereiche mit Einsätzen können nicht mehr gelöscht werden (vorher wurde die
+  gesamte Einsatzhistorie mitgelöscht).
+- „Rückgängig“ im Planungsassistenten löscht keine später manuell geänderten Einträge.
+
+### Betrieb und Entwicklung
+- `bin/migrate.php` mit Versionstabelle; bestehende Installationen einmalig per
+  `baseline` übernehmen (siehe `docs/MIGRATION_PLAN.md`). Läuft auf MariaDB und MySQL 8.
+- Keine Schemaänderungen mehr zur Laufzeit.
+- Automatisierte Tests (Unit, Integration über HTTP, Nebenläufigkeit) und CI.
+- Rechte „Abwesenheiten erfassen“ und „Planungsassistent nutzen“ sind auf der Seite
+  „Rollen & Rechte“ pflegbar.
+
+### Hinweis zum Update
+Vor dem Einspielen: Backup, DB-Passwort rotieren, Zugangsdaten auslagern,
+`php bin/migrate.php baseline v6_9_0 && php bin/migrate.php up`.
+
 ## v6.9.0 (24.07.2026)
 
 ### Planungsassistent: Planungen speichern und wieder aufnehmen
