@@ -2,16 +2,18 @@
 
 *Copyright © 2026 Florian-Fynn Scheibel. Alle Rechte vorbehalten.*
 
-## Unveröffentlicht
+## Planquadro 7.0.5 (30.10.2026) – Dashboard, Icons, Scrollen im Plan
 
 ### Icons
-- Eigenes, einheitliches Icon-Set (80 Linien-Icons, `public/assets/icons.svg`, erzeugt aus
+- Eigenes, einheitliches Icon-Set (82 Linien-Icons, `public/assets/icons.svg`, erzeugt aus
   `tools/icons/icons.py`, Vorschau `docs/icons-preview.svg`) – ohne Fremdbibliothek.
 - Jeder Navigationspunkt hat ein eigenes Icon (bisher teilten sich mehrere das Kalender-Icon);
   Benutzermenü, Mobilnavigation, Banner und Werkzeugleisten nutzen das neue Set.
 - Knöpfe bekommen automatisch ein passendes Icon nach ihrer Beschriftung (Speichern, Löschen,
   Abbrechen, Veröffentlichen, Drucken, Zurück/Weiter …), auch in Dialogen, die Skripte erzeugen
   (`assets/js/icons.js`, `pqIcon()` in PHP und JS; ausnehmen mit `data-noicon`).
+- Monatsplanung, Gesamtplan, Einstellungen, Rollen, Abwesenheiten, Anträge, Mein Plan, Team und
+  Assistent: Sonderzeichen (✎ ⊘ « » ↶ ⌨) und alte Grafiken durch Icons des Sets ersetzt.
 
 ### Dashboard (neu gestaltet)
 - Schlichter Seitenkopf mit Datum/KW, Knöpfen nach Rechten und Live-Stand; eine Zeile mit dem
@@ -23,7 +25,8 @@
 - Aktualisiert sich live (Server-Sent Events) und zusätzlich regelmäßig sowie beim Zurückkehren
   in den Tab; Anzeige „Stand hh:mm“ mit Verbindungsstatus und Knopf ↻. Ausgetauscht werden nur
   die Inhaltsbereiche, mit denselben Rechten wie beim Seitenaufruf.
-- Kennzahlen-Kacheln sind Links (Gesamtplan, Urlaub, Mein Plan) und dunkelmodus-tauglich.
+- Kennzahlen sind Links (Gesamtplan, Urlaub, Mein Plan); Resturlaub verlinkt nur mit
+  Berechtigung auf die Urlaubsplanung.
 - Ankündigungen und Antragszahlen ohne Inline-Skripte (`assets/js/dashboard.js`).
 
 ### Planungstabellen (Monatsplanung, Gesamtplan, Mein Plan, Jahresplan)

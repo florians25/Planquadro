@@ -120,7 +120,7 @@ final class AppModel {
 
         let bundleID = Bundle.main.bundleIdentifier ?? "de.planquadro.app"
         let secure: SecureStore = options.demo ? InMemorySecureStore() : ResilientSecureStore(service: bundleID)
-        let version = (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "7.0.0"
+        let version = (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "7.0.5"
         let env = SessionEnvironment(
             secureStore: secure,
             prefs: UserDefaultsPreferencesStore(),
