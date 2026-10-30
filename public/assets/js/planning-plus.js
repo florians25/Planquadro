@@ -178,6 +178,9 @@ var pqPlus = {
     var ABS_CODE = { krank_attest: 'K', krank_ganz: 'K', krank_halb: 'k', urlaub_genehmigt: 'U', urlaub_ganz: 'U', urlaub_halb: 'u', gleitzeit: 'GL', gesperrt: '—', offen: '?' };
 
     function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; }
+    /* Icon aus dem Sprite (icons.js) vor eine Beschriftung setzen */
+    function ic(name, cls) { return window.pqIcon ? window.pqIcon(name, cls) : ''; }
+    function iconBtn(cls, icon, label) { var b = el('button', cls); b.innerHTML = ic(icon) + ' ' + label; return b; }
     function say(msg) { if (!live) return; live.textContent = ''; setTimeout(function() { live.textContent = msg; }, 30); }
     function areaById(id) { if (!cfg) return null; for (var i = 0; i < cfg.areas.length; i++) if (String(cfg.areas[i].id) === String(id)) return cfg.areas[i]; return null; }
     function stateLabel(s) {
@@ -223,7 +226,7 @@ var pqPlus = {
         if (!bar) return;
         var det = el('details', 'pq-view no-print');
         var sum = el('summary', 'btn btn-outline pq-view-btn');
-        sum.innerHTML = '<svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true"><path d="M5 4a1 1 0 00-2 0v7.27a2 2 0 000 3.46V16a1 1 0 102 0v-1.27a2 2 0 000-3.46V4zM11 4a1 1 0 10-2 0v1.27a2 2 0 000 3.46V16a1 1 0 102 0V8.73a2 2 0 000-3.46V4zM16 3a1 1 0 011 1v7.27a2 2 0 010 3.46V16a1 1 0 11-2 0v-1.27a2 2 0 010-3.46V4a1 1 0 011-1z"/></svg> Ansicht';
+        sum.innerHTML = ic('sliders') + ' Ansicht';
         sum.title = 'Darstellung des Plans anpassen (wird in diesem Browser gemerkt)';
         det.appendChild(sum);
         var pop = el('div', 'pq-view-pop');
@@ -570,8 +573,8 @@ var pqPlus = {
         var host = document.getElementById('pqUndoHost') || document.querySelector('#toolbar .tbs');
         if (host) {
             var g = el('span', 'pq-undo-grp');
-            btnU = el('button', 'btn btn-xs btn-outline pq-undo-btn', '↶ Rückgängig'); btnU.type = 'button'; btnU.setAttribute('aria-keyshortcuts', 'Control+Z');
-            btnR = el('button', 'btn btn-xs btn-outline pq-undo-btn', '↷ Wiederholen'); btnR.type = 'button'; btnR.setAttribute('aria-keyshortcuts', 'Control+Y Control+Shift+Z');
+            btnU = iconBtn('btn btn-xs btn-outline pq-undo-btn', 'undo', 'Rückgängig'); btnU.type = 'button'; btnU.setAttribute('aria-keyshortcuts', 'Control+Z');
+            btnR = iconBtn('btn btn-xs btn-outline pq-undo-btn', 'redo', 'Wiederholen'); btnR.type = 'button'; btnR.setAttribute('aria-keyshortcuts', 'Control+Y Control+Shift+Z');
             btnU.addEventListener('click', function() { runUndo('undo'); });
             btnR.addEventListener('click', function() { runUndo('redo'); });
             g.appendChild(btnU); g.appendChild(btnR);
@@ -751,7 +754,7 @@ var pqPlus = {
         pickBtn = el('button', 'pq-area-btn'); pickBtn.type = 'button';
         pickBtn.setAttribute('aria-haspopup', 'listbox'); pickBtn.setAttribute('aria-expanded', 'false');
         pickBtn.title = 'Einsatzbereich als Werkzeug wählen (Taste B)';
-        pickBtn.innerHTML = '<span class="pq-area-cur"></span><span class="pq-area-caret" aria-hidden="true">▾</span>';
+        pickBtn.innerHTML = '<span class="pq-area-cur"></span><span class="pq-area-caret" aria-hidden="true">' + ic('chevron-down') + '</span>';
         pickPop = el('div', 'pq-area-pop'); pickPop.hidden = true;
         pickInp = el('input', 'pq-area-inp'); pickInp.type = 'text'; pickInp.placeholder = 'Kürzel oder Name …';
         pickInp.setAttribute('role', 'combobox'); pickInp.setAttribute('aria-autocomplete', 'list'); pickInp.setAttribute('aria-expanded', 'true');
@@ -952,13 +955,13 @@ var pqPlus = {
         if (nv) { var gV = group('Sichtbarkeit', 'pq-tb-vis'); gV.appendChild(nv); }
         /* Verlauf + Hilfe: rechts in der Statuszeile */
         var host = el('div', 'pq-tb-hist'); host.id = 'pqUndoHost'; host.setAttribute('role', 'group'); host.setAttribute('aria-label', 'Verlauf und Hilfe');
-        var kb = el('button', 'btn btn-xs btn-outline pq-keys-btn', '⌨ Kürzel'); kb.type = 'button'; kb.title = 'Tastenkürzel anzeigen (Taste ?)'; kb.setAttribute('aria-keyshortcuts', '?');
+        var kb = iconBtn('btn btn-xs btn-outline pq-keys-btn', 'keyboard', 'Kürzel'); kb.type = 'button'; kb.title = 'Tastenkürzel anzeigen (Taste ?)'; kb.setAttribute('aria-keyshortcuts', '?');
         kb.addEventListener('click', openKeyHelp); host.appendChild(kb);
         /* Statuszeile */
         var st = q('#toolSt'), dsel = q('#toolDeselect'), hint = q('#liveUpdateHint');
         [st, dsel, hint, host].forEach(function(n) { if (n) status.appendChild(n); });
         if (st) { st.setAttribute('role', 'status'); }
-        if (dsel) { dsel.textContent = '✕ Werkzeug ablegen'; dsel.title = 'Werkzeug ablegen (Esc)'; }
+        if (dsel) { dsel.innerHTML = ic('x') + ' Werkzeug ablegen'; dsel.title = 'Werkzeug ablegen (Esc)'; }
         /* alte, nun leere Zeilen ersetzen */
         Array.prototype.slice.call(tb.children).forEach(function(r) { if (r.classList.contains('tb-row')) r.remove(); });
         tb.appendChild(main); tb.appendChild(status);
@@ -974,7 +977,7 @@ var pqPlus = {
         if (picks.length < 2) return;
         var det = el('details', 'pq-more no-print');
         var sum = el('summary', 'btn btn-outline', 'Mehr'); sum.title = 'Erfassen, Dauereinsatz, Woche kopieren, Drucken';
-        sum.insertAdjacentHTML('beforeend', ' <span aria-hidden="true">▾</span>');
+        sum.insertAdjacentHTML('beforeend', ' ' + ic('chevron-down', 'pq-i-after'));
         var pop = el('div', 'pq-more-pop'); pop.setAttribute('role', 'group'); pop.setAttribute('aria-label', 'Weitere Aktionen');
         det.appendChild(sum); det.appendChild(pop);
         bar.insertBefore(det, picks[0]);

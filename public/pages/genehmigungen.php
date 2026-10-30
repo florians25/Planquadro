@@ -11,7 +11,7 @@ $approvalEnabled = getSetting('approval_system_enabled','0') === '1';
 
 <?php if (!$approvalEnabled): ?>
 <div class="card mb"><div class="cb" style="text-align:center;padding:2.5rem">
-<svg viewBox="0 0 20 20" fill="currentColor" style="width:48px;height:48px;color:var(--bd2);margin-bottom:.5rem"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+<?php echo pqIcon('alert', 'pq-ic-empty'); ?>
 <p style="font-size:1rem;font-weight:600;margin-bottom:.25rem">Beantragungssystem deaktiviert</p>
 <p class="muted"><a href="einstellungen">In Einstellungen aktivieren</a></p>
 </div></div>
@@ -166,7 +166,7 @@ function loadRequests(){
     .then(function(r){return r.json();}).then(function(d){
         if(!d.success){el.innerHTML='<p class="txt-d">Fehler</p>';return;}
         allData=d.requests||[];
-        if(!allData.length){el.innerHTML='<div class="ap-empty"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><p>Keine '+(st==='pending'?'offenen':st==='approved'?'genehmigten':'abgelehnten')+' Antr\u00e4ge</p></div>';return;}
+        if(!allData.length){el.innerHTML='<div class="ap-empty"><?php echo pqIcon('check-circle'); ?><p>Keine '+(st==='pending'?'offenen':st==='approved'?'genehmigten':'abgelehnten')+' Antr\u00e4ge</p></div>';return;}
         renderCards(allData,st);
     }).catch(function(e){el.innerHTML='<p class="txt-d">'+esc(e.message)+'</p>';});
 }

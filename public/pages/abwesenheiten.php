@@ -735,7 +735,7 @@ require_once __DIR__ . '/../includes/header.php';
 
 <?php if ($DEPUTY_FOR && !hasPerm('manage_absences')): ?>
 <div class="abw-deputy">
-  <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" style="flex-shrink:0;margin-top:1px"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.97 5.97 0 00-.75-2.906A3 3 0 0119 15v3h-3zM4.75 12.094A5.97 5.97 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
+  <?php echo pqIcon('users', 'pq-s16'); ?>
   <div>Sie handeln als <b>Vertretung für
     <?php echo e(implode(', ', array_map(function ($d) { return $d['first_name'] . ' ' . $d['last_name']; }, $DEPUTY_FOR))); ?></b>.
     Sie sehen und verwalten deshalb auch deren Team. Jede Erfassung wird mit Ihrem Namen protokolliert.</div>

@@ -394,8 +394,8 @@ function loadMyRequests(){
     fetch(getApiBase()+'api/change_requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'my_requests',status:status})})
     .then(function(r){return r.json();}).then(function(d){
         if(!d.success||!d.requests||!d.requests.length){
-            var emptyIcon=mrTab==='archive'?'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4':'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z';
-            el.innerHTML='<div class="ma-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="'+emptyIcon+'"/></svg><div class="ma-empty-title">'+(mrTab==='current'?'Keine aktuellen Antr\u00e4ge':'Kein Archiv')+'</div><div class="ma-empty-sub">'+(status==='pending'?'Alle Antr\u00e4ge wurden bearbeitet':status==='rejected'?'Keine abgelehnten Antr\u00e4ge':'Neue Antr\u00e4ge k\u00f6nnen \u00fcber den Gesamtplan eingereicht werden')+'</div></div>';
+            var emptyIcon=mrTab==='archive'?'<?php echo pqIcon('archive'); ?>':'<?php echo pqIcon('check-circle'); ?>';
+            el.innerHTML='<div class="ma-empty">'+emptyIcon+'<div class="ma-empty-title">'+(mrTab==='current'?'Keine aktuellen Antr\u00e4ge':'Kein Archiv')+'</div><div class="ma-empty-sub">'+(status==='pending'?'Alle Antr\u00e4ge wurden bearbeitet':status==='rejected'?'Keine abgelehnten Antr\u00e4ge':'Neue Antr\u00e4ge k\u00f6nnen \u00fcber den Gesamtplan eingereicht werden')+'</div></div>';
             return;
         }
         mrAllReqs=d.requests;
@@ -410,7 +410,7 @@ pqAction({mrPrevPage:function(){mrPage--;renderMR();},mrNextPage:function(){mrPa
 function renderMR(){
     var el=document.getElementById('myReqList'),reqs=mrAllReqs,total=reqs.length;
     if(!total){
-        el.innerHTML='<div class="ma-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><div class="ma-empty-title">'+(mrTab==='current'?'Keine aktuellen Antr\u00e4ge':'Kein Archiv')+'</div><div class="ma-empty-sub">Antr\u00e4ge der letzten 7 Tage erscheinen unter Aktuell</div></div>';
+        el.innerHTML='<div class="ma-empty"><?php echo pqIcon('check-circle'); ?><div class="ma-empty-title">'+(mrTab==='current'?'Keine aktuellen Antr\u00e4ge':'Kein Archiv')+'</div><div class="ma-empty-sub">Antr\u00e4ge der letzten 7 Tage erscheinen unter Aktuell</div></div>';
         return;
     }
     var start=mrPage*mrPageSize,end=Math.min(start+mrPageSize,total);
@@ -440,7 +440,7 @@ function renderMR(){
         html+='</div>';
         html+='</div>';
         html+='<div class="ma-card-right">';
-        html+='<svg class="ma-chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>';
+        html+='<?php echo pqIcon('chevron-down', 'ma-chevron'); ?>';
         html+='</div>';
         html+='</div>';
 
@@ -465,7 +465,7 @@ function renderMR(){
         }
         /* Approver */
         if(r0.app_first){
-            html+='<div class="ma-approver"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>Bearbeitet von '+esc(r0.app_first+' '+(r0.app_last||''))+'</div>';
+            html+='<div class="ma-approver"><?php echo pqIcon('user'); ?>Bearbeitet von '+esc(r0.app_first+' '+(r0.app_last||''))+'</div>';
         }
         html+='</div>';
         html+='</div>';

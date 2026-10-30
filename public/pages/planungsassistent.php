@@ -169,7 +169,7 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
     <div class="pqa-hero-a">
       <button type="button" class="btn btn-primary pqa-btn-lg" data-act="new">
-        <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        <?php echo pqIcon('plus'); ?>
         Neue Planung</button>
       <a class="btn btn-outline" href="<?php echo e($EPA_BP); ?>monatsplanung">Zur Monatsplanung</a>
     </div>
@@ -196,7 +196,7 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- ======================== Assistent ======================== -->
 <section id="epaWizard" class="pqa-wizard" hidden aria-labelledby="epaSub">
   <header class="pqa-top">
-    <button type="button" class="btn btn-outline btn-sm" data-act="home" title="Zur Übersicht der Planungen">&larr; Übersicht</button>
+    <button type="button" class="btn btn-outline btn-sm" data-act="home" title="Zur Übersicht der Planungen"><?php echo pqIcon('arrow-left'); ?> Übersicht</button>
     <div class="pqa-top-t">
       <h1 class="pqa-title"><span id="epaSub">Neue Planung</span> <span class="pqa-beta">Beta</span></h1>
       <div class="pqa-top-meta">
@@ -212,7 +212,7 @@ require_once __DIR__ . '/../includes/header.php';
       <button type="button" class="btn btn-outline btn-sm" data-act="save-plan" id="btnSavePlan">Speichern</button>
       <button type="button" class="btn btn-outline btn-sm" data-act="templates">Vorlagen</button>
       <div class="pqa-menu">
-        <button type="button" class="btn btn-outline btn-sm" id="moreBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="moreMenu">Mehr <span aria-hidden="true">▾</span></button>
+        <button type="button" class="btn btn-outline btn-sm" id="moreBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="moreMenu">Mehr <?php echo pqIcon('chevron-down', 'pq-i-after'); ?></button>
         <div class="pqa-menu-list" id="moreMenu" role="menu" hidden>
           <button type="button" role="menuitem" data-act="save-profile">Als Vorlage sichern</button>
           <button type="button" role="menuitem" data-act="print">Drucken / PDF</button>
@@ -237,7 +237,7 @@ require_once __DIR__ . '/../includes/header.php';
   </nav>
 
   <div class="pqa-note" role="note">
-    <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+    <?php echo pqIcon('info', 'pq-s16'); ?>
     <span>Der Assistent schreibt nur <b>Entwürfe</b> – veröffentlicht wird in der Monatsplanung. Jede Übernahme ist rücknehmbar.</span>
   </div>
 

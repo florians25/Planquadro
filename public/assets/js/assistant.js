@@ -14,6 +14,8 @@
   if (!C || !bootEl) return;
   var BOOT = JSON.parse(bootEl.textContent || '{}');
   var $ = function (id) { return document.getElementById(id); };
+  /* Icon aus dem Sprite (icons.js) */
+  var pqI = function (name, cls) { return window.pqIcon ? window.pqIcon(name, cls) : ''; };
   var esc = C.esc, dmy = C.dmy, WD = C.WD;
   var KEY = 'epa_cfg_v1';
   var LAST = 3;
@@ -847,7 +849,7 @@
       '</div>' +
       (R.manual && formDirty ? '<p class="pqa-hint pqa-hint-warn">Der Vorschlag enthält Handänderungen und wird nicht automatisch neu berechnet. <button type="button" class="btn btn-xs btn-outline" data-act="generate-confirm">Neu berechnen</button></p>' : '') +
       '<div class="pqa-ps pqa-ps-live">' + gridHtml(orderedPeople(true), true) + '</div>' +
-      '<button type="button" class="btn btn-sm btn-outline pqa-live-go" data-go="2">Vorschlag im Detail prüfen →</button>';
+      '<button type="button" class="btn btn-sm btn-outline pqa-live-go" data-go="2">Vorschlag im Detail prüfen ' + pqI('arrow-right', 'pq-i-after') + '</button>';
     paint(body);
   }
 
@@ -1289,13 +1291,13 @@
   function renderApplied(d) {
     $('applyBox').innerHTML =
       '<div class="pqa-done">' +
-        '<span class="pqa-done-ic" aria-hidden="true"><svg viewBox="0 0 20 20" width="22" height="22" fill="currentColor"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" clip-rule="evenodd"/></svg></span>' +
+        '<span class="pqa-done-ic" aria-hidden="true">' + pqI('check', 'pq-s22') + '</span>' +
         '<div><h2 class="pqa-apply-t" id="appliedTitle">' + d.written + ' Einträge als Entwurf übernommen</h2>' +
         '<p>Die Einträge stehen jetzt in der Monatsplanung als Entwurf. Dort prüfen und wie gewohnt veröffentlichen.</p></div>' +
       '</div>' +
       (d.skipped_total ? '<div class="pqa-skip"><h3 class="pqa-h3">' + d.skipped_total + ' übersprungen</h3><ul class="pqa-reasons">' + reasonList(d) + '</ul></div>' : '') +
       '<div class="pqa-apply-a">' +
-        (lastRun ? '<button type="button" class="btn btn-outline pqa-btn-undo pqa-btn-lg" data-act="undo">↶ Übernahme rückgängig machen</button>' : '') +
+        (lastRun ? '<button type="button" class="btn btn-outline pqa-btn-undo pqa-btn-lg" data-act="undo">' + pqI('undo') + ' Übernahme rückgängig machen</button>' : '') +
         '<a class="btn btn-primary" href="' + esc(BOOT.planning_url) + '">Zur Monatsplanung</a>' +
         '<button type="button" class="btn btn-outline" data-act="home">Zur Übersicht</button>' +
       '</div>';

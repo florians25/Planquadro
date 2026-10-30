@@ -9,6 +9,9 @@ function localDateStr(d) {
         ('0'+d.getDate()).slice(-2);
 }
 
+/* Icon aus dem Sprite (assets/js/icons.js); leer, falls icons.js fehlt */
+function _pqI(name, cls) { return window.pqIcon ? window.pqIcon(name, cls) : ''; }
+
 /* ============================================================
    CORE: Shared AJAX POST
    ============================================================ */
@@ -370,8 +373,8 @@ function setToolStatus() {
     if(dBtn) dBtn.style.display='';
     if (currentTool.type === 'clear') { st.innerHTML = '<b>L\u00f6schen</b> aktiv'; st.className = 'txt-d'; }
     else if (currentTool.type === 'locked') { st.innerHTML = '<b>Sperren</b> aktiv'; st.className = ''; }
-    else if (currentTool.type === 'remark') { st.innerHTML = '<b>\u270e Bemerkung</b> – Zellen w\u00e4hlen &amp; loslassen'; st.className = ''; st.style.color='#f97316'; }
-    else if (currentTool.type === 'intremark') { st.innerHTML = '<b>\u270e Int. Bemerkung</b> – Zellen w\u00e4hlen &amp; loslassen'; st.className = ''; st.style.color='#c8b400'; }
+    else if (currentTool.type === 'remark') { st.innerHTML = '<b>' + _pqI('message') + ' Bemerkung</b> – Zellen w\u00e4hlen &amp; loslassen'; st.className = ''; st.style.color='#f97316'; }
+    else if (currentTool.type === 'intremark') { st.innerHTML = '<b>' + _pqI('message') + ' Int. Bemerkung</b> – Zellen w\u00e4hlen &amp; loslassen'; st.className = ''; st.style.color='#c8b400'; }
     else { st.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:' + currentTool.color + ';vertical-align:middle;margin-right:4px"></span> <b>' + currentTool.code + '</b> aktiv'; st.className = ''; }
 }
 
@@ -663,14 +666,14 @@ var ctxCells = []; /* for multi-select remarks */
 function initContextMenu() {
     var menu = document.createElement('div'); menu.className = 'ctx-menu'; menu.id = 'ctxMenu';
     menu.innerHTML =
-        '<button class="ctx-item" id="ctxRemark"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd"/></svg><span>Bemerkung bearbeiten</span></button>' +
-        '<button class="ctx-item" id="ctxRemarkBulk" style="display:none"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd"/></svg><span id="ctxBulkLabel">Bemerkung f\u00fcr X Zellen</span></button>' +
-        '<button class="ctx-item ctx-item-int" id="ctxIntRemark" style="display:none"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg><span>Interne Bemerkung</span></button>' +
+        '<button class="ctx-item" id="ctxRemark">'+_pqI('message')+'<span>Bemerkung bearbeiten</span></button>' +
+        '<button class="ctx-item" id="ctxRemarkBulk" style="display:none">'+_pqI('message')+'<span id="ctxBulkLabel">Bemerkung f\u00fcr X Zellen</span></button>' +
+        '<button class="ctx-item ctx-item-int" id="ctxIntRemark" style="display:none">'+_pqI('lock')+'<span>Interne Bemerkung</span></button>' +
         '<div class="ctx-sep"></div>' +
-        '<button class="ctx-item" id="ctxRemoveRemark"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9z" clip-rule="evenodd"/></svg><span>Bemerkung entfernen</span></button>' +
+        '<button class="ctx-item" id="ctxRemoveRemark">'+_pqI('trash')+'<span>Bemerkung entfernen</span></button>' +
         '<div class="ctx-sep" id="ctxVacSep" style="display:none"></div>' +
-        '<button class="ctx-item ctx-item-unlock" id="ctxUnlockVac" style="display:none"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z"/></svg><span>Urlaub entsperren</span></button>' +
-        '<button class="ctx-item ctx-item-unlock" id="ctxUnlockSick" style="display:none"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z"/></svg><span>Krankheit entsperren</span></button>';
+        '<button class="ctx-item ctx-item-unlock" id="ctxUnlockVac" style="display:none">'+_pqI('unlock')+'<span>Urlaub entsperren</span></button>' +
+        '<button class="ctx-item ctx-item-unlock" id="ctxUnlockSick" style="display:none">'+_pqI('unlock')+'<span>Krankheit entsperren</span></button>';
     document.body.appendChild(menu);
 
     document.addEventListener('contextmenu', function(e) {
@@ -825,8 +828,8 @@ function unlockAbsence(cell) {
 function initRemarkTooltip() {
     var tip = document.createElement('div'); tip.className = 'ep-tip'; tip.id = 'epTip';
     document.body.appendChild(tip);
-    var lockSvg = '<svg viewBox="0 0 20 20" fill="currentColor" style="width:10px;height:10px;vertical-align:middle;margin-right:3px;color:#818cf8"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>';
-    var draftSvg = '<svg viewBox="0 0 20 20" fill="currentColor" style="width:10px;height:10px;vertical-align:middle;margin-right:3px;color:#fbbf24"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>';
+    var lockSvg = '<span style="color:#818cf8">'+_pqI('lock', 'pq-tip-ic')+'</span>';
+    var draftSvg = '<span style="color:#fbbf24">'+_pqI('pencil', 'pq-tip-ic')+'</span>';
 
     var hoverTimer = null;
     window.pqShowCellTip = function(c) { showCellTip(c); };
@@ -862,20 +865,20 @@ function initRemarkTooltip() {
 
         /* Unavailable */
         if (isUnavailable) {
-            parts.push('<div class="ep-tip-row" style="color:#f87171"><svg viewBox="0 0 20 20" fill="currentColor" style="width:10px;height:10px;vertical-align:middle;margin-right:3px"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>Person nicht verf\u00fcgbar</div>');
+            parts.push('<div class="ep-tip-row" style="color:#f87171">'+_pqI('x-circle', 'pq-tip-ic')+'Person nicht verf\u00fcgbar</div>');
         }
 
         /* Absence details – only for authorized roles */
         if (seeDetails) {
             if (isVacLock) {
-                parts.push('<div class="ep-tip-row" style="color:#fbbf24"><svg viewBox="0 0 20 20" fill="currentColor" style="width:10px;height:10px;vertical-align:middle;margin-right:3px"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>Genehmigter Urlaub (gesperrt)</div>');
+                parts.push('<div class="ep-tip-row" style="color:#fbbf24">'+_pqI('lock', 'pq-tip-ic')+'Genehmigter Urlaub (gesperrt)</div>');
             }
             if (isSick && isAbsence) {
                 var sickLabel = {krank_halb:'Krank (halber Tag)',krank_ganz:'Krank (ganzer Tag)',krank_attest:'Krank (Attest)'}[c.dataset.v] || 'Krank';
-                parts.push('<div class="ep-tip-row" style="color:#f87171"><svg viewBox="0 0 20 20" fill="currentColor" style="width:10px;height:10px;vertical-align:middle;margin-right:3px"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd"/></svg>' + sickLabel + '</div>');
+                parts.push('<div class="ep-tip-row" style="color:#f87171">'+_pqI('thermometer', 'pq-tip-ic')+'' + sickLabel + '</div>');
             }
             if (c.classList.contains('cell-locked') && !isSick) {
-                parts.push('<div class="ep-tip-row" style="color:#94a3b8"><svg viewBox="0 0 20 20" fill="currentColor" style="width:10px;height:10px;vertical-align:middle;margin-right:3px"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>Gesperrt</div>');
+                parts.push('<div class="ep-tip-row" style="color:#94a3b8">'+_pqI('lock', 'pq-tip-ic')+'Gesperrt</div>');
             }
         } else if (isAbsence && !isUnavailable) {
             /* Techniker: generic "Abwesend" without details */
@@ -886,12 +889,12 @@ function initRemarkTooltip() {
         if (hasDraftOther) {
             parts.push('<div class="ep-tip-row ep-tip-draft">' + draftSvg + '<b>Entwurf von ' + esc(c.dataset.draftBy || '?') + '</b><br><span style="opacity:.7;font-size:.68rem;margin-left:13px">Noch nicht ver\u00f6ffentlicht</span></div>');
         } else if (hasDraftMine) {
-            parts.push('<div class="ep-tip-row ep-tip-mine"><svg viewBox="0 0 20 20" fill="currentColor" style="width:10px;height:10px;vertical-align:middle;margin-right:3px;color:#60a5fa"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg><b>Eigener Entwurf</b><br><span style="opacity:.7;font-size:.68rem;margin-left:13px">Noch nicht ver\u00f6ffentlicht</span></div>');
+            parts.push('<div class="ep-tip-row ep-tip-mine"><span style="color:#60a5fa">'+_pqI('pencil', 'pq-tip-ic')+'</span><b>Eigener Entwurf</b><br><span style="opacity:.7;font-size:.68rem;margin-left:13px">Noch nicht ver\u00f6ffentlicht</span></div>');
         }
 
         /* Internal entry marker */
         if (isInternal) {
-            parts.push('<div class="ep-tip-row" style="color:#c8b400;font-size:.72rem"><svg viewBox="0 0 20 20" fill="currentColor" style="width:10px;height:10px;vertical-align:middle;margin-right:3px"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/><path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/></svg>Wird nicht ver\u00f6ffentlicht</div>');
+            parts.push('<div class="ep-tip-row" style="color:#c8b400;font-size:.72rem">'+_pqI('eye-off', 'pq-tip-ic')+'Wird nicht ver\u00f6ffentlicht</div>');
         }
 
         /* Public remark */
@@ -1087,7 +1090,7 @@ fetch(getApiBase()+'api/save_wots',{method:'POST',headers:{'Content-Type':'appli
 .then(function(r){return r.json();}).then(function(d){if(!d.success||!d.wots||d.wots.length===0){list.innerHTML='<p class="muted">Keine WOTs</p>';return;}
 var html='<ul class="wot-list">';d.wots.forEach(function(w){
 var isHidden=(w.visible_to_user==='0'||w.visible_to_user===0);
-var visIcon=isHidden?'<svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;opacity:.4;vertical-align:middle"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/><path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/></svg>':'<svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;color:var(--ok);vertical-align:middle"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>';
+var visIcon=isHidden?_pqI('eye-off', 'pq-s14 pq-op40'):'<span style="color:var(--ok)">'+_pqI('eye', 'pq-s14')+'</span>';
 html+='<li class="wot-item" data-wid="'+w.id+'"><div class="wot-item-color" style="background:'+safeColor(w.color||'#3b82f6')+'"></div><div class="wot-item-body"><div class="wot-item-num">'+esc(w.wot_number)+' '+visIcon+'</div>';
 if(w.link_url)html+='<div class="wot-item-link"><a href="'+esc(safeUrl(w.link_url))+'" target="_blank" rel="noopener noreferrer">'+esc(w.link_url.substring(0,50))+'</a></div>';
 if(w.remarks)html+='<div class="wot-item-rem">'+esc(w.remarks)+'</div>';
@@ -1208,7 +1211,7 @@ function showConflictResolver(allChanges, d, ctx){
 
     var bg=document.getElementById('conflictMod'); if(bg) bg.remove();
     bg=document.createElement('div'); bg.className='modal-bg'; bg.id='conflictMod';
-    var H='<div class="modal modal-lg"><div class="mh"><h3><svg viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:#d97706"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>Konflikte – Auswahl treffen</h3><button class="mx" data-action="cMod" data-args=\'["conflictMod"]\'>&times;</button></div>';
+    var H='<div class="modal modal-lg"><div class="mh"><h3><span style="color:#d97706">'+_pqI('alert', 'pq-s18 pq-h3-ic')+'</span>Konflikte – Auswahl treffen</h3><button class="mx" data-action="cMod" data-args=\'["conflictMod"]\'>&times;</button></div>';
     H+='<div class="mb">';
     H+='<p class="cfx-intro">Neuer Eintrag: <b>'+esc(newLabel)+'</b>. Wähle pro Mitarbeiter, welche bestehenden Einträge <b>überschrieben</b> werden. Abgewählte bleiben unverändert.</p>';
     H+='<div class="cfx-bulk"><button type="button" class="btn btn-xs btn-outline" data-action="cfxAll" data-args="[true]">Alle überschreiben</button><button type="button" class="btn btn-xs btn-outline" data-action="cfxAll" data-args="[false]">Keine überschreiben</button></div>';

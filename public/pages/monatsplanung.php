@@ -69,34 +69,34 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 <optgroup label="Allgemein"><?php foreach(planAreas('allgemein') as $fp):?><option value="<?php echo $fp['id'];?>"><?php echo e($fp['short_code'].' - '.$fp['name']);?></option><?php endforeach;?></optgroup>
 </select>
 <button type="button" id="sortToggle" class="sort-toggle-btn" data-mode="standard" data-action="toggleSort" title="Sortierung umschalten (Standard / A–Z)">
-<svg viewBox="0 0 20 20" fill="currentColor" width="13" height="13" aria-hidden="true"><path d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h8a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h4a1 1 0 110 2H4a1 1 0 01-1-1z"/></svg>
+<?php echo pqIcon('sort', 'pq-s13'); ?>
 <span id="sortToggleLabel">Standard</span>
 </button>
-<?php if($showMineToggle):?><button type="button" class="btn btn-sm btn-outline gp-mine-btn" id="mineToggleBtn" data-pq-filter="mine" aria-pressed="false" title="Nur meine Mitarbeiter anzeigen"><svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" style="vertical-align:-2px" aria-hidden="true"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg> Meine Mitarbeiter</button><?php endif;?>
-<button type="button" class="btn btn-xs btn-outline" id="draftsOnlyBtn" aria-pressed="false" data-action="toggleDraftsOnly" data-args='["$this"]' title="Nur Mitarbeiter mit unveröffentlichten Änderungen anzeigen">Nur Änderungen</button>
-<button class="btn-reset" id="filterResetBtn" data-action="resetFilters" style="display:none" title="Filter zurücksetzen" aria-label="Filter zurücksetzen">✕</button>
+<?php if($showMineToggle):?><button type="button" class="btn btn-sm btn-outline gp-mine-btn" id="mineToggleBtn" data-pq-filter="mine" aria-pressed="false" title="Nur meine Mitarbeiter anzeigen"><?php echo pqIcon('users'); ?> Meine Mitarbeiter</button><?php endif;?>
+<button type="button" class="btn btn-xs btn-outline" id="draftsOnlyBtn" aria-pressed="false" data-action="toggleDraftsOnly" data-args='["$this"]' title="Nur Mitarbeiter mit unveröffentlichten Änderungen anzeigen"><?php echo pqIcon('filter'); ?> Nur Änderungen</button>
+<button class="btn-reset" id="filterResetBtn" data-action="resetFilters" style="display:none" title="Filter zurücksetzen" aria-label="Filter zurücksetzen"><?php echo pqIcon('x'); ?></button>
 <span class="filter-count" id="filterCount" aria-live="polite"></span>
 </div>
 <div class="plan-bar-nav">
-<a href="?year=<?php echo $py;?>&month=<?php echo $pm;?>" class="btn btn-outline">&laquo; <?php echo monthName($pm);?></a>
-<div class="plan-bar-center"><span class="plan-bar-title"><?php echo monthName($m).' '.$y;?></span><a href="?year=<?php echo(int)date('Y');?>&month=<?php echo(int)date('m');?>" class="btn-today">Heute</a></div>
+<a href="?year=<?php echo $py;?>&month=<?php echo $pm;?>" class="btn btn-outline"><?php echo pqIcon('chevron-left'); ?> <?php echo monthName($pm);?></a>
+<div class="plan-bar-center"><span class="plan-bar-title"><?php echo monthName($m).' '.$y;?></span><a href="?year=<?php echo(int)date('Y');?>&month=<?php echo(int)date('m');?>" class="btn-today"><?php echo pqIcon('calendar-check'); ?>Heute</a></div>
 
-<a href="?year=<?php echo $ny;?>&month=<?php echo $nm;?>" class="btn btn-outline"><?php echo monthName($nm);?> &raquo;</a>
+<a href="?year=<?php echo $ny;?>&month=<?php echo $nm;?>" class="btn btn-outline"><?php echo monthName($nm);?> <?php echo pqIcon('chevron-right', 'pq-i-after'); ?></a>
 </div>
 <div class="plan-bar-actions">
-<button class="btn btn-outline" data-action="print">Drucken</button>
-<button class="btn btn-outline" data-action="oMod" data-args='["entryMod"]'>Erfassen</button>
-<button class="btn btn-outline" data-action="oMod" data-args='["recurMod"]'>Dauereinsatz</button>
+<button class="btn btn-outline" data-action="print"><?php echo pqIcon('printer'); ?> Drucken</button>
+<button class="btn btn-outline" data-action="oMod" data-args='["entryMod"]'><?php echo pqIcon('plus'); ?> Erfassen</button>
+<button class="btn btn-outline" data-action="oMod" data-args='["recurMod"]'><?php echo pqIcon('calendar-range'); ?> Dauereinsatz</button>
 <?php if(canEdit()||hasPerm('use_planning_assistant')):?>
 <a href="<?php echo bp();?>planungsassistent" class="btn btn-assistant" title="Komplexen Einsatz oder Kundenprojekt planen">
-<svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm7.707 8.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+<?php echo pqIcon('sparkles'); ?>
 <span class="btn-txt">Assistent</span><span class="btn-beta">Beta</span></a>
 <?php endif;?>
 <?php if(hasPerm('plan_publish_own')):?>
-<button class="btn btn-primary" <?php echo opsActionAttr('publishPlan',[(int)$y,(int)$m,false]);?>>Meine Änderungen veröffentlichen</button>
+<button class="btn btn-primary" <?php echo opsActionAttr('publishPlan',[(int)$y,(int)$m,false]);?>><?php echo pqIcon('send'); ?> Meine Änderungen veröffentlichen</button>
 <?php endif;?>
 <?php if(hasPerm('plan_publish_all')):?>
-<button class="btn btn-outline" <?php echo opsActionAttr('publishPlan',[(int)$y,(int)$m,true]);?> title="Alle Änderungen veröffentlichen" style="border-color:var(--p);color:var(--p)">Alle veröffentlichen</button>
+<button class="btn btn-outline" <?php echo opsActionAttr('publishPlan',[(int)$y,(int)$m,true]);?> title="Alle Änderungen veröffentlichen" style="border-color:var(--p);color:var(--p)"><?php echo pqIcon('send'); ?> Alle veröffentlichen</button>
 <?php endif;?>
 </div>
 </div>
@@ -109,14 +109,14 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 </div>
 
 <div id="lockBanner" class="lock-banner" style="display:none">
-<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+<?php echo pqIcon('lock'); ?>
 <span>Gleichzeitige Bearbeitung ist gesperrt. Ein anderer Benutzer bearbeitet gerade diesen Plan.</span>
 </div>
 
 <div id="otherDraftsBanner" class="other-drafts-banner no-print" style="display:none">
-<svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;flex-shrink:0;color:#0369a1"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+<?php echo pqIcon('info', 'pq-s16 pq-c-sky'); ?>
 <span id="otherDraftsText"></span>
-<?php if(hasPerm('plan_publish_all')):?><button class="btn btn-xs btn-outline" style="margin-left:auto;border-color:#0369a1;color:#0369a1" <?php echo opsActionAttr('publishPlan',[(int)$y,(int)$m,true]);?>>Alle veröffentlichen</button><?php endif;?>
+<?php if(hasPerm('plan_publish_all')):?><button class="btn btn-xs btn-outline" style="margin-left:auto;border-color:#0369a1;color:#0369a1" <?php echo opsActionAttr('publishPlan',[(int)$y,(int)$m,true]);?>><?php echo pqIcon('send'); ?> Alle veröffentlichen</button><?php endif;?>
 </div>
 
 <!-- Toolbar -->
@@ -132,7 +132,7 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 <option value="<?php echo $p['id'];?>" data-c="<?php echo e($p['color']);?>" data-f="<?php echo e($p['fg_color']);?>" data-k="<?php echo e($p['short_code']);?>"><?php echo e($p['short_code'].' – '.$p['name']);?></option>
 <?php endforeach;?></optgroup></select></div>
 <div class="tbg tbs"><span id="toolSt" class="muted">Werkzeug wählen</span>
-<button class="btn btn-xs btn-outline" id="toolDeselect" style="display:none" data-action="deselectTool">✕ Ablegen</button>
+<button class="btn btn-xs btn-outline" id="toolDeselect" style="display:none" data-action="deselectTool"><?php echo pqIcon('x'); ?> Ablegen</button>
 <span id="liveUpdateHint" class="live-update-hint" style="display:none;margin-left:auto">Aktualisiert</span></div>
 </div>
 <div class="tb-row">
@@ -153,14 +153,14 @@ $_uNames=[];try{$_us=getDB()->query('SELECT id,first_name,last_name FROM users')
 <div class="tbg"><button class="btn btn-xs abs-btn" data-t="offen" style="background:#475569;color:#fff" title="Offen / noch zu klären">?</button><span class="abs-btn-label">Offen</span></div>
 <div class="tb-sep"></div>
 <div class="tbg">
-<button class="btn btn-xs btn-outline" id="toolLock" title="Sperren">&#x2298; Sperren</button>
-<button class="btn btn-xs btn-outline" id="toolClr">&#x2715; Löschen</button>
-<button class="btn btn-xs" id="toolRemark" title="Bemerkung (Masseneintragung)" style="background:#f97316;color:#fff;border:1px solid #f97316"><span class="tool-pen">&#x270E;</span> Bemerkung</button>
+<button class="btn btn-xs btn-outline" id="toolLock" title="Sperren"><?php echo pqIcon('lock'); ?> Sperren</button>
+<button class="btn btn-xs btn-outline" id="toolClr"><?php echo pqIcon('eraser'); ?> Löschen</button>
+<button class="btn btn-xs" id="toolRemark" title="Bemerkung (Masseneintragung)" style="background:#f97316;color:#fff;border:1px solid #f97316"><?php echo pqIcon('message'); ?> Bemerkung</button>
 </div>
 <?php if(hasPerm('plan_view_internal')):?>
 <div class="tb-sep"></div>
 <div class="tbg">
-<button class="btn btn-xs" id="toolIntRemark" title="Interne Bemerkung (Masseneintragung – nicht sichtbar für Mitarbeiter)" style="background:#c8b400;color:#fff;border:1px solid #c8b400"><span class="tool-pen">&#x270E;</span> Int. Bemerkung</button>
+<button class="btn btn-xs" id="toolIntRemark" title="Interne Bemerkung (Masseneintragung – nicht sichtbar für Mitarbeiter)" style="background:#c8b400;color:#fff;border:1px solid #c8b400"><?php echo pqIcon('message'); ?> Int. Bemerkung</button>
 </div>
 <div class="tb-sep"></div>
 <div class="tbg">
@@ -234,7 +234,7 @@ $osLevel = $u['os_level'] ?? '';
 $absSee = canSeeAbsenceDetails($u['id']);
 ?>
 <tr data-user="<?php echo $u['id'];?>" data-we="<?php echo $weOk;?>" class="plan-row <?php if($weOk) echo 'we-allowed';?>" data-name="<?php echo e(mb_strtolower($u['last_name'].' '.$u['first_name']));?>" data-role="<?php echo e($roleFilter);?>" data-realrole="<?php echo e($u['role']);?>" data-areas="<?php echo e($areasStr);?>" data-entry="<?php echo e($u['entry_date']??'');?>" data-exit="<?php echo e($u['exit_date']??'');?>" data-mine="<?php echo isset($myIds[$u['id']])?1:0;?>" data-group="<?php echo e($gn);?>">
-<td class="sc cn"><?php echo e($u['last_name'].', '.$u['first_name']);?><?php if(isset($lockedUsers[$u['id']])):?><span class="user-locked-badge" title="Konto temporär gesperrt"><svg viewBox="0 0 20 20" fill="currentColor" style="width:11px;height:11px"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></span><?php endif;?><?php if($u['role']==='teamleiter'):?><span class="role-tag role-tag-tl">TL</span><?php elseif($u['role']==='manager'):?><span class="role-tag role-tag-ma">MA</span><?php endif;?><?php if($weOk):?><span class="we-badge" title="Wochenendarbeit">WE</span><?php endif;?><span class="row-lock-badge" id="lockBadge_<?php echo $u['id'];?>" style="display:none"></span></td>
+<td class="sc cn"><?php echo e($u['last_name'].', '.$u['first_name']);?><?php if(isset($lockedUsers[$u['id']])):?><span class="user-locked-badge" title="Konto temporär gesperrt"><?php echo pqIcon('lock', 'pq-s11'); ?></span><?php endif;?><?php if($u['role']==='teamleiter'):?><span class="role-tag role-tag-tl">TL</span><?php elseif($u['role']==='manager'):?><span class="role-tag role-tag-ma">MA</span><?php endif;?><?php if($weOk):?><span class="we-badge" title="Wochenendarbeit">WE</span><?php endif;?><span class="row-lock-badge" id="lockBadge_<?php echo $u['id'];?>" style="display:none"></span></td>
 <td class="sc ca"><?php if($priArea):?><span class="ts" style="background:<?php echo e($priArea['color']);?>;color:<?php echo e($priArea['fg_color']);?>"><?php echo e($priArea['short_code']);?></span><?php endif;?><?php if($osLevel):?><span class="ts os-badge"><?php echo e($osLevel);?></span><?php endif;?><?php if(!empty($u['training_profession'])):?><span class="ts tp-badge"><?php echo e($u['training_profession']);?></span><?php endif;?></td>
 <?php if($see):?><td class="sc cr-start <?php echo ($absSee&&vacLeftAtStart($u['id'],$y,$m)<0)?'txt-d':'';?>"><?php echo $absSee?number_format(vacLeftAtStart($u['id'],$y,$m),1,',',''):'·';?></td><?php endif;?>
 <?php foreach($days as $d):
@@ -265,9 +265,9 @@ data-d="<?php echo $d;?>" data-u="<?php echo $u['id'];?>" data-r="<?php echo $ce
 <?php if($see):?><td class="cr-end <?php echo ($absSee&&vacLeftAtEnd($u['id'],$y,$m)<0)?'txt-d':'';?>"><?php echo $absSee?number_format(vacLeftAtEnd($u['id'],$y,$m),1,',',''):'·';?></td><?php endif;?>
 <?php if($showWots):?><td class="cw no-print">
 <?php if($wotCnt>0):?><span class="wot-cnt"><?php echo $wotCnt;?></span>
-<span class="wot-eye" <?php echo opsActionAttr('openWotDetail',[(int)$u['id'],$u['last_name'].', '.$u['first_name']]);?>><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg></span>
-<?php if(canEdit()):?><span class="wot-edit" <?php echo opsActionAttr('openWotManager',[(int)$u['id'],$u['last_name'].', '.$u['first_name']]);?>><svg viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg></span><?php endif;?>
-<?php else:?><?php if(canEdit()):?><span class="wot-edit" <?php echo opsActionAttr('openWotManager',[(int)$u['id'],$u['last_name'].', '.$u['first_name']]);?>><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg></span><?php endif;?><?php endif;?>
+<span class="wot-eye" <?php echo opsActionAttr('openWotDetail',[(int)$u['id'],$u['last_name'].', '.$u['first_name']]);?>><?php echo pqIcon('eye'); ?></span>
+<?php if(canEdit()):?><span class="wot-edit" <?php echo opsActionAttr('openWotManager',[(int)$u['id'],$u['last_name'].', '.$u['first_name']]);?>><?php echo pqIcon('pencil'); ?></span><?php endif;?>
+<?php else:?><?php if(canEdit()):?><span class="wot-edit" <?php echo opsActionAttr('openWotManager',[(int)$u['id'],$u['last_name'].', '.$u['first_name']]);?>><?php echo pqIcon('plus'); ?></span><?php endif;?><?php endif;?>
 </td>
 <td class="ch-col no-print"><input type="text" inputmode="decimal" class="inp-hours" value="<?php echo e($md['hours']??'');?>" data-uid="<?php echo $u['id'];?>" placeholder="–"></td>
 <?php if($canErl):?><td class="cs-col no-print"><input type="checkbox" class="inp-snow" data-uid="<?php echo $u['id'];?>" <?php if($md['snow_checked']??0) echo 'checked';?>></td><?php endif;?><?php endif;?>
@@ -368,7 +368,7 @@ $rn=roleName($eu['role']); $rc=$eu['role'];
 <!-- Leave Warning Modal -->
 <div class="modal-bg" id="leaveMod"><div class="modal modal-sm leave-modal">
 <div class="leave-modal-body">
-<div class="confirm-icon confirm-icon-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+<div class="confirm-icon confirm-icon-warn"><?php echo pqIcon('alert'); ?></div>
 <h3>Planung verlassen?</h3>
 <p>Wollen Sie die Planung wirklich ohne Veröffentlichung verlassen? Einträge werden dennoch in der Planung gespeichert, aber nicht bereitgestellt.</p>
 </div>
@@ -412,7 +412,7 @@ function updateRowLocks(editors){
             if(badge){
                 /* Start or update countdown */
                 if(!rowLockTimers[uid]){rowLockTimers[uid]=ROW_LOCK_DURATION;}
-                badge.innerHTML='<svg viewBox="0 0 20 20" fill="currentColor" style="width:10px;height:10px;vertical-align:middle;margin-right:2px"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>Gesperrt von '+esc(activeLocks[uid].name);
+                badge.innerHTML='<?php echo pqIcon('lock', 'pq-s10 pq-badge-ic'); ?>Gesperrt von '+esc(activeLocks[uid].name);
                 badge.style.display='';
             }
         } else {

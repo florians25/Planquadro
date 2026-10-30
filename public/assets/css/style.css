@@ -1949,3 +1949,31 @@ label input[type="checkbox"] { vertical-align: middle; margin-right: .35rem; pos
   .nav-link { padding-left: .55rem; padding-right: .55rem; }
   .nav-beta { display: none; }
 }
+
+/* ==========================================================================
+   Sprite-Icons (pqIcon) – Größen/Feinschliff für ersetzte Inline-SVGs
+   (Spezifität svg.pq-i.x schlägt .pq-i/.btn .pq-i aus planquadro-theme.css)
+   ========================================================================== */
+svg.pq-i.pq-s10 { width: 10px; height: 10px; }
+svg.pq-i.pq-s11 { width: 11px; height: 11px; }
+svg.pq-i.pq-s12 { width: 12px; height: 12px; }
+svg.pq-i.pq-s13 { width: 13px; height: 13px; }
+svg.pq-i.pq-s14 { width: 14px; height: 14px; }
+svg.pq-i.pq-s16 { width: 16px; height: 16px; }
+svg.pq-i.pq-s18 { width: 18px; height: 18px; }
+svg.pq-i.pq-s22 { width: 22px; height: 22px; stroke-width: 2.2; }
+svg.pq-i.pq-op40 { opacity: .4; }
+svg.pq-i.pq-c-sky { color: #0369a1; }
+svg.pq-i.pq-badge-ic { vertical-align: middle; margin-right: 2px; }
+svg.pq-i.pq-tip-ic { width: 11px; height: 11px; vertical-align: -1px; margin-right: 4px; stroke-width: 2.2; }
+svg.pq-i.pq-h3-ic { vertical-align: -3px; margin-right: 6px; }
+svg.pq-i.pq-ic-empty { width: 48px; height: 48px; color: var(--bd2); margin-bottom: .5rem; stroke-width: 1.5; }
+svg.pq-i.pq-ic-denied { width: 64px; height: 64px; color: var(--err); stroke-width: 1.6; }
+svg.pq-i.proposal-icon { width: 18px; height: 18px; color: var(--p); }
+svg.pq-i.ma-chevron { width: 16px; height: 16px; }
+svg.pq-i.rl-role-arrow { width: 14px; height: 14px; }
+.ap-empty svg.pq-i, .ma-empty svg.pq-i { stroke-width: 1.5; }
+.lock-banner svg.pq-i, .user-locked-badge svg.pq-i { vertical-align: -1px; }
+.btn-reset svg.pq-i { width: 12px; height: 12px; vertical-align: -2px; stroke-width: 2.2; }
+.sort-toggle-btn svg.pq-i { stroke-width: 2.1; }
+.pq-area-caret svg.pq-i { width: 12px; height: 12px; vertical-align: -1px; }

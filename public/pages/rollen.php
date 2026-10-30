@@ -196,10 +196,10 @@ $baseRoles = [];
 try { foreach (getDB()->query('SELECT role_key, base_role FROM custom_roles WHERE is_system=0')->fetchAll() as $cr) $baseRoles[$cr['role_key']] = $cr['base_role']; } catch(Exception $e) {}
 /* Colors come from roleColor() in functions.php */
 $groupIcons = [
-    'Planung' => 'M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z',
-    'Team & Abwesenheiten' => 'M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z',
-    'Verwaltung' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
-    'Betrieb' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+    'Planung' => 'calendar',
+    'Team & Abwesenheiten' => 'users',
+    'Verwaltung' => 'settings',
+    'Betrieb' => 'check-circle',
 ];
 $permGroups = [];
 foreach (permissionsByGroup() as $gName => $keys) $permGroups[$gName] = ['icon' => $groupIcons[$gName] ?? $groupIcons['Betrieb'], 'perms' => $keys];
@@ -227,11 +227,11 @@ $isSys=in_array($rKey,$systemRoles);
 <span class="rl-role-name"><?php echo e($rName);?><?php if(!$isSys):?><span style="font-size:.55rem;color:var(--mu);font-weight:400;margin-left:.3rem">custom</span><?php endif;?></span>
 <span class="rl-role-meta"><?php echo $cnt;?> Nutzer · <?php echo $grantedCnt;?>/<?php echo $totalPerms;?> Rechte</span>
 </div>
-<svg class="rl-role-arrow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+<?php echo pqIcon('chevron-right', 'rl-role-arrow'); ?>
 </button>
 <?php $first=false; endforeach; ?>
 <button class="rl-new-role-btn" data-action="oMod" data-args='["newRoleMod"]'>
-<svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+<?php echo pqIcon('plus', 'pq-s14'); ?>
 Neue Rolle erstellen
 </button>
 </div>
@@ -257,7 +257,7 @@ $rPerms = $permData[$rKey]; $clr=roleColor($rKey); ?>
 <?php foreach($permGroups as $gName=>$gData): ?>
 <div class="rl-section">
 <div class="rl-section-head">
-<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="<?php echo $gData['icon'];?>"/></svg>
+<?php echo pqIcon($gData['icon'], 'pq-s16'); ?>
 <span><?php echo e($gName);?></span>
 </div>
 <?php foreach($gData['perms'] as $pKey):
@@ -273,7 +273,7 @@ $locked = $rKey === 'admin' && ($pKey === 'manage_roles' || permissionIsRoleBoun
 </div>
 <div class="rl-perm-acts">
 <button type="button" class="rl-user-btn" <?php echo opsActionAttr('rlOpenOverride',[$pKey,$allPerms[$pKey],$rKey]);?> title="Einzelne Person zuweisen/verweigern">
-<svg viewBox="0 0 20 20" fill="currentColor" style="width:13px;height:13px"><path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/></svg>
+<?php echo pqIcon('user-plus', 'pq-s13'); ?>
 </button>
 <label class="rl-toggle" title="<?php echo $locked ? 'Für Administratoren fest erteilt' : 'Für alle in dieser Rolle ein/aus';?>">
 <input type="checkbox" class="rl-cb" data-role="<?php echo $rKey;?>" data-perm="<?php echo $pKey;?>" <?php if($checked||$locked) echo 'checked';?><?php if($locked) echo ' disabled data-locked="1"';?>>
@@ -288,7 +288,7 @@ $locked = $rKey === 'admin' && ($pKey === 'manage_roles' || permissionIsRoleBoun
 <div class="rl-save-bar">
 <span class="rl-save-info" id="rlMsg_<?php echo $rKey;?>"></span>
 <button class="btn btn-primary" <?php echo opsActionAttr('rlSave',[$rKey]);?>>
-<svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;margin-right:.35rem"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+<?php echo pqIcon('save'); ?>
 Speichern
 </button>
 </div>
@@ -350,17 +350,17 @@ Speichern
 <div class="rl-ov-modes">
 <label class="rl-ov-mode" id="ovModeGrant" data-action="rlSetOverrideMode" data-args='["grant"]'>
 <input type="radio" name="overrideMode" value="grant" checked>
-<div class="rl-ov-mode-icon" style="background:#dcfce7;color:#16a34a"><svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></div>
+<div class="rl-ov-mode-icon" style="background:#dcfce7;color:#16a34a"><?php echo pqIcon('check-circle', 'pq-s16'); ?></div>
 <div><b>Zusätzlich gewähren</b><span class="muted" style="font-size:.68rem;display:block">Ausgewählte Personen erhalten dieses Recht zusätzlich</span></div>
 </label>
 <label class="rl-ov-mode" id="ovModeNobody" data-action="rlSetOverrideMode" data-args='["nobody"]'>
 <input type="radio" name="overrideMode" value="nobody">
-<div class="rl-ov-mode-icon" style="background:#fef3c7;color:#d97706"><svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg></div>
+<div class="rl-ov-mode-icon" style="background:#fef3c7;color:#d97706"><?php echo pqIcon('lock', 'pq-s16'); ?></div>
 <div><b>Niemand außer</b><span class="muted" style="font-size:.68rem;display:block">NUR ausgewählte Personen – Rollen-Schalter wird deaktiviert</span></div>
 </label>
 <label class="rl-ov-mode" id="ovModeDeny" data-action="rlSetOverrideMode" data-args='["deny"]'>
 <input type="radio" name="overrideMode" value="deny">
-<div class="rl-ov-mode-icon" style="background:#fef2f2;color:#dc2626"><svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg></div>
+<div class="rl-ov-mode-icon" style="background:#fef2f2;color:#dc2626"><?php echo pqIcon('x-circle', 'pq-s16'); ?></div>
 <div><b>Verweigern für</b><span class="muted" style="font-size:.68rem;display:block">Ausgewählte Personen verlieren dieses Recht</span></div>
 </label>
 </div>

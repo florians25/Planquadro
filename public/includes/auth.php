@@ -227,7 +227,7 @@ function showAccessDenied($msg = 'Sie haben keine Berechtigung, diese Seite aufz
     require_once __DIR__ . '/header.php';
     $cu = currentUser();
     echo '<div class="access-denied-page">';
-    echo '<div class="access-denied-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:64px;height:64px;color:var(--err)"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>';
+    echo '<div class="access-denied-icon">' . pqIcon('ban', 'pq-ic-denied') . '</div>';
     echo '<h2>Kein Zugriff</h2>';
     echo '<p class="muted" style="max-width:400px;margin:.5rem auto">'.htmlspecialchars($msg, ENT_QUOTES, 'UTF-8').'</p>';
     if ($cu) {
