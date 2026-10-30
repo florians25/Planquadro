@@ -14,6 +14,11 @@ name: Apps (Android, iOS)
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      release_tag:
+        description: "Version für die Dateinamen (z. B. v7.0.0)"
+        type: string
+        required: false
   push:
     branches: ["**"]
     paths:
@@ -28,6 +33,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/') }}
 
 env:
+  # Dateinamen der Builds: Version beim Release, sonst Branch/Tag
+  ARTIFACT_NAME: ${{ inputs.release_tag || github.ref_name }}
   NODE_VERSION: "22"
   JAVA_VERSION: "21"
   ANDROID_API: "34"
@@ -75,7 +82,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon --stacktrace assembleDebug
-          name="${GITHUB_REF_NAME//\//-}"
+          name="${ARTIFACT_NAME//\//-}"
           mkdir -p ../../out
           cp app/build/outputs/apk/debug/app-debug.apk "../../out/planquadro-${name}-android-test.apk"
 
@@ -215,7 +222,7 @@ jobs:
       - name: Simulator-App packen
         working-directory: mobile/ios/App
         run: |
-          name="${GITHUB_REF_NAME//\//-}"
+          name="${ARTIFACT_NAME//\//-}"
           ditto -c -k --sequesterRsrc --keepParent build/Build/Products/Debug-iphonesimulator/App.app "../../../planquadro-${name}-ios-simulator.zip"
 
       - uses: actions/upload-artifact@v4

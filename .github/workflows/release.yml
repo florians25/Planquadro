@@ -3,6 +3,9 @@ name: Release-Image
 # Baut ein Multi-Arch-Image (amd64, arm64) und veröffentlicht es in der
 # GitHub Container Registry – AUSSCHLIESSLICH bei einem gepushten Tag v*
 # oder bei manuellem Start (workflow_dispatch). Branch-Pushes veröffentlichen nie.
+# Manueller Start mit „tag“ (z. B. v7.0.0): legt den Tag auf dem gewählten Commit an
+# (annotiert, Tagger florians25) und erstellt daraus das komplette Release – für
+# Umgebungen, in denen Tags nicht direkt gepusht werden können.
 # Das Image wird mit cosign (keyless, Sigstore) signiert; SBOM und Provenienz
 # werden als Attestierungen angehängt.
 
@@ -12,18 +15,45 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Image-Tag (z. B. v1.2.3); leer = Git-Referenz"
-        required: false
+        description: "Release-Tag, der angelegt wird (z. B. v7.0.0)"
+        required: true
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref }}
   cancel-in-progress: false
 
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
 jobs:
+  # Nur bei manuellem Start: Tag anlegen (bei Tag-Push existiert er bereits)
+  tag:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag anlegen
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          case "$RELEASE_TAG" in v[0-9]*.[0-9]*.[0-9]*) ;; *) echo "Ungültiger Tag: $RELEASE_TAG"; exit 1;; esac
+          test -f "docs/releases/${RELEASE_TAG}.md" || { echo "docs/releases/${RELEASE_TAG}.md fehlt"; exit 1; }
+          if git ls-remote --exit-code --tags origin "refs/tags/${RELEASE_TAG}" >/dev/null; then
+            echo "Tag ${RELEASE_TAG} existiert bereits – wird verwendet."
+          else
+            git config user.name "florians25"
+            git config user.email "111896304+florians25@users.noreply.github.com"
+            git tag -a "$RELEASE_TAG" -m "Planquadro ${RELEASE_TAG#v}" "$GITHUB_SHA"
+            git push origin "refs/tags/${RELEASE_TAG}"
+          fi
+
   image:
+    needs: [tag]
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -33,6 +63,8 @@ jobs:
       attestations: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Image-Name (Kleinbuchstaben)
         id: name
@@ -53,10 +85,9 @@ jobs:
         with:
           images: ${{ steps.name.outputs.image }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
-            type=ref,event=tag
+            type=semver,pattern={{version}},value=${{ env.RELEASE_TAG }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ env.RELEASE_TAG }}
+            type=raw,value=${{ env.RELEASE_TAG }}
 
       - name: Bauen und veröffentlichen
         id: build
@@ -68,7 +99,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            PQ_VERSION=${{ github.ref_name }}
+            PQ_VERSION=${{ env.RELEASE_TAG }}
           sbom: true
           provenance: mode=max
           cache-from: type=gha
@@ -86,19 +117,23 @@ jobs:
   # Emulator-Screenshots → Branch app-screenshots. Ein Workflow für Push/Tag/manuell (apps.yml),
   # hier als wiederverwendbarer Workflow, damit die Artefakte in diesem Lauf am Release hängen.
   apps:
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [tag]
     uses: ./.github/workflows/apps.yml
+    with:
+      release_tag: ${{ inputs.tag || github.ref_name }}
     permissions:
       contents: write
 
   # Web-App (PWA-Build der Mobile-App) als ZIP
   web-app:
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [tag]
     runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -106,7 +141,7 @@ jobs:
         working-directory: mobile
         run: npm ci --no-audit --no-fund && npm run build
       - name: Packen
-        run: cd mobile/dist && zip -qr "../../planquadro-${GITHUB_REF_NAME}-web-app.zip" .
+        run: cd mobile/dist && zip -qr "../../planquadro-${RELEASE_TAG}-web-app.zip" .
       - uses: actions/upload-artifact@v4
         with:
           name: web-app
@@ -114,13 +149,15 @@ jobs:
 
   # GitHub-Release mit Release-Notes (docs/releases/<tag>.md) und den Builds
   github-release:
-    if: always() && startsWith(github.ref, 'refs/tags/v')
-    needs: [image, apps, web-app]
+    if: always() && needs.tag.result == 'success'
+    needs: [tag, image, apps, web-app]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
       # Nur die Builds anhängen (nicht die Screenshot-Artefakte)
       - uses: actions/download-artifact@v4
         with:
@@ -140,7 +177,7 @@ jobs:
       - name: Release anlegen
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ env.RELEASE_TAG }}
         run: |
           notes="docs/releases/${TAG}.md"
           [ -f "$notes" ] || notes="CHANGELOG.md"
