@@ -515,3 +515,17 @@ function addNotification($userId, $title, $message='', $link='') {
                ->execute([$userId, $title, $message ?: null, $link ?: null]);
     } catch(Exception $e) {}
 }
+
+/**
+ * Icon aus dem Planquadro-Sprite (public/assets/icons.svg, erzeugt von tools/icons/icons.py).
+ * Dekorativ (aria-hidden); die Beschriftung trägt der Knopf/Link selbst.
+ */
+function pqIconUrl(): string {
+    static $u = null;
+    if ($u === null) $u = bp() . 'assets/icons.svg?v=' . (int)@filemtime(__DIR__ . '/../assets/icons.svg');
+    return $u;
+}
+function pqIcon(string $name, string $class = ''): string {
+    $name = preg_replace('/[^a-z0-9-]/', '', $name);
+    return '<svg class="pq-i' . ($class !== '' ? ' ' . htmlspecialchars($class, ENT_QUOTES) : '') . '" aria-hidden="true" focusable="false"><use href="' . htmlspecialchars(pqIconUrl(), ENT_QUOTES) . '#' . $name . '"/></svg>';
+}

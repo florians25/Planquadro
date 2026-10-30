@@ -48,18 +48,18 @@ stehen in [INSTALLATION.md](INSTALLATION.md), das Anpassen an die eigene Firma i
 
 ![Dashboard](screenshots/web-dashboard.png)
 
-- **Dashboard:** Planer sehen zuerst **Heute zu tun** – offene Anträge (→ Prüfen),
-  unveröffentlichte Entwürfe (→ Veröffentlichen), Unterbesetzung, unverplante Arbeitstage
-  der nächsten 14 Tage, den noch nicht veröffentlichten Folgemonat – oder „Alles erledigt“.
-  Danach folgen die eigene Woche, Anträge und Kennzahlen (Team, Resturlaub, Krank-/
-  Gleitzeittage), Planstatus, „Heute abwesend“, Mitteilungen. Mitarbeitende sehen zuerst
-  ihre Woche. Welche Kacheln erscheinen, legt die Administration fest.
-- **Immer aktuell:** Das Dashboard aktualisiert sich selbst, sobald jemand plant,
-  veröffentlicht oder einen Antrag stellt – ohne Neuladen. Oben rechts steht der Stand
-  („Stand 14:32“): grüner Punkt = live verbunden, grauer Punkt = automatische Aktualisierung
-  jede Minute, roter Punkt = keine Verbindung. **↻** aktualisiert sofort.
-- **Kennzahlen anklicken:** Team führt zum Gesamtplan, Resturlaub zur Urlaubsübersicht,
-  Krank-, Gleitzeit- und WOT-Kacheln zu „Mein Plan“.
+- **Dashboard:** Oben begrüßt Sie eine Übersicht mit Datum und Kalenderwoche, Ihrem Einsatz
+  **heute** und am **nächsten Arbeitstag** sowie Schnellzugriffen (Planung, Assistent,
+  Gesamtplan, Mein Plan, Urlaub, Anträge – je nach Ihren Rechten).
+  - **Hauptspalte:** Planer sehen zuerst **Heute zu tun** – offene Anträge (→ Prüfen),
+    unveröffentlichte Entwürfe (→ Veröffentlichen), Unterbesetzung, unverplante Arbeitstage
+    der nächsten 14 Tage, den noch nicht veröffentlichten Folgemonat – oder „Alles erledigt“.
+    Darunter **Meine Woche** mit dieser und der nächsten Woche (Feiertage, Ferien,
+    Abwesenheiten) und die **Einsatz-Verteilung** des Monats.
+  - **Seitenspalte:** **Meine Zahlen** (Resturlaub, Krank-, Gleitzeittage, WOTs, aktives Team),
+    Änderungsanträge, **Planstatus** mit Planungsquote, **Heute abwesend**, WOTs des Monats und
+    **kommende Feiertage** mit Countdown.
+  - Welche Kacheln erscheinen, legt die Administration fest (*Organisation → Dashboard-Widgets*).
 - **Mein Plan:** Ihre Einsätze und Abwesenheiten als Liste bzw. Kalender.
 - **Kalender-Abo:** Im Profil finden Sie einen persönlichen iCal-Link für Outlook, Google
   oder Apple Kalender. Behandeln Sie ihn wie ein Passwort; er lässt sich neu erzeugen.

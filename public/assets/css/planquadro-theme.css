@@ -264,3 +264,17 @@ html[data-theme="dark"] .maint-active a{color:color-mix(in srgb, #92400e 45%, #f
 .nav-links.nav-compact .nav-link:not(.active) span:not(.nav-beta) { display: none; }
 .nav-links.nav-compact .nav-link:not(.active) .nav-beta { display: none; }
 .nav-links.nav-compact .nav-link { padding-left: .55rem; padding-right: .55rem; }
+
+/* ===== Icons (assets/icons.svg, js/icons.js, pqIcon() in functions.php) ===== */
+.pq-i{width:1.15em;height:1.15em;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em;overflow:visible}
+.btn .pq-i{width:1.15em;height:1.15em;margin-left:-.1em}
+.btn .pq-i-after{margin-left:0;margin-right:-.15em}
+.btn-xs .pq-i{width:1.05em;height:1.05em;stroke-width:2}
+.btn.pq-ibtn{padding-left:.45rem;padding-right:.45rem}
+.mx .pq-i{width:20px;height:20px}
+.btn-today .pq-i{width:1em;height:1em;margin-right:.2em}
+.nav-icon.pq-i{width:18px;height:18px;stroke-width:1.8}
+.nav-drop-icon.pq-i{width:17px;height:17px}
+.notif-bell .pq-i{width:19px;height:19px}
+.mob-nav-item .pq-i{width:22px;height:22px;stroke-width:1.8}
+.nav-chevron.pq-i{width:13px;height:13px;stroke-width:2.2}

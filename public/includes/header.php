@@ -91,9 +91,12 @@ $_bp = bp();
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/planquadro-theme.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/planquadro-theme.css'); ?>">
 <script src="<?php echo $_bp; ?>assets/js/nav.js?v=<?php echo @filemtime(__DIR__.'/../assets/js/nav.js'); ?>" defer></script>
 <link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/planning-plus.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/planning-plus.css'); ?>">
+<?php if (($_pg ?? '') === 'dashboard'): ?><link rel="stylesheet" href="<?php echo $_bp; ?>assets/css/dashboard.css?v=<?php echo @filemtime(__DIR__.'/../assets/css/dashboard.css'); ?>"><?php endif; ?>
 <link rel="icon" href="<?php echo $_bp; ?>assets/brand/favicon.svg" type="image/svg+xml"><link rel="icon" href="<?php echo $_bp; ?>assets/brand/favicon-32.png" sizes="32x32" type="image/png"><link rel="apple-touch-icon" href="<?php echo $_bp; ?>assets/brand/apple-touch-icon.png"><meta name="theme-color" content="#14213D">
 <meta name="color-scheme" content="light dark">
 <meta name="csrf-token" content="<?php echo csrfToken(); ?>">
+<meta name="pq-icons" content="<?php echo e(pqIconUrl()); ?>">
+<script src="<?php echo $_bp; ?>assets/js/icons.js?v=<?php echo @filemtime(__DIR__.'/../assets/js/icons.js'); ?>" defer></script>
 <style><?php echo opsBrandCss(); ?></style>
 <script nonce="<?php echo opsCspNonce(); ?>">
 /* CSRF: jede zustandsändernde Anfrage an den eigenen Server trägt das
@@ -132,83 +135,83 @@ $_bp = bp();
   <a href="<?php echo $_bp; ?>dashboard" class="nav-brand" aria-label="<?php echo e(tcfg('branding.name','Planquadro')); ?> – Dashboard"><?php if (tcfg('branding.logo')): ?><img src="<?php echo $_bp; ?>api/branding?logo=1" alt="" class="nav-brand-logo"><?php else: ?><span class="nav-brand-icon"><svg viewBox="0 0 64 64" width="22" height="22" aria-hidden="true" focusable="false"><rect x="4" y="4" width="16" height="16" rx="4" fill="#fff"/><rect x="24" y="4" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="44" y="4" width="16" height="16" rx="4" fill="#fff"/><rect x="4" y="24" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="24" y="24" width="16" height="16" rx="4" fill="#fff"/><rect x="44" y="24" width="16" height="16" rx="4" fill="#FF7A1A"/><rect x="4" y="44" width="16" height="16" rx="4" fill="#fff"/><rect x="24" y="44" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/><rect x="44" y="44" width="16" height="16" rx="4" fill="#fff" fill-opacity=".28"/></svg></span><?php endif; ?></a>
   <div class="nav-links" id="navLinks">
     <?php if (opsNavVisible('dashboard')): ?><a style="order:<?php echo opsNavOrder('dashboard'); ?>" href="<?php echo $_bp; ?>dashboard" class="nav-link mob-ok<?php echo $_pg==='dashboard'?' active':''; ?>"<?php if($_pg==='dashboard') echo ' aria-current="page"'; ?> title="Dashboard" aria-label="Dashboard">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+      <?php echo pqIcon('home','nav-icon'); ?>
       <span>Dashboard</span></a><?php endif; ?>
     <?php if (opsNavVisible('mein_plan')): ?><a style="order:<?php echo opsNavOrder('mein_plan'); ?>" href="<?php echo $_bp; ?>mein_plan" class="nav-link mob-ok<?php echo $_pg==='mein_plan'?' active':''; ?>"<?php if($_pg==='mein_plan') echo ' aria-current="page"'; ?> title="Mein Plan" aria-label="Mein Plan">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+      <?php echo pqIcon('calendar-user','nav-icon'); ?>
       <span>Mein Plan</span></a><?php endif; ?>
     <span class="nav-div" style="order:<?php echo opsNavOrder('gesamtplan'); ?>"></span>
     <?php if (opsNavVisible('gesamtplan')): ?><a style="order:<?php echo opsNavOrder('gesamtplan'); ?>" href="<?php echo $_bp; ?>gesamtplan" class="nav-link desk-only<?php echo $_pg==='gesamtplan'?' active':''; ?>"<?php if($_pg==='gesamtplan') echo ' aria-current="page"'; ?> title="Gesamtplan" aria-label="Gesamtplan">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"/></svg>
+      <?php echo pqIcon('grid','nav-icon'); ?>
       <span>Gesamtplan</span></a><?php endif; ?>
     <?php if (canEdit()): ?>
     <?php if (opsNavVisible('monatsplanung')): ?><a style="order:<?php echo opsNavOrder('monatsplanung'); ?>" href="<?php echo $_bp; ?>monatsplanung" class="nav-link<?php echo $_pg==='monatsplanung'?' active':''; ?>"<?php if($_pg==='monatsplanung') echo ' aria-current="page"'; ?> title="Planung" aria-label="Planung">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+      <?php echo pqIcon('calendar-edit','nav-icon'); ?>
       <span>Planung</span></a><?php endif; ?>
     <?php endif; ?>
     <?php if (canEdit() || hasPerm('use_planning_assistant')): ?>
     <?php if (opsNavVisible('planungsassistent')): ?><a style="order:<?php echo opsNavOrder('planungsassistent'); ?>" href="<?php echo $_bp; ?>planungsassistent" class="nav-link nav-link-assistant<?php echo $_pg==='planungsassistent'?' active':''; ?>"<?php if($_pg==='planungsassistent') echo ' aria-current="page"'; ?> title="Planungsassistent – komplexe Einsätze und Kundenprojekte" aria-label="Planungsassistent – komplexe Einsätze und Kundenprojekte">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm7.707 8.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+      <?php echo pqIcon('sparkles','nav-icon'); ?>
       <span>Assistent</span><span class="nav-beta">Beta</span></a><?php endif; ?>
     <?php endif; ?>
     <?php if (opsNavVisible('jahresuebersicht')): ?><a style="order:<?php echo opsNavOrder('jahresuebersicht'); ?>" href="<?php echo $_bp; ?>jahresuebersicht" class="nav-link<?php echo $_pg==='jahresuebersicht'?' active':''; ?>"<?php if($_pg==='jahresuebersicht') echo ' aria-current="page"'; ?> title="Jahresplan" aria-label="Jahresplan">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9v-1h5v2H5a1 1 0 01-1-1zm7 1h4a1 1 0 001-1v-1h-5v2zm0-4h5V8h-5v2zM9 8H4v2h5V8z" clip-rule="evenodd"/></svg>
+      <?php echo pqIcon('calendar-range','nav-icon'); ?>
       <span>Jahresplan</span></a><?php endif; ?>
     <?php if (hasRole('admin','manager','teamleiter')): ?>
     <?php if (opsNavVisible('urlaubsplanung')): ?><a style="order:<?php echo opsNavOrder('urlaubsplanung'); ?>" href="<?php echo $_bp; ?>urlaubsplanung" class="nav-link<?php echo $_pg==='urlaubsplanung'?' active':''; ?>"<?php if($_pg==='urlaubsplanung') echo ' aria-current="page"'; ?> title="Urlaub" aria-label="Urlaub">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clip-rule="evenodd"/></svg>
+      <?php echo pqIcon('sun','nav-icon'); ?>
       <span>Urlaub</span></a><?php endif; ?>
     <?php if (hasPerm('manage_absences') || canEdit()): ?>
     <?php if (opsNavVisible('abwesenheiten')): ?><a style="order:<?php echo opsNavOrder('abwesenheiten'); ?>" href="<?php echo $_bp; ?>abwesenheiten" class="nav-link<?php echo $_pg==='abwesenheiten'?' active':''; ?>"<?php if($_pg==='abwesenheiten') echo ' aria-current="page"'; ?> title="Abwesenheiten erfassen" aria-label="Abwesenheiten erfassen">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm5.707 9.707a1 1 0 00-1.414-1.414L10 10.586l-.293-.293a1 1 0 00-1.414 1.414l.293.293-.293.293a1 1 0 101.414 1.414l.293-.293.293.293a1 1 0 001.414-1.414l-.293-.293.293-.293z" clip-rule="evenodd"/></svg>
+      <?php echo pqIcon('calendar-x','nav-icon'); ?>
       <span>Abwesenheiten</span></a><?php endif; ?>
     <?php endif; ?>
     <?php endif; ?>
     <?php if (canManageDeputations()): ?>
     <?php if (opsNavVisible('vertretung')): ?><a style="order:<?php echo opsNavOrder('vertretung'); ?>" href="<?php echo $_bp; ?>vertretung" class="nav-link<?php echo $_pg==='vertretung'?' active':''; ?>"<?php if($_pg==='vertretung') echo ' aria-current="page"'; ?> title="Vertretung" aria-label="Vertretung">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7 2a1 1 0 011 1v1h4V3a1 1 0 112 0v1h1a2 2 0 012 2v1H3V6a2 2 0 012-2h1V3a1 1 0 011-1zM3 9h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V9zm4.707 2.293a1 1 0 00-1.414 1.414L7.586 14l-1.293 1.293a1 1 0 101.414 1.414L9 15.414l1.293 1.293a1 1 0 001.414-1.414L10.414 14l1.293-1.293a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293z" clip-rule="evenodd"/></svg>
+      <?php echo pqIcon('swap','nav-icon'); ?>
       <span>Vertretung</span></a><?php endif; ?>
     <?php endif; ?>
     <?php if (canEdit()): ?>
     <span class="nav-div" style="order:<?php echo opsNavOrder('genehmigungen'); ?>"></span>
     <?php if (getSetting('approval_system_enabled','0')==='1' && hasPerm('approve_requests')): ?>
     <?php if (opsNavVisible('genehmigungen')): ?><a style="order:<?php echo opsNavOrder('genehmigungen'); ?>" href="<?php echo $_bp; ?>genehmigungen" class="nav-link<?php echo $_pg==='genehmigungen'?' active':''; ?> nav-link-approval"<?php if($_pg==='genehmigungen') echo ' aria-current="page"'; ?> title="Anträge" aria-label="Anträge">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+      <?php echo pqIcon('clipboard-check','nav-icon'); ?>
       <span>Anträge</span><span class="approval-pill" id="approvalBadge" style="display:none">0</span></a><?php endif; ?>
     <?php endif; ?>
     <?php if (canManageUsers()): ?>
     <?php if (opsNavVisible('mitarbeiter')): ?><a style="order:<?php echo opsNavOrder('mitarbeiter'); ?>" href="<?php echo $_bp; ?>mitarbeiter" class="nav-link<?php echo $_pg==='mitarbeiter'?' active':''; ?>"<?php if($_pg==='mitarbeiter') echo ' aria-current="page"'; ?> title="Team" aria-label="Team">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+      <?php echo pqIcon('users','nav-icon'); ?>
       <span>Team</span></a><?php endif; ?>
     <?php endif; ?>
     <?php if (canManageConfig()): ?>
     <?php if (opsNavVisible('planbereiche')): ?><a style="order:<?php echo opsNavOrder('planbereiche'); ?>" href="<?php echo $_bp; ?>planbereiche" class="nav-link<?php echo $_pg==='planbereiche'?' active':''; ?>"<?php if($_pg==='planbereiche') echo ' aria-current="page"'; ?> title="Bereiche" aria-label="Bereiche">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+      <?php echo pqIcon('tag','nav-icon'); ?>
       <span>Bereiche</span></a><?php endif; ?>
     <?php if (opsNavVisible('stammdaten')): ?><a style="order:<?php echo opsNavOrder('stammdaten'); ?>" href="<?php echo $_bp; ?>stammdaten" class="nav-link<?php echo $_pg==='stammdaten'?' active':''; ?>"<?php if($_pg==='stammdaten') echo ' aria-current="page"'; ?> title="Stammdaten" aria-label="Stammdaten">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zm11-1a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/></svg>
+      <?php echo pqIcon('database','nav-icon'); ?>
       <span>Stammdaten</span></a><?php endif; ?>
     <?php if (opsNavVisible('feiertage')): ?><a style="order:<?php echo opsNavOrder('feiertage'); ?>" href="<?php echo $_bp; ?>feiertage" class="nav-link<?php echo $_pg==='feiertage'?' active':''; ?>"<?php if($_pg==='feiertage') echo ' aria-current="page"'; ?> title="Feiertage" aria-label="Feiertage">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+      <?php echo pqIcon('flag','nav-icon'); ?>
       <span>Feiertage</span></a><?php endif; ?>
     <?php endif; ?>
     <?php endif; ?>
     <?php if (hasPerm('manage_settings')): ?>
     <span class="nav-div" style="order:<?php echo opsNavOrder('einstellungen'); ?>"></span>
     <?php if (opsNavVisible('einstellungen')): ?><a style="order:<?php echo opsNavOrder('einstellungen'); ?>" href="<?php echo $_bp; ?>einstellungen" class="nav-link<?php echo $_pg==='einstellungen'?' active':''; ?>"<?php if($_pg==='einstellungen') echo ' aria-current="page"'; ?> title="Einstellungen" aria-label="Einstellungen">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+      <?php echo pqIcon('settings','nav-icon'); ?>
       <span>Einstellungen</span></a><?php endif; ?>
     <?php endif; ?>
     <?php if (hasPerm('manage_roles')): ?>
     <?php if (opsNavVisible('rollen')): ?><a style="order:<?php echo opsNavOrder('rollen'); ?>" href="<?php echo $_bp; ?>rollen" class="nav-link<?php echo $_pg==='rollen'?' active':''; ?>"<?php if($_pg==='rollen') echo ' aria-current="page"'; ?> title="Rollen & Rechte" aria-label="Rollen & Rechte">
-      <svg class="nav-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+      <?php echo pqIcon('shield','nav-icon'); ?>
       <span>Rollen</span></a><?php endif; ?>
     <?php endif; ?>
   </div>
   <div class="nav-right">
     <div class="notif-wrap" id="notifWrap">
       <button class="notif-bell" data-action="toggleNotif" title="Benachrichtigungen">
-        <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/></svg>
+        <?php echo pqIcon('bell'); ?>
         <span class="notif-count" id="notifCount" style="display:none">0</span>
       </button>
       <div class="notif-panel" id="notifPanel">
@@ -223,7 +226,7 @@ $_bp = bp();
           <span class="nav-user-name"><?php echo e($_cu['first_name'].' '.$_cu['last_name']); ?></span>
           <span class="nav-badge r-<?php echo e($_cu['role']); ?>"><?php echo e(roleName($_cu['role'])); ?></span>
         </span>
-        <svg class="nav-chevron" viewBox="0 0 20 20" fill="currentColor" width="12" height="12"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+        <?php echo pqIcon('chevron-down','nav-chevron'); ?>
       </button>
       <div class="nav-dropdown">
         <div class="nav-drop-header">
@@ -231,27 +234,27 @@ $_bp = bp();
           <span class="nav-drop-role"><?php echo e(roleName($_cu['role'])); ?></span>
         </div>
         <a href="<?php echo $_bp; ?>profil" class="nav-drop-item">
-          <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+          <?php echo pqIcon('user','nav-drop-icon'); ?>
           Mein Profil
         </a>
         <a href="#" class="nav-drop-item" data-action="oMod" data-args='["changelogMod"]' data-prevent>
-          <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+          <?php echo pqIcon('info','nav-drop-icon'); ?>
           Was gibt es Neues?
         </a>
         <a href="#" class="nav-drop-item" data-action="oMod" data-args='["pwMod"]' data-prevent>
-          <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+          <?php echo pqIcon('key','nav-drop-icon'); ?>
           Passwort ändern
         </a>
         <a href="<?php echo $_bp; ?>datenschutz" class="nav-drop-item">
-          <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          <?php echo pqIcon('shield','nav-drop-icon'); ?>
           Datenschutz
         </a>
         <button type="button" class="nav-drop-item pq-theme-toggle" data-action="pqCycleTheme" aria-live="polite">
-          <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+          <?php echo pqIcon('moon','nav-drop-icon'); ?>
           <span>Darstellung: <b id="pqThemeLabel">System</b></span>
         </button>
         <a href="<?php echo $_bp; ?>logout" class="nav-drop-item nav-drop-logout">
-          <svg viewBox="0 0 20 20" fill="currentColor" class="nav-drop-icon"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
+          <?php echo pqIcon('logout','nav-drop-icon'); ?>
           Abmelden
         </a>
       </div>
@@ -281,7 +284,7 @@ $_bp = bp();
 <?php $mobPages=['dashboard','mein_plan','profil','genehmigungen']; $isMobPage=in_array($_pg,$mobPages); ?>
 <?php if(!$isMobPage):?>
 <div class="mob-desk-only-warn">
-<svg viewBox="0 0 20 20" fill="currentColor" style="width:32px;height:32px;color:var(--mu);margin-bottom:.5rem"><path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd"/></svg>
+<?php echo pqIcon('monitor','pq-i-xl'); ?>
 <b>Diese Seite ist für Desktop optimiert</b>
 <span style="font-size:.78rem;color:var(--mu)">Bitte verwende einen Computer für diese Funktion.</span>
 <a href="<?php echo $_bp;?>dashboard" class="btn btn-primary btn-sm" style="margin-top:.5rem">Zum Dashboard</a>
@@ -294,22 +297,22 @@ pqAction('pqForceDesktop',function(){document.documentElement.classList.add('mob
 <!-- Mobile Bottom Nav -->
 <nav class="mob-nav">
 <a href="<?php echo $_bp;?>dashboard" class="mob-nav-item<?php echo $_pg==='dashboard'?' active':'';?>">
-<svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+<?php echo pqIcon('home'); ?>
 <span>Home</span></a>
 <a href="<?php echo $_bp;?>mein_plan" class="mob-nav-item<?php echo $_pg==='mein_plan'?' active':'';?>">
-<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+<?php echo pqIcon('calendar-user'); ?>
 <span>Mein Plan</span></a>
 <a href="<?php echo $_bp;?>profil" class="mob-nav-item<?php echo $_pg==='profil'?' active':'';?>">
-<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+<?php echo pqIcon('user'); ?>
 <span>Profil</span></a>
 <a href="<?php echo $_bp;?>logout" class="mob-nav-item">
-<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
+<?php echo pqIcon('logout'); ?>
 <span>Abmelden</span></a>
 </nav>
 
 <?php if (isMaintenanceMode()): ?>
 <div class="maint-active no-print">
-  <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+  <?php echo pqIcon('alert'); ?>
   <span><b>Wartungsmodus aktiv.</b> Für alle übrigen Rollen ist die Anwendung gesperrt – Sie arbeiten weiter, weil Sie Administrator oder Manager sind.</span>
   <?php if (hasPerm('manage_settings')): ?><a href="<?php echo $_bp; ?>einstellungen">Beenden</a><?php endif; ?>
 </div>
@@ -317,7 +320,7 @@ pqAction('pqForceDesktop',function(){document.documentElement.classList.add('mob
 <main id="main" tabindex="-1" class="content <?php if(!$isMobPage) echo 'mob-hide-content';?>">
 <?php if (function_exists('hasActiveDeputation') && hasActiveDeputation()): $depNames = activeDeputationNames(); ?>
 <div class="deputy-banner no-print">
-  <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a5 5 0 010 10h-1a1 1 0 110-2h1a3 3 0 100-6H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+  <?php echo pqIcon('swap'); ?>
   <span>Sie vertreten aktuell: <b><?php echo e(implode(', ', $depNames)); ?></b> – Sie können für dessen Team planen und Anträge genehmigen.</span>
 </div>
 <?php endif; ?>

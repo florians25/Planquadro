@@ -4,7 +4,22 @@
 
 ## Unveröffentlicht
 
-### Dashboard
+### Icons
+- Eigenes, einheitliches Icon-Set (80 Linien-Icons, `public/assets/icons.svg`, erzeugt aus
+  `tools/icons/icons.py`, Vorschau `docs/icons-preview.svg`) – ohne Fremdbibliothek.
+- Jeder Navigationspunkt hat ein eigenes Icon (bisher teilten sich mehrere das Kalender-Icon);
+  Benutzermenü, Mobilnavigation, Banner und Werkzeugleisten nutzen das neue Set.
+- Knöpfe bekommen automatisch ein passendes Icon nach ihrer Beschriftung (Speichern, Löschen,
+  Abbrechen, Veröffentlichen, Drucken, Zurück/Weiter …), auch in Dialogen, die Skripte erzeugen
+  (`assets/js/icons.js`, `pqIcon()` in PHP und JS; ausnehmen mit `data-noicon`).
+
+### Dashboard (neu gestaltet)
+- Übersicht oben: Begrüßung, Datum/KW, Einsatz heute und am nächsten Arbeitstag,
+  Schnellzugriffe nach Rechten, Live-Stand.
+- Zweispaltig: Aufgaben, zwei Wochen und Einsatz-Verteilung links; Zahlen, Anträge, Planstatus
+  (mit Monatslinks und Planungsquote), Heute abwesend, WOTs und Feiertage (mit Countdown) rechts.
+  Alle bisherigen Kacheln, Widget-Schalter und Rechteprüfungen bleiben erhalten.
+- Eigenes Stylesheet `assets/css/dashboard.css`, Dunkelmodus, Tablet- und Handy-Layout.
 - Aktualisiert sich live (Server-Sent Events) und zusätzlich regelmäßig sowie beim Zurückkehren
   in den Tab; Anzeige „Stand hh:mm“ mit Verbindungsstatus und Knopf ↻. Ausgetauscht werden nur
   die Inhaltsbereiche, mit denselben Rechten wie beim Seitenaufruf.
