@@ -54,6 +54,12 @@ stehen in [INSTALLATION.md](INSTALLATION.md), das Anpassen an die eigene Firma i
   Danach folgen die eigene Woche, Anträge und Kennzahlen (Team, Resturlaub, Krank-/
   Gleitzeittage), Planstatus, „Heute abwesend“, Mitteilungen. Mitarbeitende sehen zuerst
   ihre Woche. Welche Kacheln erscheinen, legt die Administration fest.
+- **Immer aktuell:** Das Dashboard aktualisiert sich selbst, sobald jemand plant,
+  veröffentlicht oder einen Antrag stellt – ohne Neuladen. Oben rechts steht der Stand
+  („Stand 14:32“): grüner Punkt = live verbunden, grauer Punkt = automatische Aktualisierung
+  jede Minute, roter Punkt = keine Verbindung. **↻** aktualisiert sofort.
+- **Kennzahlen anklicken:** Team führt zum Gesamtplan, Resturlaub zur Urlaubsübersicht,
+  Krank-, Gleitzeit- und WOT-Kacheln zu „Mein Plan“.
 - **Mein Plan:** Ihre Einsätze und Abwesenheiten als Liste bzw. Kalender.
 - **Kalender-Abo:** Im Profil finden Sie einen persönlichen iCal-Link für Outlook, Google
   oder Apple Kalender. Behandeln Sie ihn wie ein Passwort; er lässt sich neu erzeugen.
@@ -92,6 +98,17 @@ Ohne gewähltes Werkzeug lässt sich ein Eintrag mit der Maus auf ein anderes Fe
 **ziehen = verschieben**, mit **Strg/Alt** (Mac: ⌘/⌥) = **kopieren**. Gültige Ziele werden grün
 umrandet, ungültige rot gestrichelt mit Begründung (Feiertag, genehmigter Urlaub,
 Krankmeldung, fremde Bearbeitung …). **Esc** bricht ab.
+
+### Scrollen im Plan
+- Die Tabelle passt sich der Fensterhöhe an. Beim Scrollen mit dem Mausrad rutscht sie zuerst
+  unter die Werkzeugleiste und bleibt dort „angedockt“; danach scrollt nur noch die Tabelle.
+  Tageskopfzeile, Namensspalte, die Zeile „Eingeplant“ und die waagerechte Scrollleiste bleiben
+  dabei immer sichtbar.
+- **Waagerecht scrollen:** Mausrad über der Tageskopfzeile – oder Umschalt + Mausrad bzw. zwei
+  Finger auf dem Touchpad irgendwo in der Tabelle.
+- **Heute:** Im aktuellen Monat springt der Knopf *Heute* zur heutigen Spalte, statt die Seite
+  neu zu laden. Beim Öffnen des aktuellen Monats steht der heutige Tag automatisch im Blick.
+- Nach dem Veröffentlichen oder Neuladen bleibt die Scrollposition erhalten.
 
 ### Tastatur
 Mit den Pfeiltasten durch das Raster, **Enter**/**Leertaste** setzt das gewählte Werkzeug,

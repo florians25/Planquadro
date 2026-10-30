@@ -64,7 +64,7 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 <div class="ph">
   <div class="phl">
     <h1><?php echo e($u['first_name'].' '.$u['last_name']); ?></h1>
-    <span class="muted" style="font-size:.82rem"><?php echo e(roleName($u['role'])); ?> | KW <?php echo $cwk; ?>, <?php echo wdShort($today); ?> <?php echo date('d.',strtotime($today)).monthName($m).' '.$y; ?></span>
+    <span class="muted" style="font-size:.82rem"><?php echo e(roleName($u['role'])); ?> | KW <?php echo $cwk; ?>, <?php echo wdShort($today); ?> <?php echo date('j. ',strtotime($today)).monthName($m).' '.$y; ?></span>
     <div class="pq-today" aria-label="Heute">
       <span class="pq-today-lbl">Heute</span>
       <?php if (isset($holsAll[$today]) && $holsAll[$today]['holiday_type'] === 'feiertag'): ?><span class="pq-chip pq-chip-hol"><?php echo e($holsAll[$today]['name']); ?></span>
@@ -74,6 +74,10 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
     </div>
   </div>
   <div class="phr">
+    <span class="pq-live" id="pqDashLive" role="status" aria-live="polite" title="Das Dashboard aktualisiert sich automatisch, sobald sich Pläne, Anträge oder Abwesenheiten ändern.">
+      <span class="pq-live-dot" aria-hidden="true"></span><span class="pq-live-txt" id="pqDashStamp">Stand <?php echo date('H:i'); ?></span>
+      <button type="button" class="pq-live-btn" id="pqDashRefresh" aria-label="Jetzt aktualisieren" title="Jetzt aktualisieren">↻</button>
+    </span>
     <?php if (canEdit()): ?>
     <a href="monatsplanung" class="btn btn-primary desk-only">Planung</a>
     <?php endif; ?>
@@ -90,36 +94,40 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 
 <!-- KPI Row -->
 <?php if (opsWidget('kpis')): ?>
-<div class="g pq-ds-kpis" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.65rem;margin-bottom:1rem">
+<?php
+  $__vUsed = vacUsed($u['id'],$y); $__vTot = (float)$u['vacation_days'];
+  $__pct = $__vTot > 0 ? min(100, ($__vUsed / $__vTot) * 100) : 0;
+  $__vacHref = opsNavVisible('urlaubsplanung') ? 'urlaubsplanung' : 'mein_plan';
+?>
+<div class="pq-kpis pq-ds-kpis">
   <?php if ($see): ?>
-  <div class="card" style="padding:.75rem 1rem">
-    <div style="font-size:.68rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.04em">Team</div>
-    <div style="font-size:1.5rem;font-weight:800;line-height:1.1;margin-top:.15rem"><?php echo $stats['totalUsers']; ?></div>
-    <div style="font-size:.7rem;color:var(--mu)">Mitarbeiter aktiv</div>
-  </div>
+  <a class="card pq-kpi" href="gesamtplan">
+    <span class="pq-kpi-lbl">Team</span>
+    <span class="pq-kpi-val"><?php echo (int)$stats['totalUsers']; ?></span>
+    <span class="pq-kpi-sub">Mitarbeitende aktiv</span>
+  </a>
   <?php endif; ?>
-  <div class="card" style="padding:.75rem 1rem">
-    <div style="font-size:.68rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.04em">Resturlaub</div>
-    <div style="font-size:1.5rem;font-weight:800;line-height:1.1;margin-top:.15rem;color:#16a34a"><?php echo number_format(vacLeft($u['id'],$y),1,',',''); ?></div>
-    <div style="font-size:.7rem;color:var(--mu)"><?php echo number_format(vacUsed($u['id'],$y),1,',',''); ?> von <?php echo number_format((float)$u['vacation_days'],1,',',''); ?> genommen</div>
-    <?php $pct = $u['vacation_days'] > 0 ? min(100, (vacUsed($u['id'],$y) / (float)$u['vacation_days']) * 100) : 0; ?>
-    <div style="width:100%;height:4px;background:var(--bd);border-radius:2px;margin-top:.35rem;overflow:hidden"><div style="height:100%;border-radius:2px;width:<?php echo $pct; ?>%;background:<?php echo $pct>90?'#dc2626':($pct>70?'#f59e0b':'#16a34a'); ?>"></div></div>
-  </div>
-  <div class="card" style="padding:.75rem 1rem">
-    <div style="font-size:.68rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.04em">Kranktage</div>
-    <div style="font-size:1.5rem;font-weight:800;line-height:1.1;margin-top:.15rem;color:#dc2626"><?php echo number_format(sickDays($u['id'],$y),1,',',''); ?></div>
-    <div style="font-size:.7rem;color:var(--mu)"><?php echo $y; ?></div>
-  </div>
-  <div class="card" style="padding:.75rem 1rem">
-    <div style="font-size:.68rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.04em">Gleitzeit</div>
-    <div style="font-size:1.5rem;font-weight:800;line-height:1.1;margin-top:.15rem;color:#7c3aed"><?php echo $glCnt; ?></div>
-    <div style="font-size:.7rem;color:var(--mu)"><?php echo $y; ?></div>
-  </div>
-  <div class="card" style="padding:.75rem 1rem">
-    <div style="font-size:.68rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.04em">WOTs</div>
-    <div style="font-size:1.5rem;font-weight:800;line-height:1.1;margin-top:.15rem;color:#d97706"><?php echo count($wots); ?></div>
-    <div style="font-size:.7rem;color:var(--mu)"><?php echo monthName($m).' '.$y; ?></div>
-  </div>
+  <a class="card pq-kpi pq-kpi-ok" href="<?php echo $__vacHref; ?>">
+    <span class="pq-kpi-lbl">Resturlaub</span>
+    <span class="pq-kpi-val"><?php echo number_format(vacLeft($u['id'],$y),1,',',''); ?></span>
+    <span class="pq-kpi-sub"><?php echo number_format($__vUsed,1,',',''); ?> von <?php echo number_format($__vTot,1,',',''); ?> genommen</span>
+    <span class="pq-kpi-bar" role="presentation"><span class="<?php echo $__pct>90?'is-err':($__pct>70?'is-warn':'is-ok'); ?>" style="width:<?php echo round($__pct,1); ?>%"></span></span>
+  </a>
+  <a class="card pq-kpi pq-kpi-err" href="mein_plan">
+    <span class="pq-kpi-lbl">Kranktage</span>
+    <span class="pq-kpi-val"><?php echo number_format(sickDays($u['id'],$y),1,',',''); ?></span>
+    <span class="pq-kpi-sub"><?php echo $y; ?></span>
+  </a>
+  <a class="card pq-kpi pq-kpi-gl" href="mein_plan">
+    <span class="pq-kpi-lbl">Gleitzeit</span>
+    <span class="pq-kpi-val"><?php echo $glCnt; ?></span>
+    <span class="pq-kpi-sub"><?php echo $y; ?></span>
+  </a>
+  <a class="card pq-kpi pq-kpi-wot" href="mein_plan">
+    <span class="pq-kpi-lbl">WOTs</span>
+    <span class="pq-kpi-val"><?php echo count($wots); ?></span>
+    <span class="pq-kpi-sub"><?php echo monthName($m).' '.$y; ?></span>
+  </a>
 </div>
 
 <?php endif; /* kpis */ ?>
@@ -244,24 +252,6 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 <div class="dash-approval-grid" id="dashApprovalGrid"></div>
 </div>
 </div>
-<script nonce="<?php echo opsCspNonce(); ?>">
-(function(){
-    var base=window.location.pathname;base=(base.indexOf('/pages/')!==-1||base.indexOf('/api/')!==-1)?'../':'';
-    fetch(base+'api/change_requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'dashboard_stats'})})
-    .then(function(r){return r.json();}).then(function(d){
-        if(!d.success)return;
-        var show=d.my_pending>0||d.my_approved_week>0||d.my_rejected_week>0||d.to_approve>0;
-        if(!show)return;
-        var card=document.getElementById('dashApprovalCard');card.style.display='';
-        var html='';
-        if(d.my_pending>0) html+='<div class="dash-approval-item"><div class="dash-approval-num" style="color:var(--wn)">'+d.my_pending+'</div><div class="dash-approval-label">Meine offenen</div></div>';
-        if(d.my_approved_week>0) html+='<div class="dash-approval-item"><div class="dash-approval-num" style="color:var(--ok)">'+d.my_approved_week+'</div><div class="dash-approval-label">Genehmigt (7d)</div></div>';
-        if(d.my_rejected_week>0) html+='<div class="dash-approval-item"><div class="dash-approval-num" style="color:var(--err)">'+d.my_rejected_week+'</div><div class="dash-approval-label">Abgelehnt (7d)</div></div>';
-        if(d.to_approve>0) html+='<div class="dash-approval-item" style="border:2px solid var(--p)"><div class="dash-approval-num" style="color:var(--p)">'+d.to_approve+'</div><div class="dash-approval-label">Zu genehmigen</div></div>';
-        document.getElementById('dashApprovalGrid').innerHTML=html;
-    }).catch(function(){});
-})();
-</script>
 <?php endif; ?>
 
 <!-- Two-column grid: Status + Team OR Abwesend + Feiertage -->
@@ -400,28 +390,5 @@ $glS=getDB()->prepare("SELECT COUNT(*) c FROM absences WHERE user_id=? AND YEAR(
 </div>
 </div><!-- /.pq-dash -->
 
-<script nonce="<?php echo opsCspNonce(); ?>">
-(function(){
-    var base=window.location.pathname;base=(base.indexOf('/pages/')!==-1||base.indexOf('/api/')!==-1)?'../':'';
-    fetch(base+'api/announcements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'active'})})
-    .then(function(r){return r.json();}).then(function(d){
-        if(!d.success||!d.items||d.items.length===0)return;
-        var el=document.getElementById('dashAnnouncements');if(!el)return;
-        var colors={info:['#e0f2fe','#0369a1','#bae6fd'],warning:['#fef3c7','#92400e','#fde68a'],critical:['#fef2f2','#991b1b','#fecaca']};
-        var icons={info:'M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z',warning:'M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z',critical:'M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'};
-        var h='';
-        d.items.forEach(function(a){
-            var c=colors[a.priority]||colors.info;
-            var ic=icons[a.priority]||icons.info;
-            h+='<div class="ann-card" style="background:'+c[0]+';border:1px solid '+c[2]+';color:'+c[1]+'">';
-            h+='<svg viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;flex-shrink:0"><path fill-rule="evenodd" d="'+ic+'" clip-rule="evenodd"/></svg>';
-            h+='<div><b>'+esc(a.title)+'</b>';
-            if(a.content) h+='<div style="font-size:.78rem;margin-top:.15rem;opacity:.85">'+esc(a.content)+'</div>';
-            h+='</div></div>';
-        });
-        el.innerHTML=h;
-    }).catch(function(){});
-})();
-</script>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php $pqDashboardLive = true; require_once __DIR__ . '/../includes/footer.php'; ?>

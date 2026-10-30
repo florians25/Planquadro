@@ -2,6 +2,22 @@
 
 *Copyright © 2026 Florian-Fynn Scheibel. Alle Rechte vorbehalten.*
 
+## Unveröffentlicht
+
+### Dashboard
+- Aktualisiert sich live (Server-Sent Events) und zusätzlich regelmäßig sowie beim Zurückkehren
+  in den Tab; Anzeige „Stand hh:mm“ mit Verbindungsstatus und Knopf ↻. Ausgetauscht werden nur
+  die Inhaltsbereiche, mit denselben Rechten wie beim Seitenaufruf.
+- Kennzahlen-Kacheln sind Links (Gesamtplan, Urlaub, Mein Plan) und dunkelmodus-tauglich.
+- Ankündigungen und Antragszahlen ohne Inline-Skripte (`assets/js/dashboard.js`).
+
+### Planungstabellen (Monatsplanung, Gesamtplan, Mein Plan, Jahresplan)
+- Tabelle passt sich der Fensterhöhe an und dockt beim Scrollen unter der Werkzeugleiste an:
+  Tageskopf, Namensspalte, Summenzeile „Eingeplant“ und waagerechte Scrollleiste bleiben sichtbar.
+- Mausrad über der Tageskopfzeile scrollt waagerecht.
+- „Heute“ springt im aktuellen Monat zur heutigen Spalte; der aktuelle Tag steht beim Öffnen im Blick.
+- Scrollposition bleibt beim Neuladen (z. B. nach Veröffentlichen) erhalten (`assets/js/plan-scroll.js`).
+
 ## Planquadro 7.0.0 (29.10.2026) – erste Version unter dem Namen Planquadro
 
 Zusammengefasst aus den Entwicklungsphasen 2–7. Release-Notes: `docs/releases/v7.0.0.md`.

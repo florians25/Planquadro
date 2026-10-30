@@ -985,11 +985,12 @@ var pqPlus = {
 
     /* ================= 9. Dashboard ================= */
     function initDashboard() {
-        document.querySelectorAll('[data-pq-publish]').forEach(function(b) {
-            b.addEventListener('click', function() {
-                var p = String(b.dataset.pqPublish).split('-');
-                if (typeof publishPlan === 'function') publishPlan(+p[0], +p[1], false);
-            });
+        /* delegiert: das Dashboard tauscht seine Inhalte live aus (dashboard.js) */
+        document.addEventListener('click', function(e) {
+            var b = e.target.closest && e.target.closest('[data-pq-publish]');
+            if (!b) return;
+            var p = String(b.dataset.pqPublish).split('-');
+            if (typeof publishPlan === 'function') publishPlan(+p[0], +p[1], false);
         });
     }
 
