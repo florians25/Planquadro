@@ -81,13 +81,13 @@
             post('change_requests', { action: 'dashboard_stats' }).then(function (d) {
                 if (!d || !d.success) return;
                 var h = '';
-                function item(n, color, label, strong) {
-                    return '<div class="dash-approval-item"' + (strong ? ' style="border:2px solid var(--p)"' : '') + '><div class="dash-approval-num" style="color:' + color + '">' + (+n) + '</div><div class="dash-approval-label">' + label + '</div></div>';
+                function item(n, color, label) {
+                    return '<div class="dash-approval-item"><div class="dash-approval-num" style="color:' + color + '">' + (+n) + '</div><div class="dash-approval-label">' + label + '</div></div>';
                 }
                 if (d.my_pending > 0) h += item(d.my_pending, 'var(--wn)', 'Meine offenen');
                 if (d.my_approved_week > 0) h += item(d.my_approved_week, 'var(--ok)', 'Genehmigt (7d)');
                 if (d.my_rejected_week > 0) h += item(d.my_rejected_week, 'var(--err)', 'Abgelehnt (7d)');
-                if (d.to_approve > 0) h += item(d.to_approve, 'var(--p)', 'Zu genehmigen', true);
+                if (d.to_approve > 0) h += item(d.to_approve, 'var(--p)', 'Zu genehmigen');
                 extras.appr = h; paintExtras();
             }).catch(function () {});
         }

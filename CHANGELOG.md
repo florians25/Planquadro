@@ -14,8 +14,8 @@
   (`assets/js/icons.js`, `pqIcon()` in PHP und JS; ausnehmen mit `data-noicon`).
 
 ### Dashboard (neu gestaltet)
-- Übersicht oben: Begrüßung, Datum/KW, Einsatz heute und am nächsten Arbeitstag,
-  Schnellzugriffe nach Rechten, Live-Stand.
+- Schlichter Seitenkopf mit Datum/KW, Knöpfen nach Rechten und Live-Stand; eine Zeile mit dem
+  Einsatz heute und am nächsten Arbeitstag. Kennzahlen und Feiertage als einfache Tabellen.
 - Zweispaltig: Aufgaben, zwei Wochen und Einsatz-Verteilung links; Zahlen, Anträge, Planstatus
   (mit Monatslinks und Planungsquote), Heute abwesend, WOTs und Feiertage (mit Countdown) rechts.
   Alle bisherigen Kacheln, Widget-Schalter und Rechteprüfungen bleiben erhalten.

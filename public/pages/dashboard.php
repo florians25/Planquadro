@@ -50,8 +50,6 @@ $nextDay = null;
 foreach (array_merge($wd, $nwd) as $d) if ($d > $today) { $nextDay = $d; break; }
 $nextInfo = $nextDay ? $dayInfo($nextDay) : null;
 
-$hour = (int)date('G');
-$greet = $hour < 11 ? 'Guten Morgen' : ($hour < 18 ? 'Guten Tag' : 'Guten Abend');
 $wdLong = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
 $dateLong = function (string $d) use ($wdLong): string { return $wdLong[(int)date('N', strtotime($d)) - 1] . ', ' . date('j. ', strtotime($d)) . monthName((int)date('n', strtotime($d))); };
 
@@ -68,7 +66,7 @@ if (canEdit() && $approvalsOn && hasPerm('approve_requests') && opsNavVisible('g
 
 /* Karten-Kopf mit Icon */
 $cardHead = function (string $icon, string $title, string $sub = '', string $action = ''): string {
-    return '<div class="pq-card-h"><span class="pq-card-ic">' . pqIcon($icon) . '</span><h2>' . e($title) . '</h2>'
+    return '<div class="pq-card-h"><h2>' . e($title) . '</h2>'
         . ($sub !== '' ? '<span class="pq-card-sub">' . $sub . '</span>' : '') . ($action !== '' ? '<span class="pq-card-act">' . $action . '</span>' : '') . '</div>';
 };
 ?>
@@ -88,45 +86,37 @@ $cardHead = function (string $icon, string $title, string $sub = '', string $act
 <div class="alert alert-err pq-db-alert" id="backupBanner"><?php echo pqIcon('archive'); ?><span>Backup: <?php echo e($bkWarn); ?> <a href="einstellungen">Einstellungen → Backup</a></span></div>
 <?php endif; } ?>
 
-<!-- Begrüßung, heute, Schnellzugriffe -->
-<section class="pq-hero" aria-label="Übersicht">
-  <div class="pq-hero-main">
-    <p class="pq-hero-date"><?php echo e($dateLong($today) . ' ' . $y); ?> · KW <?php echo $cwk; ?></p>
-    <h1><?php echo e($greet . ', ' . $u['first_name']); ?></h1>
-    <p class="pq-hero-role"><?php echo e($u['first_name'].' '.$u['last_name']); ?> · <?php echo e(roleName($u['role'])); ?></p>
+<!-- Seitenkopf: Name, Datum, heute, Schnellzugriffe -->
+<div class="ph pq-dbh">
+  <div class="phl">
+    <h1><?php echo e($u['first_name'].' '.$u['last_name']); ?></h1>
+    <span class="muted pq-dbh-sub"><?php echo e(roleName($u['role'])); ?> · <?php echo e($dateLong($today) . ' ' . $y); ?> · KW <?php echo $cwk; ?></span>
   </div>
-  <div class="pq-today" aria-label="Heute und nächster Arbeitstag">
-    <div class="pq-today-card pq-today-now">
-      <span class="pq-today-lbl">Heute</span>
-      <?php if ($todayInfo['code'] !== ''): ?>
-        <span class="pq-today-row"><span class="pq-chip pq-chip-lg<?php echo $todayInfo['ft'] ? ' pq-chip-hol' : ''; ?>"<?php if ($todayInfo['bg']): ?> style="background:<?php echo e($todayInfo['bg']); ?>;color:<?php echo e($todayInfo['fg']); ?>"<?php endif; ?>><?php echo e($todayInfo['code']); ?></span><b><?php echo e($todayInfo['name']); ?></b></span>
-      <?php else: ?>
-        <span class="pq-today-row pq-today-none"><?php echo pqIcon('calendar'); ?><span>Kein veröffentlichter Einsatz</span></span>
-      <?php endif; ?>
-    </div>
-    <?php if ($nextInfo): ?>
-    <div class="pq-today-card">
-      <span class="pq-today-lbl"><?php echo e($dateLong($nextDay)); ?></span>
-      <?php if ($nextInfo['code'] !== ''): ?>
-        <span class="pq-today-row"><span class="pq-chip<?php echo $nextInfo['ft'] ? ' pq-chip-hol' : ''; ?>"<?php if ($nextInfo['bg']): ?> style="background:<?php echo e($nextInfo['bg']); ?>;color:<?php echo e($nextInfo['fg']); ?>"<?php endif; ?>><?php echo e($nextInfo['code']); ?></span><span><?php echo e($nextInfo['name']); ?></span></span>
-      <?php else: ?>
-        <span class="pq-today-row pq-today-none"><span>Noch nichts geplant</span></span>
-      <?php endif; ?>
-    </div>
-    <?php endif; ?>
-  </div>
-  <div class="pq-hero-side">
+  <div class="phr">
     <span class="pq-live" id="pqDashLive" title="Das Dashboard aktualisiert sich automatisch, sobald sich Pläne, Anträge oder Abwesenheiten ändern.">
       <span class="pq-live-dot" aria-hidden="true"></span><span class="pq-live-txt" id="pqDashStamp">Stand <?php echo date('H:i'); ?></span>
       <button type="button" class="pq-live-btn" id="pqDashRefresh" aria-label="Jetzt aktualisieren" title="Jetzt aktualisieren"><?php echo pqIcon('refresh'); ?></button>
     </span>
-    <nav class="pq-quick" aria-label="Schnellzugriff">
-      <?php foreach ($quick as [$href, $icon, $label, $primary]): ?>
-      <a class="pq-quick-a<?php echo $primary ? ' is-primary' : ''; ?><?php echo in_array($href, ['monatsplanung','gesamtplan','planungsassistent','urlaubsplanung'], true) ? ' desk-only' : ''; ?>" href="<?php echo $href; ?>"><?php echo pqIcon($icon); ?><span><?php echo e($label); ?></span></a>
-      <?php endforeach; ?>
-    </nav>
+    <?php foreach ($quick as [$href, $icon, $label, $primary]): ?>
+    <a class="btn <?php echo $primary ? 'btn-primary' : 'btn-outline'; ?><?php echo in_array($href, ['monatsplanung','gesamtplan','planungsassistent','urlaubsplanung'], true) ? ' desk-only' : ''; ?>" href="<?php echo $href; ?>"><?php echo pqIcon($icon); ?><?php echo e($label); ?></a>
+    <?php endforeach; ?>
   </div>
-</section>
+</div>
+
+<div class="pq-today" aria-label="Heute und nächster Arbeitstag">
+  <div class="pq-today-item">
+    <span class="pq-today-lbl">Heute</span>
+    <?php if ($todayInfo['code'] !== ''): ?><span class="pq-chip<?php echo $todayInfo['ft'] ? ' pq-chip-hol' : ''; ?>"<?php if ($todayInfo['bg']): ?> style="background:<?php echo e($todayInfo['bg']); ?>;color:<?php echo e($todayInfo['fg']); ?>"<?php endif; ?>><?php echo e($todayInfo['code']); ?></span><b><?php echo e($todayInfo['name']); ?></b>
+    <?php else: ?><span class="muted">Kein veröffentlichter Einsatz</span><?php endif; ?>
+  </div>
+  <?php if ($nextInfo): ?>
+  <div class="pq-today-item">
+    <span class="pq-today-lbl"><?php echo e($dateLong($nextDay)); ?></span>
+    <?php if ($nextInfo['code'] !== ''): ?><span class="pq-chip<?php echo $nextInfo['ft'] ? ' pq-chip-hol' : ''; ?>"<?php if ($nextInfo['bg']): ?> style="background:<?php echo e($nextInfo['bg']); ?>;color:<?php echo e($nextInfo['fg']); ?>"<?php endif; ?>><?php echo e($nextInfo['code']); ?></span><span><?php echo e($nextInfo['name']); ?></span>
+    <?php else: ?><span class="muted">noch nichts geplant</span><?php endif; ?>
+  </div>
+  <?php endif; ?>
+</div>
 
 <?php /* Reihenfolge je Rolle (planning-plus.css): Planer zuerst ihre Aufgaben, Mitarbeitende zuerst ihre Woche */ ?>
 <div class="pq-dash <?php echo canEdit() ? 'pq-dash-planner' : 'pq-dash-staff'; ?>">
@@ -210,37 +200,15 @@ $cardHead = function (string $icon, string $title, string $sub = '', string $act
 ?>
 <section class="card pq-card pq-ds-kpis">
   <?php echo $cardHead('target', 'Meine Zahlen', (string)$y); ?>
-  <div class="pq-kpis">
-    <a class="pq-kpi pq-kpi-wide pq-kpi-ok" href="<?php echo $vacHref; ?>">
-      <span class="pq-kpi-ic"><?php echo pqIcon('sun'); ?></span>
-      <span class="pq-kpi-lbl">Resturlaub</span>
-      <span class="pq-kpi-val"><?php echo number_format($vLeft,1,',',''); ?> <small>Tage</small></span>
-      <span class="pq-kpi-sub"><?php echo number_format($vUsed,1,',',''); ?> von <?php echo number_format($vTot,1,',',''); ?> genommen</span>
-      <span class="pq-kpi-bar" role="presentation"><span class="<?php echo $vPct>90?'is-err':($vPct>70?'is-warn':'is-ok'); ?>" style="width:<?php echo round($vPct,1); ?>%"></span></span>
-    </a>
-    <a class="pq-kpi pq-kpi-err" href="mein_plan">
-      <span class="pq-kpi-ic"><?php echo pqIcon('thermometer'); ?></span>
-      <span class="pq-kpi-lbl">Kranktage</span>
-      <span class="pq-kpi-val"><?php echo number_format(sickDays($u['id'],$y),1,',',''); ?></span>
-    </a>
-    <a class="pq-kpi pq-kpi-gl" href="mein_plan">
-      <span class="pq-kpi-ic"><?php echo pqIcon('clock'); ?></span>
-      <span class="pq-kpi-lbl">Gleitzeit</span>
-      <span class="pq-kpi-val"><?php echo $glCnt; ?></span>
-    </a>
-    <a class="pq-kpi pq-kpi-wot" href="mein_plan">
-      <span class="pq-kpi-ic"><?php echo pqIcon('hash'); ?></span>
-      <span class="pq-kpi-lbl">WOTs <?php echo e(monthName($m)); ?></span>
-      <span class="pq-kpi-val"><?php echo count($wots); ?></span>
-    </a>
-    <?php if ($see): ?>
-    <a class="pq-kpi" href="gesamtplan">
-      <span class="pq-kpi-ic"><?php echo pqIcon('users'); ?></span>
-      <span class="pq-kpi-lbl">Team aktiv</span>
-      <span class="pq-kpi-val"><?php echo (int)$stats['totalUsers']; ?></span>
-    </a>
-    <?php endif; ?>
-  </div>
+  <table class="pq-stats">
+    <tr><th scope="row"><a href="<?php echo $vacHref; ?>">Resturlaub</a></th>
+      <td><b><?php echo number_format($vLeft,1,',',''); ?></b> Tage<span class="pq-stats-sub"><?php echo number_format($vUsed,1,',',''); ?> von <?php echo number_format($vTot,1,',',''); ?> genommen</span>
+        <span class="pq-kpi-bar" role="presentation"><span class="<?php echo $vPct>90?'is-err':($vPct>70?'is-warn':'is-ok'); ?>" style="width:<?php echo round($vPct,1); ?>%"></span></span></td></tr>
+    <tr><th scope="row"><a href="mein_plan">Kranktage</a></th><td><b><?php echo number_format(sickDays($u['id'],$y),1,',',''); ?></b></td></tr>
+    <tr><th scope="row"><a href="mein_plan">Gleitzeit</a></th><td><b><?php echo $glCnt; ?></b></td></tr>
+    <tr><th scope="row"><a href="mein_plan">WOTs <?php echo e(monthName($m)); ?></a></th><td><b><?php echo count($wots); ?></b></td></tr>
+    <?php if ($see): ?><tr><th scope="row"><a href="gesamtplan">Mitarbeitende aktiv</a></th><td><b><?php echo (int)$stats['totalUsers']; ?></b></td></tr><?php endif; ?>
+  </table>
 </section>
 <?php endif; /* kpis */ ?>
 
@@ -261,7 +229,6 @@ $cardHead = function (string $icon, string $title, string $sub = '', string $act
       <?php foreach ([[$y, $m, $lp, 'Aktueller Monat', 'Entwurf'], [$ny2, $nm2, $lpNext, 'Nächster Monat', 'Nicht veröffentlicht']] as [$sy, $sm, $slp, $slbl, $sdraft]): ?>
       <li>
         <a href="monatsplanung?year=<?php echo (int)$sy; ?>&amp;month=<?php echo (int)$sm; ?>" class="pq-status-a">
-          <span class="pq-status-ic<?php echo $slp ? ' is-ok' : ' is-warn'; ?>"><?php echo pqIcon($slp ? 'check-circle' : 'pencil'); ?></span>
           <span class="pq-status-t"><b><?php echo e(monthName($sm) . ' ' . $sy); ?></b><span><?php echo e($slbl); ?></span></span>
           <?php if ($slp): ?><span class="badge bs">Veröffentlicht <?php echo date('d.m. H:i', strtotime($slp)); ?></span><?php else: ?><span class="badge bw"><?php echo e($sdraft); ?></span><?php endif; ?>
         </a>
@@ -296,8 +263,7 @@ $cardHead = function (string $icon, string $title, string $sub = '', string $act
     <?php else: ?>
     <ul class="pq-people">
       <?php foreach ($absent as $a): ?>
-      <li><span class="pq-avatar" aria-hidden="true"><?php echo e(mb_strtoupper(mb_substr($a['first_name'],0,1) . mb_substr($a['last_name'],0,1))); ?></span>
-        <span class="pq-people-n"><?php echo e($a['last_name'].', '.$a['first_name']); ?></span>
+      <li><span class="pq-people-n"><?php echo e($a['last_name'].', '.$a['first_name']); ?></span>
         <span class="pq-chip" style="background:<?php echo e(absenceColor($a['absence_type'])); ?>;color:<?php echo e(absenceFg($a['absence_type'])); ?>" title="<?php echo e(absenceName($a['absence_type'])); ?>"><?php echo e(absenceLabel($a['absence_type'])); ?></span></li>
       <?php endforeach; ?>
     </ul>
@@ -324,12 +290,11 @@ $cardHead = function (string $icon, string $title, string $sub = '', string $act
 <!-- Kommende Feiertage -->
 <section class="card pq-card pq-ds-hols">
   <?php echo $cardHead('flag', 'Kommende Feiertage'); ?>
-  <ul class="pq-hols">
+  <table class="pq-stats pq-hols">
     <?php foreach ($upHols as $h): $ht = strtotime($h['holiday_date']); $inDays = (int)round((strtotime(date('Y-m-d', $ht)) - strtotime($today)) / 86400); ?>
-    <li><span class="pq-hol-d"><b><?php echo date('j', $ht); ?></b><span><?php echo e(mb_substr(monthName((int)date('n', $ht)), 0, 3)); ?></span></span>
-      <span class="pq-hol-t"><b><?php echo e($h['name']); ?></b><span><?php echo e($wdLong[(int)date('N', $ht) - 1]); ?> · <?php echo $inDays === 0 ? 'heute' : ($inDays === 1 ? 'morgen' : 'in ' . $inDays . ' Tagen'); ?></span></span></li>
+    <tr><th scope="row"><?php echo e($h['name']); ?></th><td><?php echo wdShort($h['holiday_date']); ?> <?php echo date('d.m.Y', $ht); ?><span class="pq-stats-sub"><?php echo $inDays === 0 ? 'heute' : ($inDays === 1 ? 'morgen' : 'in ' . $inDays . ' Tagen'); ?></span></td></tr>
     <?php endforeach; ?>
-  </ul>
+  </table>
 </section>
 <?php endif; ?>
 

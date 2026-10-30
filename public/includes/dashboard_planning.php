@@ -17,7 +17,7 @@ $__canPublish = hasPerm('plan_publish_own');
 $__tasks = 0;
 ?>
 <section class="card pq-card pq-ds-tasks pq-tasks" aria-labelledby="pqTasksH">
-  <div class="pq-card-h"><span class="pq-card-ic pq-card-ic-acc"><?php echo pqIcon('bolt'); ?></span><h2 id="pqTasksH">Heute zu tun</h2><span class="pq-card-sub">Ihre Planungsaufgaben · nächste <?php echo (int)$__k['days']; ?> Tage</span></div>
+  <div class="pq-card-h"><h2 id="pqTasksH">Heute zu tun</h2><span class="pq-card-sub">Ihre Planungsaufgaben · nächste <?php echo (int)$__k['days']; ?> Tage</span></div>
   <div class="pq-task-grid pq-card-b">
     <?php if ($__canApprove && $__k['pending'] > 0): $__tasks++; ?>
     <a class="pq-task pq-task-warn" href="genehmigungen">
